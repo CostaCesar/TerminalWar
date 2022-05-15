@@ -1,0 +1,39 @@
+Altura:
+	Aumenta a vantagem de ataque, se diferença de altura > 2 OU o terrono conter água em uma altura < -1,
+	movimento impedido
+
+Terrenos: 
+   0 Grass, 	// Nada
+   1 Sand, 	   // Penalidade de movimento 1
+   2 Rock, 	   // Penalidade de movimento 1 para infantaria, 2 para demais
+   3 Mud, 	   // Penalidade de movimento 3 
+   4 Water, 	// Penalidade de movimento 4 OU impassável
+
+Vegetaçao:
+// Niveis de proteção de projpetil
+   0 None,	   // 0
+   1 Field,	   // 1
+   2 Sparse,   // 1	
+   3 Grove,	   // 2
+   4 Forest,	// 3
+   5 Jungle	   // 5
+} T_Veget;
+
+Clima:
+// Cosmético	
+    Sunny,			
+    Sparse_Clouds,
+    Many_Clouds,
+    Cloudy,
+    Rain,
+    Storm
+
+
+Time:
+// Comsético
+    Dawn,
+    Morning,
+    Noon,
+    Afternoon,
+    Twilight,
+    Night
