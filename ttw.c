@@ -398,9 +398,8 @@ int main(/*int argc, char** argv*/)
             int FRes = false;
             int xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
             int xTarget = -1, yTarget = -1;
-            action = 'x';
             system("cls");
-            info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y,  Side_A.units[unitA_I].moves - moves);
+            info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, Side_A.units[unitA_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
             info_Bottom();                
             if(moves < Side_A.units[unitA_I].moves && Side_A.units[unitA_I].isRetreating == false && Side_A.units[unitA_I].inCombat == false) 
@@ -523,7 +522,6 @@ int main(/*int argc, char** argv*/)
                             }
                             else if(FRes > -1)
                                 moves += FRes;
-                            moves++;
                         }
                         free(Side_A.units[unitA_I].path);
                     }
@@ -531,13 +529,17 @@ int main(/*int argc, char** argv*/)
                 update_Unit(&Side_A.units[unitA_I], unitA);
                 toggle_Cursor(false);       
             }
-            else Side_A.units[unitA_I].inCombat = false;
+            else 
+                Side_A.units[unitA_I].inCombat = false;
         }
-
+        system("cls");
+        info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, 0);
+        show_Map(&battleMap, MODE_HEIGHT); 
+        Sleep(2000);
+        
         unitB_I = 4;
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
-        
-        for(moves = 0; moves <= Side_B.units[unitB_I].moves; moves++)  // Side_B turn
+        for(moves = 0; moves < Side_B.units[unitB_I].moves; moves++)  // Side_B turn
         {
             int FRes = false;
             system("cls");
@@ -564,6 +566,10 @@ int main(/*int argc, char** argv*/)
             }
             else Side_B.units[unitB_I].inCombat = false;
         }
+        system("cls");
+        info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, 0);
+        show_Map(&battleMap, MODE_HEIGHT);
+        Sleep(2000);
         
         // Cheking for retreat
         for(int j = 0; j < Side_A.size && j < Side_B.size; j++)
