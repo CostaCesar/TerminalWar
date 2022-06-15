@@ -12,6 +12,8 @@ typedef struct S_Result
     bool isDraw;
 } B_Result;
 
+short int A_Loss = 0, B_Loss = 0;
+
 float add_BonusDamage_ByVeget(int tileVeget)
 {
     return (tileVeget / 2.0f + 1);
@@ -189,7 +191,7 @@ int add_BonusDamage_ByClass(T_Class attacker_Type, T_Class defender_Type, bool f
 B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, short int *fortLevel)
 {
     B_Result result;
-    short int men_Buffer = 0;
+    short int A_Buffer = 0, D_Buffer = 0;
     result.isDraw = false;
 
     unit_Attacker.inCombat = true, unit_Defender.inCombat = true;
@@ -225,12 +227,14 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         unit_Attacker.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 10;
 
         // Remaining men is defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        men_Buffer = unit_Attacker.men;
+        A_Buffer = unit_Attacker.men;
         unit_Attacker.men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
         * (unit_Defender.men / unit_Attacker.morale);
+        A_Loss = A_Buffer - unit_Attacker.men;
 
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
+        D_Buffer = unit_Defender.men;
         unit_Defender.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 10;
         if(unit_Defender.morale <= 1 )
         {
@@ -242,7 +246,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         else 
         {
             unit_Defender.men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (men_Buffer / unit_Defender.morale) * OFFSET + OFFSET;
+            * (A_Buffer / unit_Defender.morale) * OFFSET + OFFSET;
             if(unit_Defender.men < 0)
             {
                 unit_Defender.men = (short int) ((1.0f / (float) OFFSET) * unit_Defender.men_Max);
@@ -250,7 +254,9 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
                 unit_Defender.isRetreating = true;
                 unit_Defender.inCombat = false;
             }
-        }    
+        }
+        B_Loss = D_Buffer - unit_Defender.men;
+
         result.winner = unit_Attacker;
         result.looser = unit_Defender;
     }
@@ -260,12 +266,14 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         unit_Defender.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 10;
 
         // Remaining men is Defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        men_Buffer = unit_Defender.men;
+        D_Buffer = unit_Defender.men;
         unit_Defender.men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
         * (unit_Attacker.men / unit_Defender.morale);
+        B_Loss = D_Buffer - unit_Defender.men;
         
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
+        A_Buffer = unit_Attacker.men;
         unit_Attacker.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 10;
         if(unit_Attacker.morale <= 1)
         {
@@ -277,7 +285,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         else 
         {
             unit_Attacker.men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (men_Buffer / unit_Attacker.morale) * OFFSET + OFFSET;
+            * (A_Buffer / unit_Attacker.morale) * OFFSET + OFFSET;
             if(unit_Attacker.men < 0)
             {
                 unit_Attacker.men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker.men_Max);
@@ -286,6 +294,8 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
                 unit_Attacker.inCombat = false;
             }
         }
+        A_Loss = A_Buffer - unit_Attacker.men;
+
         result.winner = unit_Defender;
         result.looser = unit_Attacker;
     }

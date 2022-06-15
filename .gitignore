@@ -1,5 +1,7 @@
 # Ignorar executáveis
 *.exe
+*.png
+*.json
 
 # Ignorar pasta do VS Code
 .vscode

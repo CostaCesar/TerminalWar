@@ -423,7 +423,7 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
             return OUT_COMBAT;
         }
         
-        short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
+        short int mCost = 1;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
         source_Map->tiles[destPos.Y][destPos.X].unit = destPos;
         source_Map->tiles[unitPos->Y][unitPos->X].unit.ID = NO_UNIT;

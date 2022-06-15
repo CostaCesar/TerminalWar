@@ -4,21 +4,12 @@
 #include <conio.h>
 #include <Windows.h>
 
-/*
-typedef enum E_MSG
+typedef struct P_endStats
 {
-    map_OutOfLimits,
-    map_InvalidTarget,
-    map_Engage,
-    map_Move_Ocean,
-    map_Move_TooSteep,
-    map_Move_UnitOverlap,
-    map_Path_NotFound,
-    combat_MustDisengage,
-    combat_OutOfRange,
-    combat_NoAmmo,
-    combat_Routing,
-} UI_MSG; */
+    int deployed;
+    int loss;
+    int killed;
+} B_endStats;
 
 int get_ScreenWidth()
 {
@@ -26,6 +17,12 @@ int get_ScreenWidth()
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
     return (int) csbi.srWindow.Right - csbi.srWindow.Left + 1;         
     // tSize_Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;   
+}
+int get_ScreenHeight()
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
+    return (int) csbi.srWindow.Bottom - csbi.srWindow.Top + 1;  
 }
 
 void toggle_Cursor(bool cursor)
@@ -203,7 +200,7 @@ void info_Bottom()
     printf("===============================================\n"); 
 }
 
-int startMenu(float version)
+int screen_Menu(float version)
 {
     int sWidth = get_ScreenWidth();
     
@@ -286,4 +283,35 @@ int startMenu(float version)
     printf("                         [S]> Encerrar jogo                          \n"); */
 
     return get_KeyPress(true);
+}
+
+void screen_Victory(B_endStats winner, B_endStats looser)
+{
+    system("cls");
+    int sWidth = get_ScreenWidth();
+    
+    printf("           Winner X Looser\n");
+    printf("Deployed:  %7d   %7d\n", winner.deployed, looser.deployed);
+    printf("Killed:    %7d   %7d\n", winner.killed, looser.killed);
+    printf("Lost:      %7d   %7d\n", winner.loss, looser.loss);
+    printf("Remaining: %7d   %7d\n", winner.deployed - winner.loss, looser.deployed - looser.loss);
+
+    // printf("#");
+    // for(int i = 0; i < sWidth - 2; i++)
+    //     printf("-");
+    // printf("#\n");
+// 
+    // printf("|");
+    // for(int i = 0; i < sWidth - 2; i++)
+    //     printf(" ");
+    // printf("|\n");
+// 
+    // printf("|");
+    // for(int i = 0; i < sWidth - 2; i++)
+    //     printf(" ");
+    // printf("|\n");
+
+    printf(">Press ENTER to continue...\n");
+    getchar();
+    return;
 }

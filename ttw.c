@@ -131,6 +131,7 @@ int placementMenu(B_Map *map, B_Side *Side)
     short int dUnits = 0;
     do
     {
+        Index = -1;
         B_Pos unitPos = {-1, -1};
         Map_Unit unit;
         system("cls");
@@ -182,13 +183,13 @@ int placementMenu(B_Map *map, B_Side *Side)
             
             toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
-            scanf("%d", &out);
+            scanf(" %d", &out);
             
             Index = get_UnitIndex(Side, out);
             if(Index > -1 && (Side->units[Index].position.X < 0 && Side->units[Index].position.Y < 0))
             {
                 printf(">> Cordinates of the unit <X Y> inside |*1| area: ");
-                scanf("%hd %hd", &Side->units[Index].position.X, &Side->units[Index].position.Y);
+                scanf(" %hd %hd", &Side->units[Index].position.X, &Side->units[Index].position.Y);
                 
                 unit = set_MapUnit(&Side->units[Index]);
                 out = put_Unit_OnMap(map, &unit);
@@ -310,8 +311,8 @@ int main(/*int argc, char** argv*/)
     toggle_Cursor(false);
                                  
     int unit_TableSize = 0, out = 0;
-    //int tSize_X = 10;
-    //int tSize_Y = 10;
+    extern short int A_Loss, B_Loss;
+    A_Loss = 0, B_Loss = 0;
     B_Map battleMap;
     B_Unit* unit_Table = getFile_Unit("units/new.bin", &unit_TableSize);
 
@@ -320,7 +321,7 @@ int main(/*int argc, char** argv*/)
 
     do
     {
-        switch(startMenu(VERSION))
+        switch(screen_Menu(VERSION))
         {
         case 'i':
             // Setting up map & units
@@ -340,8 +341,10 @@ int main(/*int argc, char** argv*/)
     } while(1);
 
     B_Side Side_A;
+    B_endStats Status_A = {0};
     Map_Unit unitA;
     B_Side Side_B;
+    B_endStats Status_B = {0};
     Map_Unit unitB;
     
     Side_A.units = (B_Unit*) malloc(sizeof(B_Unit));
@@ -359,13 +362,13 @@ int main(/*int argc, char** argv*/)
     set_fUnitTable(unit_Table, 0, &Side_A);
     set_fUnitTable(unit_Table, 0, &Side_A);
     set_fUnitTable(unit_Table, 1, &Side_B);
-    set_fUnitTable(unit_Table, 1, &Side_B);
-    set_fUnitTable(unit_Table, 2, &Side_B);
-    set_fUnitTable(unit_Table, 0, &Side_A);
-    set_fUnitTable(unit_Table, 0, &Side_A);
-    set_fUnitTable(unit_Table, 2, &Side_B);
-    set_fUnitTable(unit_Table, 1, &Side_B);
-    set_fUnitTable(unit_Table, 1, &Side_B);
+    // set_fUnitTable(unit_Table, 1, &Side_B);
+    // set_fUnitTable(unit_Table, 2, &Side_B);
+    // set_fUnitTable(unit_Table, 0, &Side_A);
+    // set_fUnitTable(unit_Table, 0, &Side_A);
+    // set_fUnitTable(unit_Table, 2, &Side_B);
+    // set_fUnitTable(unit_Table, 1, &Side_B);
+    // set_fUnitTable(unit_Table, 1, &Side_B);
 
     // Placing AI on Map
     for(int i = 0; i < Side_B.size; i++)
@@ -385,10 +388,17 @@ int main(/*int argc, char** argv*/)
             return -1;
     }
     
+    // Getting deployed troops
+    for(int i = 0; i < Side_A.size; i++)
+        Status_A.deployed += Side_A.units[i].men;
+    for(int i = 0; i < Side_B.size; i++)
+        Status_B.deployed += Side_B.units[i].men;
+    
+    // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
     for(int i = 0; i < TURNS; i++)
     {
-        int unitA_I = 0, unitB_I = 2, moves = 0;
+        int unitA_I = 0, unitB_I = 0, moves = 0;
         B_Tile *position;
         char action;
         unitA = set_MapUnit(&Side_A.units[unitA_I]);
@@ -510,7 +520,7 @@ int main(/*int argc, char** argv*/)
                     {
                         for(int steps = 0; moves < Side_A.units[unitA_I].moves; steps++)
                         {
-                            if(unitA.X == xGoal && unitA.Y == yGoal)
+                            if((unitA.X == xGoal && unitA.Y == yGoal) || FRes == OUT_COMBAT)
                                 break;
                             FRes = move_Unit(&battleMap, &unitA, Side_A.units[unitA_I].path[steps]);
                             if(FRes == OUT_COMBAT)
@@ -518,7 +528,8 @@ int main(/*int argc, char** argv*/)
                                 position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
                                 unitB_I = get_UnitIndex(&Side_B, position->unit.ID);
                                 do_Combat(&Side_A.units[unitA_I], &Side_B.units[unitB_I], get_HeightDif(&battleMap, unitA, unitB), &battleMap.tiles[unitB.Y][unitB.X].fortLevel);
-                                getchar();       
+                                Status_A.loss += A_Loss, Status_B.loss += B_Loss;
+                                // getchar();       
                             }
                             else if(FRes > -1)
                                 moves += FRes;
@@ -537,7 +548,6 @@ int main(/*int argc, char** argv*/)
         show_Map(&battleMap, MODE_HEIGHT); 
         Sleep(2000);
         
-        unitB_I = 4;
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
         for(moves = 0; moves < Side_B.units[unitB_I].moves; moves++)  // Side_B turn
         {
@@ -559,6 +569,7 @@ int main(/*int argc, char** argv*/)
                     position = get_AdjTile(&battleMap, unitB, West, false);
                     unitA_I = get_UnitIndex(&Side_A, position->unit.ID);
                     do_Combat(&Side_B.units[unitB_I], &Side_A.units[unitA_I], get_HeightDif(&battleMap, unitB, unitA), &battleMap.tiles[unitA.Y][unitA.X].fortLevel);
+                    Status_B.loss += A_Loss, Status_A.loss += B_Loss;
                 }
                 else if(FRes > -1)
                     moves += FRes;
@@ -605,6 +616,17 @@ int main(/*int argc, char** argv*/)
                     }
                 }
             }
+        }
+        // Checking for victory
+        if(Side_A.size == 0)
+        {
+            screen_Victory(Status_B, Status_A);
+            break;   
+        }
+        else if (Side_B.size == 0)
+        {
+            screen_Victory(Status_B, Status_A);
+            break;   
         }
     }
     
