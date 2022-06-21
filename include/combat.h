@@ -224,7 +224,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
     // Returnig winner or definig draw
     if(combat_Result > 0)
     {
-        unit_Attacker.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 10;
+        unit_Attacker.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
 
         // Remaining men is defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
         A_Buffer = unit_Attacker.men;
@@ -235,7 +235,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
         D_Buffer = unit_Defender.men;
-        unit_Defender.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 10;
+        unit_Defender.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
         if(unit_Defender.morale <= 1 )
         {
             unit_Defender.men = (short int) ((1.0f / (float) OFFSET) * unit_Defender.men_Max);
@@ -263,7 +263,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
     else if (combat_Result < 0)
     {  
         combat_Result = (float) fabs((double) combat_Result);
-        unit_Defender.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 10;
+        unit_Defender.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
 
         // Remaining men is Defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
         D_Buffer = unit_Defender.men;
@@ -274,7 +274,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
         A_Buffer = unit_Attacker.men;
-        unit_Attacker.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 10;
+        unit_Attacker.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
         if(unit_Attacker.morale <= 1)
         {
             unit_Attacker.men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker.men_Max);
