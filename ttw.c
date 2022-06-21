@@ -158,7 +158,7 @@ int placementMenu(B_Map *map, B_Side *Side)
         show_Map(map, mode);
         printf("===========================================\n");
         printf("| [T] Change Map Type  | [A] Place A Unit |\n");
-        printf("| [Esc] Exit The Game  | [M] Replace Unit |\n");
+        printf("| [Esc] Exit To Menu   | [M] Replace Unit |\n");
         printf("| [Enter] Start Battle | [R] Remove Unit  |\n");
         printf("===========================================\n");
         
@@ -276,7 +276,7 @@ int placementMenu(B_Map *map, B_Side *Side)
                 print_Message("This unit ID is not valid!", true);
             continue;
         case KEY_ESCAPE:
-            return 1;
+            return FUNCTION_FAIL;
         case KEY_ENTER:
             // Cheking if any units are deployed at all
             if(dUnits < 1)
@@ -315,10 +315,21 @@ int main(/*int argc, char** argv*/)
     A_Loss = 0, B_Loss = 0;
     B_Map battleMap;
     B_Unit* unit_Table = getFile_Unit("units/new.bin", &unit_TableSize);
+    
+    // Side_A  
+    B_Side Side_A;
+    B_endStats Status_A = {0};  
+    Side_A.size = 0, Side_A.ID = 0, Side_A.units = NULL; 
+    
+    // Side_B
+    B_Side Side_B;
+    Side_B.size = 0, Side_B.ID = 1, Side_B.units = NULL;
+    B_endStats Status_B = {0};
 
     // Playing music
     PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 
+  startMenu:
     do
     {
         switch(screen_Menu(VERSION))
@@ -340,23 +351,12 @@ int main(/*int argc, char** argv*/)
         break;
     } while(1);
 
-    B_Side Side_A;
-    B_endStats Status_A = {0};
-    Map_Unit unitA;
-    B_Side Side_B;
-    B_endStats Status_B = {0};
-    Map_Unit unitB;
     
-    Side_A.units = (B_Unit*) malloc(sizeof(B_Unit));
+    Side_A.units = (B_Unit*) malloc(sizeof(B_Unit)); 
     strcpy(Side_A.name, "Greeks");
-    Side_A.size = 0;
-    Side_A.ID = 0;
-
     Side_B.units = (B_Unit*) malloc(sizeof(B_Unit));
     strcpy(Side_B.name, "Romans");
-    Side_B.size = 0;
-    Side_B.ID = 1;
-    
+
     // Setting up some units
     set_fUnitTable(unit_Table, 0, &Side_A);
     set_fUnitTable(unit_Table, 0, &Side_A);
@@ -371,28 +371,39 @@ int main(/*int argc, char** argv*/)
     // set_fUnitTable(unit_Table, 1, &Side_B);
 
     // Placing AI on Map
+    Map_Unit unitB;
     for(int i = 0; i < Side_B.size; i++)
     {
         unitB = def_Unit(&Side_B.units[i], &battleMap);
         put_Unit_OnMap(&battleMap, &unitB);
     }
     // Placing Player on map
-    switch(placementMenu(&battleMap, &Side_A))
+    if(placementMenu(&battleMap, &Side_A) == FUNCTION_FAIL)
     {
-        case 1:
-            return 0;
-        case FUNCTION_SUCESS:
-            break;
-        default:
-            printf(">> ERROR: placementMenu.WTF \n");
-            return -1;
+        for(int i = 0; i < battleMap.height; i++)
+            free(battleMap.tiles[i]);
+        free(battleMap.tiles); 
+        free(Side_A.units);
+        free(Side_B.units);
+        Side_A.size = 0, Side_B.size = 0;
+        goto startMenu;
     }
+    // {
+    //     case FUNCTION_FAIL:
+    //         return 0;
+    //     case FUNCTION_SUCESS:
+    //         break;
+    //     default:
+    //         printf(">> ERROR: placementMenu.WTF \n");
+    //         return -1;
+    // }
     
     // Getting deployed troops
     for(int i = 0; i < Side_A.size; i++)
         Status_A.deployed += Side_A.units[i].men;
     for(int i = 0; i < Side_B.size; i++)
         Status_B.deployed += Side_B.units[i].men;
+    Map_Unit unitA;
     
     // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
@@ -497,8 +508,17 @@ int main(/*int argc, char** argv*/)
                         moves--;
                     } 
                 }
-                else if(action == KEY_ESCAPE) // Exit game
-                    return 0;
+                else if(action == KEY_ESCAPE)
+                { 
+                    free(Side_A.units);
+                    free(Side_B.units);
+                    for(int i = 0; i < battleMap.height; i++)
+                        free(battleMap.tiles[i]);
+                    free(battleMap.tiles);
+                    Side_A.size = 0, Side_B.size = 0;
+                    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
+                    goto startMenu;
+                }
                 else if(action == KEY_ENTER) // Next Turn
                 {   }
                 else
@@ -630,7 +650,7 @@ int main(/*int argc, char** argv*/)
     }
     
     // Freeing
-    for(int i = 0; i < BACKUP_MAP_COLUMNS; i++)
+    for(int i = 0; i < battleMap.height; i++)
         free(battleMap.tiles[i]);
     free(battleMap.tiles);
     free(Side_A.units);

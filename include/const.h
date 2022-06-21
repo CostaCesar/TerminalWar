@@ -1,9 +1,8 @@
 // common
 #define STRING_NAME (50 + 1)
 #define STRING_FILE (20 + 1)
-// #define STRING_MSG (STRING_NAME * 3 - 2)
-#define FUNCTION_FAIL -2
-#define FUNCTION_SUCESS 0
+#define FUNCTION_FAIL 0
+#define FUNCTION_SUCESS 1
 
 // Keys
 #define KEY_ESCAPE 27

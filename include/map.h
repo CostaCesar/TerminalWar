@@ -544,12 +544,12 @@ bool unit_Retreat(Map_Unit* unit, B_Map* map)
     T_Direc direction;
 
     // What direction it should move
-    if (unit->X > 0 && unit->X < (BACKUP_MAP_COLUMNS / 2))
+    if (unit->X > 0 && unit->X < (map->width / 2))
     {
         // West-ish 
         direction = Southwest + (rand() % 3);
     }
-    else if(unit->X > BACKUP_MAP_COLUMNS / 2)
+    else if(unit->X > map->width / 2)
     {
         // East-ish
         direction = Northeast + (rand() % 3);
