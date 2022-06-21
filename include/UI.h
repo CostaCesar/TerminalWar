@@ -291,10 +291,10 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     int sWidth = get_ScreenWidth();
     
     printf("           Winner X Looser\n");
-    printf("Deployed:  %7d   %7d\n", winner.deployed, looser.deployed);
-    printf("Killed:    %7d   %7d\n", winner.killed, looser.killed);
-    printf("Lost:      %7d   %7d\n", winner.loss, looser.loss);
-    printf("Remaining: %7d   %7d\n", winner.deployed - winner.loss, looser.deployed - looser.loss);
+    printf("Deployed:  %6d   %6d\n", winner.deployed, looser.deployed);
+    printf("Killed:    %6d   %6d\n", winner.killed, looser.killed);
+    printf("Lost:      %6d   %6d\n", winner.loss, looser.loss);
+    printf("Remaining: %6d   %6d\n", winner.deployed - winner.loss, looser.deployed - looser.loss);
 
     // printf("#");
     // for(int i = 0; i < sWidth - 2; i++)
@@ -311,7 +311,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     //     printf(" ");
     // printf("|\n");
 
-    printf(">Press ENTER to continue...\n");
+    printf("> Press ENTER to continue...\n");
     getchar();
     return;
 }

@@ -12,8 +12,11 @@
 #define TURNS 30
 #define VERSION 0.575f
 
-// File->Game functions 
+// Game Variables
+B_Map battleMap;
+B_Side Side_A, Side_B;
 
+// File->Game functions 
 B_Unit* getFile_Unit(char *path, int *size)
 {
     FILE* file = fopen(path, "rb");
@@ -74,7 +77,6 @@ void set_fUnitTable(B_Unit *table, int index, B_Side *side)
 }
 
 // Map<->Unit functions
-
 Map_Unit set_MapUnit(B_Unit *source)
 {
     Map_Unit choke;
@@ -123,6 +125,19 @@ void update_Unit(B_Unit* unit, Map_Unit source)
     unit->position.X = source.X;
     unit->position.Y = source.Y;
     return;
+}
+
+
+// Main functions (screens & logic)
+int dealloc_ToMenu()
+{
+    for(int i = 0; i < battleMap.height; i++)
+            free(battleMap.tiles[i]);
+    free(battleMap.tiles); 
+    free(Side_A.units);
+    free(Side_B.units);
+    Side_A.size = 0, Side_B.size = 0;
+    return FUNCTION_SUCESS;
 }
 
 int placementMenu(B_Map *map, B_Side *Side)
@@ -313,16 +328,13 @@ int main(/*int argc, char** argv*/)
     int unit_TableSize = 0, out = 0;
     extern short int A_Loss, B_Loss;
     A_Loss = 0, B_Loss = 0;
-    B_Map battleMap;
     B_Unit* unit_Table = getFile_Unit("units/new.bin", &unit_TableSize);
     
     // Side_A  
-    B_Side Side_A;
     B_endStats Status_A = {0};  
     Side_A.size = 0, Side_A.ID = 0, Side_A.units = NULL; 
     
     // Side_B
-    B_Side Side_B;
     Side_B.size = 0, Side_B.ID = 1, Side_B.units = NULL;
     B_endStats Status_B = {0};
 
@@ -350,7 +362,6 @@ int main(/*int argc, char** argv*/)
         }
         break;
     } while(1);
-
     
     Side_A.units = (B_Unit*) malloc(sizeof(B_Unit)); 
     strcpy(Side_A.name, "Greeks");
@@ -380,12 +391,7 @@ int main(/*int argc, char** argv*/)
     // Placing Player on map
     if(placementMenu(&battleMap, &Side_A) == FUNCTION_FAIL)
     {
-        for(int i = 0; i < battleMap.height; i++)
-            free(battleMap.tiles[i]);
-        free(battleMap.tiles); 
-        free(Side_A.units);
-        free(Side_B.units);
-        Side_A.size = 0, Side_B.size = 0;
+        (void) dealloc_ToMenu();
         goto startMenu;
     }
     // {
@@ -501,7 +507,8 @@ int main(/*int argc, char** argv*/)
                 else if (action == 'e')
                 { 
                     if(Side_A.units[unitA_I].build_Cap > 0)
-                        inc_FortLevel(&battleMap, Side_A.units[unitA_I].build_Cap, unitA);        
+                        out = inc_FortLevel(&battleMap, Side_A.units[unitA_I].build_Cap, unitA);
+                        if(out == FUNCTION_FAIL) moves--;     
                     else
                     {
                         print_Message("This unit cannot build fortifications!", true);
@@ -510,12 +517,7 @@ int main(/*int argc, char** argv*/)
                 }
                 else if(action == KEY_ESCAPE)
                 { 
-                    free(Side_A.units);
-                    free(Side_B.units);
-                    for(int i = 0; i < battleMap.height; i++)
-                        free(battleMap.tiles[i]);
-                    free(battleMap.tiles);
-                    Side_A.size = 0, Side_B.size = 0;
+                    (void) dealloc_ToMenu();
                     PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
                     goto startMenu;
                 }
@@ -562,10 +564,6 @@ int main(/*int argc, char** argv*/)
             else 
                 Side_A.units[unitA_I].inCombat = false;
         }
-        // system("cls");
-        // info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, 0);
-        // show_Map(&battleMap, MODE_HEIGHT); 
-        // Sleep(2000);
         
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
         for(moves = 0; moves < Side_B.units[unitB_I].moves; moves++)  // Side_B turn
@@ -644,18 +642,14 @@ int main(/*int argc, char** argv*/)
         }
         else if (Side_B.size == 0)
         {
-            screen_Victory(Status_B, Status_A);
+            screen_Victory(Status_A, Status_B);
             break;   
         }
     }
     
     // Freeing
-    for(int i = 0; i < battleMap.height; i++)
-        free(battleMap.tiles[i]);
-    free(battleMap.tiles);
-    free(Side_A.units);
-    free(Side_B.units);
-    free(unit_Table);
+    (void) dealloc_ToMenu();
+    goto startMenu;
 
     return 0;
 }
