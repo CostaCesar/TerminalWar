@@ -528,8 +528,7 @@ int main(/*int argc, char** argv*/)
                                 position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
                                 unitB_I = get_UnitIndex(&Side_B, position->unit.ID);
                                 do_Combat(&Side_A.units[unitA_I], &Side_B.units[unitB_I], get_HeightDif(&battleMap, unitA, unitB), &battleMap.tiles[unitB.Y][unitB.X].fortLevel);
-                                Status_A.loss += A_Loss, Status_B.loss += B_Loss;
-                                // getchar();       
+                                Status_A.loss += A_Loss, Status_B.loss += B_Loss;    
                             }
                             else if(FRes > -1)
                                 moves += FRes;
@@ -543,10 +542,10 @@ int main(/*int argc, char** argv*/)
             else 
                 Side_A.units[unitA_I].inCombat = false;
         }
-        system("cls");
-        info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, 0);
-        show_Map(&battleMap, MODE_HEIGHT); 
-        Sleep(2000);
+        // system("cls");
+        // info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, 0);
+        // show_Map(&battleMap, MODE_HEIGHT); 
+        // Sleep(2000);
         
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
         for(moves = 0; moves < Side_B.units[unitB_I].moves; moves++)  // Side_B turn
