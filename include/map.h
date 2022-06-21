@@ -465,7 +465,7 @@ int put_Unit_OnMap(B_Map *map, Map_Unit *unit)
     return FUNCTION_SUCESS;
 }
 
-void inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
+int inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
 {
     map->tiles[pos.Y][pos.X].fortLevel += amount;
     if(map->tiles[pos.Y][pos.X].fortLevel > MAX_FORT_LEVEL)
@@ -474,12 +474,14 @@ void inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
         char msg[28];
         snprintf(msg, sizeof(msg), "Max Fort Level Reached [%2d]", MAX_FORT_LEVEL);
         print_Message(msg, true);
+        return FUNCTION_FAIL;
     }
     else
     {
         char msg[29];
         snprintf(msg, sizeof(msg), "Fort Upgraded from %2d to %2d!", map->tiles[pos.Y][pos.X].fortLevel - amount, map->tiles[pos.Y][pos.X].fortLevel);
         print_Message(msg, true);       
+        return FUNCTION_SUCESS;
     }
 }
 
@@ -540,37 +542,34 @@ B_Tile* get_AdjTile(B_Map* map, Map_Unit unit, T_Direc direction, bool isAI)
 
 bool unit_Retreat(Map_Unit* unit, B_Map* map)
 {
-    bool hasMoved = true;
+    bool hasMoved = false;
     T_Direc direction;
 
     // What direction it should move
-    if (unit->X > 0 && unit->X < (map->width / 2))
-    {
-        // West-ish 
-        direction = Southwest + (rand() % 3);
-    }
+    if (unit->X < (map->width / 2))
+        direction = West;
     else if(unit->X > map->width / 2)
-    {
-        // East-ish
-        direction = Northeast + (rand() % 3);
-    }
+        direction = East;
+    else if(unit->Y < map->height / 2)
+        direction = North;
+    else if(unit->Y > map->height / 2)
+        direction = South;
     else
-    {
         direction = rand() % Northwest; // Random direction
-    }
 
     // Trying to move foward, then diagonals
-    hasMoved = move_Unit(map, unit, direction);
+    B_Tile* adj = get_AdjTile(map, *unit, direction, true);
+    if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction);
     if (hasMoved == false)
     {
-        hasMoved = move_Unit(map, unit, direction -1);
+        adj = get_AdjTile(map, *unit, direction -1, true);
+        if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction -1);
         if (hasMoved == false)
         {
-            hasMoved = move_Unit(map, unit, direction +1);
+            adj = get_AdjTile(map, *unit, direction +1, true);
+            if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction +1);
             if (hasMoved == false)
-            {
                 return false;
-            }
         }
     }
     return true;
