@@ -1,6 +1,11 @@
 #include <string.h>
-#include <Windows.h>
 #include "include/unit.h"
+
+#ifdef _WIN32
+    #include <Windows.h>
+#else
+    #include <unistd.h>
+#endif
 
 #define VERSION 1.500f
 
@@ -280,7 +285,7 @@ int main(int argc, char **argv)
     B_Unit *list = (B_Unit *) calloc(list_Size, sizeof(B_Unit));
     list_Size = 0;
 
-    PlaySound("sound/Editor.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    // PlaySound("sound/Editor.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
     do
     {
         printf("Total Terminal War: Editor de Unidade \n");

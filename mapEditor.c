@@ -1,5 +1,9 @@
 #include "include/map.h"
-#include <Windows.h>
+#ifdef _WIN32
+    #include <Windows.h>
+#else
+    #include <unistd.h>
+#endif
 #include <string.h>
 
 #define SUCESS 0
@@ -201,9 +205,9 @@ int map_Edit(B_Map* map)
         {
         case 'm':
             printf("Digite as coordenadas do primeiro ponto <X Y>: ");
-            scanf("%d %d", &fArea.aPosX, &fArea.aPosY);
+            scanf("%hd %hd", &fArea.aPosX, &fArea.aPosY);
             printf("Digite as coordenadas do segundo ponto <X Y>: ");
-            scanf("%d %d", &fArea.bPosX, &fArea.bPosY);
+            scanf("%hd %hd", &fArea.bPosX, &fArea.bPosY);
 
             if(fArea.aPosX < 0 || fArea.aPosX > map->width || fArea.aPosY < 0 || fArea.aPosY > map->height
             || fArea.bPosX < 0 || fArea.bPosX > map->width || fArea.bPosY < 0 || fArea.bPosY > map->height)
@@ -248,13 +252,13 @@ int map_Edit(B_Map* map)
 
             printf("Modos: \n [Q] para manter\n [W] para adicionar valor ao atual \n");
             printf("Selecione uma altura para a area selecionada <NumeroModo>: ");
-            scanf("%d%c", &fTile.elevation, &mElevat);
+            scanf("%hd%c", &fTile.elevation, &mElevat);
             if(mElevat >= 'A' && mElevat <= 'Z')
                 mElevat += 32;
 
             printf("Modos: \n [Q] para manter\n [W] para adicionar valor ao atual \n");
             printf("Selecione um nivel de entrincheiramento para a area selecionada <NumeroModo>: ");
-            scanf("%d%c", &fTile.fortLevel, &mFortif);
+            scanf("%hd%c", &fTile.fortLevel, &mFortif);
             if(mFortif >= 'A' && mFortif <= 'Z')
                 mFortif += 32;
             
@@ -413,7 +417,7 @@ int main(int argc, char *argv)
     for(int i = 0; i < map.height; i++)
         map.tiles[i] = (B_Tile *) calloc(map.width, sizeof(B_Tile));
     map_Defaults(&map);
-    PlaySound("sound/Editor.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    // PlaySound("sound/Editor.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
 
     do
     {
@@ -476,7 +480,7 @@ int main(int argc, char *argv)
             printf("[04] Rain > Chuva \n");
             printf("[05] Storm > Tempestade \n");
             printf("Novo clima para o mapa: ");
-            scanf("%d%c", &map.climate, &chr);
+            scanf("%d%c", (int *) &map.climate, &chr);
 
             printf("[00] Dawn > Penumbra \n");
             printf("[01] Morning > Manha \n");
@@ -485,7 +489,7 @@ int main(int argc, char *argv)
             printf("[04] Twilight > Crepusculo\n");
             printf("[05] Night > Noite\n");
             printf("Novo tempo para o mapa: ");
-            scanf("%d%c", &map.time, &chr);
+            scanf("%d%c", (int *) &map.time, &chr);
 
             printf("\n");
             continue;

@@ -1,8 +1,84 @@
 #pragma once
 #include <stdio.h>
 #include <stdbool.h>
-#include <conio.h>
-#include <Windows.h>
+#include <string.h>
+
+int get_ScreenWidtdh();
+int get_ScreenHeight();
+void toggle_Cursor(bool cursor);
+
+#ifdef _WIN32
+    #include <conio.h>
+    #include <Windows.h>
+    int get_ScreenWidth()
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
+        return (int) csbi.srWindow.Right - csbi.srWindow.Left + 1;         
+        // tSize_Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;   
+    }
+    int get_ScreenHeight()
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
+        return (int) csbi.srWindow.Bottom - csbi.srWindow.Top + 1;  
+    }
+    void toggle_Cursor(bool cursor)
+    {
+        CONSOLE_CURSOR_INFO info;
+        info.dwSize = 100;
+        info.bVisible = cursor;
+        SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+    }
+    #define CLEAR "cls"
+#else
+    #include <unistd.h>
+    #include <sys/ioctl.h>
+    #include <sys/types.h>
+    #include <termios.h>
+    #include <unistd.h>
+    #include <stdlib.h>
+
+    int kbhit()
+    {
+        struct termios argin, argout;
+        unsigned char ch = 0;
+        tcgetattr(0,&argin);
+        argout = argin;
+        argout.c_lflag &= ~(ICANON);
+        argout.c_iflag &= ~(ICRNL);
+        argout.c_oflag &= ~(OPOST);
+        argout.c_cc[VMIN] = 1;
+        argout.c_cc[VTIME] = 0;
+        tcsetattr(0,TCSADRAIN,&argout);
+        read(0, &ch, 1);
+        tcsetattr(0,TCSADRAIN,&argin);
+        return ch;
+    }
+    int get_ScreenWidth()
+    {
+        struct winsize w;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        return w.ws_col;
+    }
+    int get_ScreenHeight()
+    {
+        struct winsize w;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        return w.ws_row;
+    }
+    void toggle_Cursor(bool cursor)
+    {
+        if(cursor == true)
+            printf("\e[?25l");
+        else
+            printf("\e[?25h");
+        return;
+    }
+    #define getch() kbhit();
+    #define Sleep(time) sleep(time);
+    #define CLEAR "clear"
+#endif
 
 typedef struct P_endStats
 {
@@ -11,27 +87,6 @@ typedef struct P_endStats
     int killed;
 } B_endStats;
 
-int get_ScreenWidth()
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
-    return (int) csbi.srWindow.Right - csbi.srWindow.Left + 1;         
-    // tSize_Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;   
-}
-int get_ScreenHeight()
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
-    return (int) csbi.srWindow.Bottom - csbi.srWindow.Top + 1;  
-}
-
-void toggle_Cursor(bool cursor)
-{
-    CONSOLE_CURSOR_INFO info;
-    info.dwSize = 100;
-    info.bVisible = cursor;
-    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
-}
 
 void print_Message(char *message, bool doWait)
 {
@@ -204,7 +259,7 @@ int screen_Menu(float version)
 {
     int sWidth = get_ScreenWidth();
     
-    system("cls");
+    system("clear");
     for(int i = 0; i < sWidth / 2 - 14; i++)
         printf("-");
     printf("#==========================#");
@@ -267,7 +322,8 @@ int screen_Menu(float version)
     for(int i = 0; i < sWidth / 2 - 14; i++)
         printf(" ");
     printf("\n");
-    ShowCursor(FALSE);
+    toggle_Cursor(false);
+    // ShowCursor(FALSE);
 
     // print_Message("Hello there!", true);
 

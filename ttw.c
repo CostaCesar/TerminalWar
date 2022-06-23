@@ -322,7 +322,7 @@ int main(/*int argc, char** argv*/)
     srand(time(NULL));
 
     // Setting up terminal
-    SetConsoleTitle("Total Terminal War");
+    // SetConsoleTitle("Total Terminal War");
     toggle_Cursor(false);
                                  
     int unit_TableSize = 0, out = 0;
@@ -339,7 +339,7 @@ int main(/*int argc, char** argv*/)
     B_endStats Status_B = {0};
 
     // Playing music
-    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
+    // PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 
   startMenu:
     do
@@ -348,7 +348,7 @@ int main(/*int argc, char** argv*/)
         {
         case 'i':
             // Setting up map & units
-            out = getFile_Map("maps/new.map", &battleMap);
+            out = getFile_Map("maps/ln.map", &battleMap);
             if(out != FUNCTION_SUCESS)
                 return FUNCTION_FAIL;
 
@@ -412,7 +412,7 @@ int main(/*int argc, char** argv*/)
     Map_Unit unitA;
     
     // Game Starts
-    PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    // PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
     for(int i = 0; i < TURNS; i++)
     {
         int unitA_I = 0, unitB_I = 0, moves = 0;
@@ -518,7 +518,7 @@ int main(/*int argc, char** argv*/)
                 else if(action == KEY_ESCAPE)
                 { 
                     (void) dealloc_ToMenu();
-                    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
+                    // PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
                     goto startMenu;
                 }
                 else if(action == KEY_ENTER) // Next Turn
