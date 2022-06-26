@@ -3,9 +3,11 @@
 #include <stdbool.h>
 #include <conio.h>
 #include <Windows.h>
+#include <math.h>
 
 typedef struct P_endStats
 {
+    char *name;
     int deployed;
     int loss;
     int killed;
@@ -289,27 +291,53 @@ void screen_Victory(B_endStats winner, B_endStats looser)
 {
     system("cls");
     int sWidth = get_ScreenWidth();
+    int sHeight = get_ScreenHeight();
     
-    printf("           Winner X Looser\n");
-    printf("Deployed:  %6d   %6d\n", winner.deployed, looser.deployed);
-    printf("Killed:    %6d   %6d\n", winner.killed, looser.killed);
-    printf("Lost:      %6d   %6d\n", winner.loss, looser.loss);
-    printf("Remaining: %6d   %6d\n", winner.deployed - winner.loss, looser.deployed - looser.loss);
+    // printf("           Winner X Looser\n");
+    // printf("Deployed:  %6d   %6d\n", winner.deployed, looser.deployed);
+    // printf("Killed:    %6d   %6d\n", winner.killed, looser.killed);
+    // printf("Lost:      %6d   %6d\n", winner.loss, looser.loss);
+    // printf("Remaining: %6d   %6d\n", winner.deployed - winner.loss, looser.deployed - looser.loss);
 
-    // printf("#");
-    // for(int i = 0; i < sWidth - 2; i++)
-    //     printf("-");
-    // printf("#\n");
-// 
-    // printf("|");
-    // for(int i = 0; i < sWidth - 2; i++)
-    //     printf(" ");
-    // printf("|\n");
-// 
-    // printf("|");
-    // for(int i = 0; i < sWidth - 2; i++)
-    //     printf(" ");
-    // printf("|\n");
+    printf("#");
+    for(int i = 0; i < sWidth - 2; i++)
+        printf("-");
+    printf("#\n");
+
+    printf("|");
+    for(int i = 0; i < sWidth - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    printf("|");
+    for(int i = 0; i < (sWidth / 2) - floorf((strlen(winner.name) / 2.0f)) - 11; i++)
+        printf(" ");
+    printf("%s has won the battle!", winner.name);
+    for(int i = 0; i < (sWidth / 2) - ceilf((strlen(winner.name) / 2.0f)) - 11; i++)
+        printf(" ");
+    printf("|\n");
+
+    for(int i = 0; i < ceilf((sHeight - 13) / 2.0f); i++)
+    {
+        printf("|");
+        for(int j = 0; j < sWidth - 2; j++)
+            printf(" ");
+        printf("|\n");
+    }
+    
+    int aux = 0;
+    printf("|");
+    for(int i = 0; i < (sWidth / 4.0f) - (strlen(winner.name) / 2.0f) - 1; i++)
+    { printf(" "); aux++; }
+    printf("%s", winner.name);
+    for(int i = 0; i < (sWidth / 2.0f) - aux; i++)
+        printf(" ");
+    for(int i = 0; i < (sWidth / 4.0f) - (strlen(looser.name) / 2.0f); i++)
+        printf(" ");
+    printf("%s", looser.name);
+    for(int i = 0; i < (sWidth / 4.0f) - (strlen(looser.name) / 2.0f) - 8; i++)
+        printf(" ");
+    printf("|\n");
 
     printf("> Press ENTER to continue...\n");
     getchar();

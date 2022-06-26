@@ -367,6 +367,7 @@ int main(/*int argc, char** argv*/)
     strcpy(Side_A.name, "Greeks");
     Side_B.units = (B_Unit*) malloc(sizeof(B_Unit));
     strcpy(Side_B.name, "Romans");
+    Status_A.name = Side_A.name, Status_B.name = Side_B.name;
 
     // Setting up some units
     set_fUnitTable(unit_Table, 0, &Side_A);
@@ -413,6 +414,7 @@ int main(/*int argc, char** argv*/)
     
     // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    screen_Victory(Status_B, Status_A);
     for(int i = 0; i < TURNS; i++)
     {
         int unitA_I = 0, unitB_I = 0, moves = 0;
