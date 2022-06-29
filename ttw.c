@@ -366,8 +366,13 @@ int main(/*int argc, char** argv*/)
     Side_A.units = (B_Unit*) malloc(sizeof(B_Unit)); 
     strcpy(Side_A.name, "Greeks");
     Side_B.units = (B_Unit*) malloc(sizeof(B_Unit));
-    strcpy(Side_B.name, "Romans");
+    strcpy(Side_B.name, "Gauls");
     Status_A.name = Side_A.name, Status_B.name = Side_B.name;
+
+    // Status_A.deployed = 5000, Status_B.deployed = 200;
+    // Status_A.killed = 300, Status_B.killed = 2345;
+    // screen_Victory(Status_B, Status_A);
+    // while (get_KeyPress(false) != KEY_ENTER) continue;   
 
     // Setting up some units
     set_fUnitTable(unit_Table, 0, &Side_A);
@@ -414,7 +419,6 @@ int main(/*int argc, char** argv*/)
     
     // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
-    screen_Victory(Status_B, Status_A);
     for(int i = 0; i < TURNS; i++)
     {
         int unitA_I = 0, unitB_I = 0, moves = 0;
@@ -457,18 +461,28 @@ int main(/*int argc, char** argv*/)
                     printf(" >=> ");    
                     scanf("%hd %hd", &Side_A.units[unitA_I].goal.X, &Side_A.units[unitA_I].goal.Y);  
                     xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
-                    unitB = battleMap.tiles[yGoal][xGoal].unit;
-                    if(unitB.ID != NO_UNIT)
+                    if(xGoal >= 0 && xGoal < battleMap.width && yGoal >= 0 && yGoal < battleMap.height)
                     {
-                        Side_A.units[unitA_I].chaseID = &unitB.ID;
-                        //unitB_I = get_UnitIndex(&Side_B, unitB.ID);
-                        //xChase = &Side_B.units[unitB_I].position.X, yChase = &Side_B.units[unitB_I].position.Y,
-                        print_Message("Chasing Target!", true);
+                        unitB = battleMap.tiles[yGoal][xGoal].unit;
+                        if(unitB.ID != NO_UNIT)
+                        {
+                            Side_A.units[unitA_I].chaseID = &unitB.ID;
+                            //unitB_I = get_UnitIndex(&Side_B, unitB.ID);
+                            //xChase = &Side_B.units[unitB_I].position.X, yChase = &Side_B.units[unitB_I].position.Y,
+                            print_Message("Chasing Target!", true);
+                        }
+                        else
+                        {
+                            print_Message("Target Not Found!", true);
+                            xGoal = -1, yGoal = -1, Side_A.units[unitA_I].goal.X = -1, Side_A.units[unitA_I].goal.Y = -1;
+                            moves--;
+                        }
                     }
                     else
                     {
-                        print_Message("Target Not Found!", true);
+                        print_Message("Invalid Coordinates! ", true);
                         xGoal = -1, yGoal = -1, Side_A.units[unitA_I].goal.X = -1, Side_A.units[unitA_I].goal.Y = -1;
+                        moves--;
                     }
                 }
                 else if(action == 'f')
@@ -509,8 +523,10 @@ int main(/*int argc, char** argv*/)
                 else if (action == 'e')
                 { 
                     if(Side_A.units[unitA_I].build_Cap > 0)
+                    {
                         out = inc_FortLevel(&battleMap, Side_A.units[unitA_I].build_Cap, unitA);
-                        if(out == FUNCTION_FAIL) moves--;     
+                        if(out == FUNCTION_FAIL) moves--;
+                    }
                     else
                     {
                         print_Message("This unit cannot build fortifications!", true);
@@ -640,11 +656,13 @@ int main(/*int argc, char** argv*/)
         if(Side_A.size == 0)
         {
             screen_Victory(Status_B, Status_A);
+            while (get_KeyPress(false) != KEY_ENTER) continue; 
             break;   
         }
         else if (Side_B.size == 0)
         {
             screen_Victory(Status_A, Status_B);
+            while (get_KeyPress(false) != KEY_ENTER) continue; 
             break;   
         }
     }

@@ -13,6 +13,14 @@ typedef struct P_endStats
     int killed;
 } B_endStats;
 
+int get_Digits(int num)
+{
+    int i;
+    for(i = 1; num > 10; i++)
+        num /= 10;
+    return i;
+}
+
 int get_ScreenWidth()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -56,7 +64,7 @@ void print_Message(char *message, bool doWait)
         for(int i = 0; i < (screenWidth - msg_len) / 2 - 1; i++)
             printf(" ");
         printf("%s", message);
-        for(int i = 0; i < (screenWidth - msg_len + 1) / 2 - 1; i++)
+        for(int i = 0; i < ceilf((screenWidth - msg_len + 1) / 2.0f) - 1; i++)
             printf(" ");
     printf("|\n");
 
@@ -292,6 +300,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     system("cls");
     int sWidth = get_ScreenWidth();
     int sHeight = get_ScreenHeight();
+    int auxHeight = 0;
     
     // printf("           Winner X Looser\n");
     // printf("Deployed:  %6d   %6d\n", winner.deployed, looser.deployed);
@@ -319,6 +328,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
 
     for(int i = 0; i < ceilf((sHeight - 13) / 2.0f); i++)
     {
+        auxHeight++;
         printf("|");
         for(int j = 0; j < sWidth - 2; j++)
             printf(" ");
@@ -327,19 +337,114 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     
     int aux = 0;
     printf("|");
-    for(int i = 0; i < (sWidth / 4.0f) - (strlen(winner.name) / 2.0f) - 1; i++)
+    for(int i = 0; i < (sWidth / 4.0f) - floorf((strlen(winner.name) / 2.0f)) - 1; i++)
     { printf(" "); aux++; }
     printf("%s", winner.name);
-    for(int i = 0; i < (sWidth / 2.0f) - aux; i++)
+    for(int i = 0; i < (sWidth / 2.0f) - aux - (strlen(winner.name)); i++)
         printf(" ");
     for(int i = 0; i < (sWidth / 4.0f) - (strlen(looser.name) / 2.0f); i++)
         printf(" ");
     printf("%s", looser.name);
-    for(int i = 0; i < (sWidth / 4.0f) - (strlen(looser.name) / 2.0f) - 8; i++)
+    for(int i = 0; i < (sWidth / 4.0f) - ceilf((strlen(looser.name) / 2.0f)) - 2; i++)
         printf(" ");
     printf("|\n");
 
-    printf("> Press ENTER to continue...\n");
-    getchar();
+    printf("|");
+    for(int i = 0; i < sWidth - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    aux = 0;
+    int nLen = get_Digits(winner.deployed);
+    printf("|");
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 1; i++)
+    { printf(" "); aux++; }
+    printf("%d", winner.deployed); aux += nLen;
+    for(int i = 0; i < (sWidth / 2.0f) - aux - 4; i++)
+        printf(" ");
+    printf("Deployed"); nLen = get_Digits(looser.deployed);
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 4; i++)
+        printf(" ");
+    printf("%d", looser.deployed);
+    for(int i = 0; i < (sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    aux = 0, nLen = get_Digits(winner.killed);
+    printf("|");
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 1; i++)
+    { printf(" "); aux++; }
+    printf("%d", winner.killed); aux += nLen;
+    for(int i = 0; i < (sWidth / 2.0f) - aux - 3; i++)
+        printf(" ");
+    printf("Killed"); nLen = get_Digits(looser.killed);
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 3; i++)
+        printf(" ");
+    printf("%d", looser.killed);
+    for(int i = 0; i < (sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    aux = 0, nLen = get_Digits(winner.loss);
+    printf("|");
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 1; i++)
+    { printf(" "); aux++; }
+    printf("%d", winner.loss); aux += nLen;
+    for(int i = 0; i < (sWidth / 2.0f) - aux - 2; i++)
+        printf(" ");
+    printf("Lost"); nLen = get_Digits(looser.loss);
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 2; i++)
+        printf(" ");
+    printf("%d", looser.loss);
+    for(int i = 0; i < (sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    aux = 0, nLen = get_Digits(winner.deployed - winner.loss);
+    printf("|");
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 1; i++)
+    { printf(" "); aux++; }
+    printf("%d", winner.deployed - winner.loss); aux += nLen;
+    for(int i = 0; i < (sWidth / 2.0f) - aux - 4; i++)
+        printf(" ");
+    printf("Remaining"); nLen = get_Digits(looser.deployed - looser.loss);
+    for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 5; i++)
+        printf(" ");
+    printf("%d", looser.deployed - looser.loss);
+    for(int i = 0; i < (sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    for(int i = 0; i < ceilf((sHeight - 13) / 2.0f) - 1; i++)
+    {
+        printf("|");
+        for(int j = 0; j < sWidth - 2; j++)
+            printf(" ");
+        printf("|\n");
+    }
+
+    printf("|");
+    for(int i = 0; i < (sWidth / 2.0f) - 14; i++)
+        printf(" ");
+    printf("Press ENTER to continue..."); 
+    for(int i = 0; i < (sWidth / 2.0f) - 14; i++)
+        printf(" ");
+    printf("|\n");
+
+    printf("|");
+    for(int i = 0; i < sWidth - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    printf("|");
+    for(int i = 0; i < sWidth - 2; i++)
+        printf(" ");
+    printf("|\n");
+
+    printf("#");
+    for(int i = 0; i < sWidth - 2; i++)
+        printf("-");
+    printf("#\n");
+
     return;
 }
