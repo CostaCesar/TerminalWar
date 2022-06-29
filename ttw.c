@@ -669,6 +669,8 @@ int main(/*int argc, char** argv*/)
     
     // Freeing
     (void) dealloc_ToMenu();
+    // Playing music
+    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
     goto startMenu;
 
     return 0;

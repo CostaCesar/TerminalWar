@@ -47,8 +47,6 @@ void print_Message(char *message, bool doWait)
 {
     int screenWidth = get_ScreenWidth();
     int msg_len = strlen(message);
-    if(msg_len % 2 == 1)
-        msg_len++;
     
     printf("#");
     for(int i = 0; i < screenWidth - 2; i++)
@@ -61,10 +59,10 @@ void print_Message(char *message, bool doWait)
     printf("|\n");
 
     printf("|");
-        for(int i = 0; i < (screenWidth - msg_len) / 2 - 1; i++)
+        for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
             printf(" ");
         printf("%s", message);
-        for(int i = 0; i < ceilf((screenWidth - msg_len + 1) / 2.0f) - 1; i++)
+        for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
             printf(" ");
     printf("|\n");
 
@@ -94,107 +92,80 @@ char get_KeyPress(bool fLowerCase)
 
 void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitName, int Id, short int X, short int Y, short int moves)
 {
-    int screenWidth = get_ScreenWidth();   
+    int screenWidth = get_ScreenWidth();  
+    int msg_len = 0; 
     
     // Upper Line
-    for(int i = 0; i < screenWidth - 1; i++)
-    {
-        printf("=");
-    }
-    if(screenWidth % 2 == 0)
+    for(int i = 0; i < screenWidth; i++)
         printf("=");
     printf("\n");
     
     // Map name
     printf("||");
-    for(int i = 0; i < (screenWidth / 2) - (int) (strlen(mapName) / 2) - 2; i++)
-    {
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 2; i++)
         printf(" ");
-    }
     printf("%s", mapName);
-    for(int i = 0; i < (screenWidth / 2) - (int) (strlen(mapName) / 2) - 2; i++)
-    {
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 2; i++)
         printf(" ");
-    }
     printf("||\n");
 
     // Turn
+    msg_len = strlen("Turn ") + get_Digits(turns);
     printf("||");
-    for(int i = 0; i < (screenWidth / 2) - 5; i++)
-    {
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 2; i++)
         printf(" ");
-    }
-    printf("Turn %-7d", turns);
-    for(int i = 0; i < (screenWidth / 2) - 11; i++)
-    {
+    printf("Turn %d", turns);
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 2; i++)
         printf(" ");
-    }
     printf("||\n");
 
     // Side
     printf("||");
-    for(int i = 0; i < (screenWidth / 2) - (int) (strlen(side) / 2) - 8; i++)
-    {
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(side) / 2.0f) - 8; i++)
         printf(" ");
-    }
     if(isPlayer)
         printf("(You) ");
     else
         printf("      ");
     printf("%s", side);
-    for(int i = 0; i < (screenWidth / 2) - (int) (strlen(side) / 2) - 2; i++)
-    {
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(strlen(side) / 2.0f) - 2; i++)
         printf(" ");
-    }
     printf("||\n");
 
     // Unit name
     int j = 0;
     printf("||");
-    for(j = 0; j < (screenWidth / 2) - 11; j++)
-    {
+    for(j = 0; j < ceilf(screenWidth / 2.0f) - 11; j++)
         printf(" ");
-    }
     printf("[%04d] <||> %s", Id, unitName);
-    for(j = 0; j < (screenWidth / 2) - (int) (strlen(unitName) + 5); j++)
-    {
+    for(j = 0; j < floorf(screenWidth / 2.0f) - strlen(unitName) - 5; j++)
         printf(" ");
-    }
     printf("||\n");
 
     // Unit position
     printf("||");
-    for(int i = 0; i < (screenWidth / 2) - 10; i++)
-    {
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - 10; i++)
         printf(" ");
-    }
     printf("%3dX  <||>%3dY", X, Y);
-    for(int i = 0; i < (screenWidth / 2) - 8; i++)
-    {
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - 8; i++)
         printf(" ");
-    }
     printf("||\n");
 
     // Moves left
-     printf("||");
-    for(int i = 0; i < (screenWidth / 2) - 9; i++)
-    {
+    msg_len = get_Digits(moves) + 11;
+    printf("||");
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 2; i++)
         printf(" ");
-    }
-    printf("%3d Moves Left", moves);
-    for(int i = 0; i < (screenWidth / 2) - 9; i++)
-    {
+    printf("%d Moves Left", moves);
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 2; i++)
         printf(" ");
-    }
     printf("||\n");
 
     // Lower Line
-    for(int i = 0; i < screenWidth - 1; i++)
-    {
+    for(int i = 0; i < screenWidth; i++)
         printf("=");
-    }
-    if(screenWidth % 2 == 0)
-        printf("=");
+    // if(screenWidth % 2 == 0)
+    //     printf("=");
 
     return;
 }
