@@ -43,6 +43,38 @@ void toggle_Cursor(bool cursor)
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
 }
 
+void print_Line(char *message)
+{
+    int screenWidth = get_ScreenWidth();
+
+    if(!message)
+    {
+        printf("#");
+        for(int i = 0; i < screenWidth - 2; i++)
+            printf("-");
+        printf("#\n"); 
+    }
+    else if(message[0] == ' ')
+    {
+        printf("|");
+        for(int i = 0; i < screenWidth - 2; i++)
+            printf(" ");
+        printf("|\n");
+    }
+    else
+    {
+        int msg_len = strlen(message);
+        printf("|");
+        for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+            printf(" ");
+        printf("%s", message);
+        for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
+            printf(" ");
+        printf("|\n");
+    }
+    return;
+}
+
 void print_Message(char *message, bool doWait)
 {
     int screenWidth = get_ScreenWidth();

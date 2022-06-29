@@ -110,6 +110,42 @@ float calcDistance(B_Tile A, B_Tile B)
     return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
 }
 
+char *tTerrain_toStr(T_Terrain source)
+{
+    switch (source)
+    {
+    case Grass:
+        return "Grass";
+    case Sand:
+        return "Sand";
+    case Rock:
+        return "Rock";
+    case Mud:
+        return "Mud";
+    case Water:
+        return "Water";
+    }
+}
+
+char *tVeget_toStr(T_Veget source)
+{
+    switch(source)
+    {
+        case None:
+            return "No vegetation";
+        case Field:
+            return "Fields";
+        case Sparse:
+            return "Sparse Trees";
+        case Grove:
+            return "Groove";
+        case Forest:
+            return "Forest";
+        case Jungle:
+            return "Jungle";
+    }
+}
+
 int cmp(const void *a, const void *b)
 {
     const B_Tile *a_Float = *((B_Tile **) a);

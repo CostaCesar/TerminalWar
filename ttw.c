@@ -434,9 +434,9 @@ int main(/*int argc, char** argv*/)
             system("cls");
             info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, Side_A.units[unitA_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
-            info_Bottom();                
             if(moves < Side_A.units[unitA_I].moves && Side_A.units[unitA_I].isRetreating == false && Side_A.units[unitA_I].inCombat == false) 
             {
+                info_Bottom();                
                 toggle_Cursor(true);
                 action = get_KeyPress(true);
                 if(action >= '0' && action <= '9') // Move to a adjacent tile
@@ -532,6 +532,38 @@ int main(/*int argc, char** argv*/)
                         print_Message("This unit cannot build fortifications!", true);
                         moves--;
                     } 
+                }
+                else if(action == 'g')
+                {
+                    toggle_Cursor(true);
+                    printf(">> Target coodiantes <X Y> \n");
+                    printf(" >=> ");
+                    scanf("%d %d", &xTarget, &yTarget);
+                    getchar();
+                    if(xTarget >= 0 && xTarget < battleMap.width && yTarget >= 0 && yTarget < battleMap.height)
+                    {
+                        char msg[30];
+                        print_Line(NULL);
+                        print_Line(" ");
+                        snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap.tiles[yTarget][xTarget].terrain));
+                        print_Line(msg);
+                        snprintf(msg, sizeof(msg), "Vegetation: %s", tVeget_toStr(battleMap.tiles[yTarget][xTarget].vegetation));
+                        print_Line(msg);
+                        snprintf(msg, sizeof(msg), "Elevation: %d", battleMap.tiles[yTarget][xTarget].elevation);
+                        print_Line(msg);
+                        snprintf(msg, sizeof(msg), "Unit in here: %d", battleMap.tiles[yTarget][xTarget].unit.ID);
+                        print_Line(msg);
+                        print_Line(" ");
+                        print_Line(NULL);
+                        printf(">> Press ENTER to continue \n");
+                        getchar();
+                        moves--;
+                    }
+                    else
+                    {
+                        print_Message("Coordinates out of boundaries!", true);
+                        moves--;
+                    }
                 }
                 else if(action == KEY_ESCAPE)
                 { 
