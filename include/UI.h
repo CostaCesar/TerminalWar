@@ -176,7 +176,7 @@ void info_Bottom()
     printf("| [NumPad] Move Unit | [F] Fire At Enemy Unit |\n");
     printf("| [Esc] Exit To Menu | [A] Set Tile As Target |\n");
     printf("| [W] View Unit Wiki | [S] Set Unit As Target |\n");
-    printf("| [Q] Change To Unit | [D] Current Unit Stats |\n");
+    printf("| [G] Get Tile Stats | [D] Current Unit Stats |\n");
     printf("| [E] Build Trenches | [Enter] Skip Your Turn |\n");
     printf("===============================================\n"); 
 }
