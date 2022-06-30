@@ -420,19 +420,11 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         // Checking for terrain-related movement
         if(source_Map->tiles[destPos.Y][destPos.X].elevation < -1 && source_Map->tiles[destPos.Y][destPos.X].terrain == Water)
         {
-            // printf("\n");
-            // printf("#================================# \n");
-            // printf("| The water is too deep to cross | \n");
-            // printf("#================================# \n");
             print_Message("The water is too deep to cross!", true);
             return FUNCTION_FAIL;           
         }
         if(abs(source_Map->tiles[unitPos->Y][unitPos->X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
-            // printf("\n");
-            // printf("#================================# \n");
-            // printf("| The terrain is too step to go! | \n");
-            // printf("#================================# \n");
             print_Message("The terrain is too step to go!", true);
             return FUNCTION_FAIL;
         }
@@ -440,19 +432,11 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         // Cheking for units (if friend, then if foe)
         if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) == (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
         {
-            //printf("\n");
-            //printf("#================================# \n");
-            //printf("| Units can't go over eachother! | \n");
-            //printf("#================================# \n");
             print_Message("Units can't go over eachother!", true);
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) != (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
         {
-            // printf("\n");
-            // printf("#=================================# \n");
-            // printf("| Trying engagement at %3dX %3dY  | \n", destPos.X, destPos.Y);
-            // printf("#=================================# \n");
             char msg[31];   
             snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", destPos.X, destPos.Y);
             print_Message(msg, true);

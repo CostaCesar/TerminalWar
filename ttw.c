@@ -514,8 +514,30 @@ int main(/*int argc, char** argv*/)
                 }
                 else if (action == 'd')
                 {
+                    char msg[50];
                     toggle_Cursor(false);
-                    show_Unit(Side_A.units[unitA_I]);
+                    system("cls");
+                    print_Line(NULL);
+                    print_Line(" ");
+                    snprintf(msg, sizeof(msg), "Unit %d", unitA.ID);
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "%s [%s]", unitA.name ,Side_A.units[unitA_I].faction);
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Level %d", Side_A.units[unitA_I].level);
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Men: %d | %d", Side_A.units[unitA_I].men, Side_A.units[unitA_I].men_Max);
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Morale: %f", Side_A.units[unitA_I].morale);
+                    print_Line(msg);
+                    print_Line("Melee Stats");
+                    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", Side_A.units[unitA_I].attack_MeleeP, Side_A.units[unitA_I].defend_MeleeP);
+                    print_Line("Ranged Stats");
+                    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", Side_A.units[unitA_I].attack_RangeP, Side_A.units[unitA_I].defend_RangeP);
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Level %d", Side_A.units[unitA_I].level);
+                    print_Line(msg);
+                    
+                    // show_Unit(Side_A.units[unitA_I]);
                     printf(">> Press ENTER to continue \n");
                     getchar();
                     moves--;
@@ -602,10 +624,17 @@ int main(/*int argc, char** argv*/)
                                 do_Combat(&Side_A.units[unitA_I], &Side_B.units[unitB_I], get_HeightDif(&battleMap, unitA, unitB), &battleMap.tiles[unitB.Y][unitB.X].fortLevel);
                                 Status_A.loss += A_Loss, Status_B.loss += B_Loss;    
                             }
+                            else if(FRes == FUNCTION_FAIL)
+                                moves--;
                             else if(FRes > -1)
                                 moves += FRes;
                         }
                         free(Side_A.units[unitA_I].path);
+                    }
+                    else
+                    {
+                        print_Message("Can't move in this direction!", true);
+                        moves--;
                     }
                 }
                 update_Unit(&Side_A.units[unitA_I], unitA);
