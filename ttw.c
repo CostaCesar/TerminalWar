@@ -128,6 +128,62 @@ void update_Unit(B_Unit *unit, Map_Unit source)
 }
 
 // Main functions (screens & logic)
+void show_gUnit(B_Unit *unit)
+{
+    char msg[70];
+    char buff[25];
+
+    print_Line(NULL);
+    print_Line(" ");
+    snprintf(msg, sizeof(msg), "Unit %d", unit->ID);
+    print_Line(msg);
+    snprintf(msg, sizeof(msg), "%s [%s]", unit->name, unit->faction);
+    print_Line(msg);
+    snprintf(msg, sizeof(msg), "Level %d", unit->level);
+    print_Line(msg);
+    snprintf(msg, sizeof(msg), "Men: %d | %d", unit->men, unit->men_Max);
+    print_Line(msg);
+    snprintf(msg, sizeof(msg), "Morale: %.2f", unit->morale);
+    print_Line(msg);
+    print_Line("Melee Stats");
+    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", unit->attack_MeleeP, unit->defend_MeleeP);
+    print_Line(msg);
+    print_Line("Ranged Stats");
+    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", unit->attack_RangeP, unit->defend_RangeP);
+    print_Line(msg);
+    snprintf(msg, sizeof(msg), "Level %d", unit->level);
+    print_Line(msg);
+    snprintf(msg, sizeof(msg), "Build Power: %d", unit->build_Cap);
+    print_Line(msg);
+
+    if (unit->range > 0)
+    {
+        snprintf(msg, sizeof(msg), "Range: %d tiles| Ammo: %d left", unit->range, unit->ammo);
+        print_Line(msg);
+    }
+    print_Line(" ");
+    
+    msg[0] = '\0';
+    for (int i = 0; i < unit->buffs_S; i++)
+    {
+        snprintf(buff, sizeof(buff), "[+] %s ", get_UnitBuff(unit->buffs[i]));
+        strcat(msg, buff);
+        if (i > 5)
+        {
+            print_Line(msg);
+            msg[0] = '\0';
+        }
+    }
+    if (msg[0] != '\0')print_Line(msg);
+
+    print_Line(" ");
+    if (unit->inCombat == true)
+        print_Line(" <!> Engaged In Combat ");
+    if (unit->inCombat == true)
+        print_Line(" <!> Retreating ");
+    print_Line(NULL);
+}
+
 int dealloc_ToMenu()
 {
     for (int i = 0; i < battleMap.height; i++)
@@ -188,7 +244,7 @@ int placementMenu(B_Map *map, B_Side *Side)
             printf(">> Placeable units: \n");
             for (i = 0; i < Side->size; i++)
                 if (Side->units[i].position.X < 0 && Side->units[i].position.Y < 0)
-                    show_Unit(Side->units[i]);
+                    show_gUnit(&Side->units[i]);
             if (i < 0)
             {
                 print_Message("No units in the reserve!", true);
@@ -399,15 +455,6 @@ startMenu:
         (void)dealloc_ToMenu();
         goto startMenu;
     }
-    // {
-    //     case FUNCTION_FAIL:
-    //         return 0;
-    //     case FUNCTION_SUCESS:
-    //         break;
-    //     default:
-    //         printf(">> ERROR: placementMenu.WTF \n");
-    //         return -1;
-    // }
 
     // Getting deployed troops
     for (int i = 0; i < Side_A.size; i++)
@@ -513,64 +560,10 @@ startMenu:
                 }
                 else if (action == 'd')
                 {
-                    char msg[70];
-                    char buff[25];
-
                     system("cls");
-                    print_Line(NULL);
-                    print_Line(" ");
-                    snprintf(msg, sizeof(msg), "Unit %d", unitA.ID);
-                    print_Line(msg);
-                    snprintf(msg, sizeof(msg), "%s [%s]", unitA.name, Side_A.units[unitA_I].faction);
-                    print_Line(msg);
-                    snprintf(msg, sizeof(msg), "Level %d", Side_A.units[unitA_I].level);
-                    print_Line(msg);
-                    snprintf(msg, sizeof(msg), "Men: %d | %d", Side_A.units[unitA_I].men, Side_A.units[unitA_I].men_Max);
-                    print_Line(msg);
-                    snprintf(msg, sizeof(msg), "Morale: %.2f", Side_A.units[unitA_I].morale);
-                    print_Line(msg);
-                    print_Line("Melee Stats");
-                    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", Side_A.units[unitA_I].attack_MeleeP, Side_A.units[unitA_I].defend_MeleeP);
-                    print_Line(msg);
-                    print_Line("Ranged Stats");
-                    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", Side_A.units[unitA_I].attack_RangeP, Side_A.units[unitA_I].defend_RangeP);
-                    print_Line(msg);
-                    snprintf(msg, sizeof(msg), "Level %d", Side_A.units[unitA_I].level);
-                    print_Line(msg);
-                    snprintf(msg, sizeof(msg), "Build Power: %d", Side_A.units[unitA_I].build_Cap);
-                    print_Line(msg);
-
-                    if (Side_A.units[unitA_I].range > 0)
-                    {
-                        snprintf(msg, sizeof(msg), "Range: %d tiles| Ammo: %d left", Side_A.units[unitA_I].range, Side_A.units[unitA_I].ammo);
-                        print_Line(msg);
-                    }
-
-                    print_Line(" ");
-                    msg[0] = '\0';
-                    for (int i = 0; i < Side_A.units[unitA_I].buffs_S; i++)
-                    {
-                        snprintf(buff, sizeof(buff), "[+] %s ", get_UnitBuff(Side_A.units[unitA_I].buffs[i]));
-                        strcat(msg, buff);
-                        if (i > 5)
-                        {
-                            print_Line(msg);
-                            msg[0] = '\0';
-                        }
-                    }
-                    if (msg[0] != '\0')
-                        print_Line(msg);
-
-                    print_Line(" ");
-                    if (Side_A.units[unitA_I].inCombat == true)
-                        print_Line(" <!> Engaged In Combat ");
-                    if (Side_A.units[unitA_I].inCombat == true)
-                        print_Line(" <!> Retreating ");
-                    print_Line(NULL);
-
+                    show_gUnit(&Side_A.units[unitA_I]);
                     printf(">> Press ENTER to continue \n");
-                    while (get_KeyPress(false) != KEY_ENTER)
-                        continue;
+                    while (get_KeyPress(false) != KEY_ENTER) continue;
                     moves--;
                 }
                 else if (action == 'e')
