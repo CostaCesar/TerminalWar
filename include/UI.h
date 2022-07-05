@@ -16,7 +16,7 @@ typedef struct P_endStats
 int get_Digits(int num)
 {
     int i;
-    for(i = 1; num > 10; i++)
+    for(i = 1; num > 9; i++)
         num /= 10;
     return i;
 }
