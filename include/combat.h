@@ -368,10 +368,6 @@ bool show_Combat_Result(B_Result units)
         printf("%s was doomed today: A shamefull day for the %s! \n", units.looser.name, units.looser.faction);  
         out = true;   
     }
-
-    show_Unit(units.winner);
-    show_Unit(units.looser);
-    printf(">> Press ENTER to continue ");
     return out;
 }
 
@@ -394,7 +390,6 @@ void do_Combat(B_Unit* attacker, B_Unit* defender, int heigthDif, short int *for
 
     B_Result Result = combat_Unit(*attacker, *defender, heigthDif, fortLevel);
     bool LevelUP = show_Combat_Result(Result);
-    getchar();
     // Level up
     if(LevelUP == true)
         Result.winner.level++; 

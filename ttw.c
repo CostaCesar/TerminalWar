@@ -550,6 +550,11 @@ startMenu:
                         int tVeget = getTile_Vegetat(&battleMap, unitB), tHeight = get_HeightDif(&battleMap, unitA, unitB);
                         short int *tFort = &battleMap.tiles[unitB.Y][unitB.X].fortLevel;
                         FRes = do_Combat_Ranged(&Side_A.units[unitA_I], &Side_B.units[unitB_I], tHeight, tVeget, tFort);
+                        show_gUnit(&Side_A.units[unitA_I]);
+                        show_gUnit(&Side_B.units[unitB_I]);
+                        printf(">> Press ENTER to continue ");
+                        while (get_KeyPress(false) != KEY_ENTER) continue;
+                        break;
                     }
                     else
                     {
@@ -598,13 +603,14 @@ startMenu:
                         print_Line(msg);
                         snprintf(msg, sizeof(msg), "Elevation: %d", battleMap.tiles[yTarget][xTarget].elevation);
                         print_Line(msg);
+                        snprintf(msg, sizeof(msg), "Fortification: %d", battleMap.tiles[yTarget][xTarget].fortLevel);
+                        print_Line(msg);
                         snprintf(msg, sizeof(msg), "Unit in here: %d", battleMap.tiles[yTarget][xTarget].unit.ID);
                         print_Line(msg);
                         print_Line(" ");
                         print_Line(NULL);
                         printf(">> Press ENTER to continue \n");
-                        while (get_KeyPress(false) != KEY_ENTER)
-                            continue;
+                        while (get_KeyPress(false) != KEY_ENTER) continue;
                         moves--;
                     }
                     else
@@ -649,7 +655,11 @@ startMenu:
                                 position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
                                 unitB_I = get_UnitIndex(&Side_B, position->unit.ID);
                                 do_Combat(&Side_A.units[unitA_I], &Side_B.units[unitB_I], get_HeightDif(&battleMap, unitA, unitB), &battleMap.tiles[unitB.Y][unitB.X].fortLevel);
+                                show_gUnit(&Side_A.units[unitA_I]);
+                                show_gUnit(&Side_B.units[unitB_I]);
                                 Status_A.loss += A_Loss, Status_B.loss += B_Loss;
+                                printf(">> Press ENTER to continue ");
+                                while (get_KeyPress(false) != KEY_ENTER) continue;
                             }
                             else if (FRes == FUNCTION_FAIL)
                                 moves--;
@@ -675,8 +685,7 @@ startMenu:
                 toggle_Cursor(false);
             }
             else
-                Side_A.units[unitA_I].inCombat = false;
-            
+                Side_A.units[unitA_I].inCombat = false; 
         }
 
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
@@ -701,6 +710,10 @@ startMenu:
                     unitA_I = get_UnitIndex(&Side_A, position->unit.ID);
                     do_Combat(&Side_B.units[unitB_I], &Side_A.units[unitA_I], get_HeightDif(&battleMap, unitB, unitA), &battleMap.tiles[unitA.Y][unitA.X].fortLevel);
                     Status_B.loss += A_Loss, Status_A.loss += B_Loss;
+                    show_gUnit(&Side_A.units[unitA_I]);
+                    show_gUnit(&Side_B.units[unitB_I]);
+                    printf(">> Press ENTER to continue ");
+                    while (get_KeyPress(false) != KEY_ENTER) continue;
                 }
                 else if (FRes > -1)
                     moves += FRes;
