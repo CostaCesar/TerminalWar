@@ -134,74 +134,84 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
     int msg_len = 0; 
     
     // Upper Line
-    for(int i = 0; i < screenWidth; i++)
-        printf("=");
+    putchar(201);
+    for(int i = 0; i < screenWidth - 2; i++)
+        putchar(205);
+    putchar(187);
     printf("\n");
     
     // Map name
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 2; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 1; i++)
         printf(" ");
     printf("%s", mapName);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    printf("\n");
 
     // Turn
     msg_len = strlen("Turn ") + get_Digits(turns);
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 2; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
         printf(" ");
     printf("Turn %d", turns);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    printf("\n");
 
     // Side
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(side) / 2.0f) - 8; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(side) / 2.0f) - 7; i++)
         printf(" ");
     if(isPlayer)
         printf("(You) ");
     else
         printf("      ");
     printf("%s", side);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(strlen(side) / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(strlen(side) / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    printf("\n");
 
     // Unit name
     int j = 0;
-    printf("||");
-    for(j = 0; j < ceilf(screenWidth / 2.0f) - 11; j++)
+    putchar(186);
+    for(j = 0; j < ceilf(screenWidth / 2.0f) - 10; j++)
         printf(" ");
     printf("[%04d] <||> %s", Id, unitName);
-    for(j = 0; j < floorf(screenWidth / 2.0f) - strlen(unitName) - 5; j++)
+    for(j = 0; j < floorf(screenWidth / 2.0f) - strlen(unitName) - 4; j++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    printf("\n");
 
     // Unit position
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - 10; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - 9; i++)
         printf(" ");
     printf("%3dX  <||>%3dY", X, Y);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - 8; i++)
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - 7; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    printf("\n");
 
     // Moves left
     msg_len = get_Digits(moves) + 11;
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 2; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
         printf(" ");
     printf("%d Moves Left", moves);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    printf("\n");
 
     // Lower Line
-    for(int i = 0; i < screenWidth; i++)
-        printf("=");
+    putchar(200);
+    for(int i = 0; i < screenWidth - 2; i++)
+        putchar(205);
+    putchar(188);
     // if(screenWidth % 2 == 0)
     //     printf("=");
 
