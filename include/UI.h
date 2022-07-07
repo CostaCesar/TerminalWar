@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include <math.h>
 
+bool firstLine = true;
 typedef struct P_endStats
 {
     char *name;
@@ -49,28 +50,40 @@ void print_Line(char *message)
 
     if(!message)
     {
-        printf("#");
-        for(int i = 0; i < screenWidth - 2; i++)
-            printf("-");
-        printf("#\n"); 
+        if(firstLine == true)
+        {
+            putchar(201);
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(205);
+            putchar(187);
+        }
+        else
+        {
+            putchar(200);
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(205);
+            putchar(188); 
+        }
+        firstLine = !firstLine;
     }
     else if(message[0] == ' ')
     {
-        printf("|");
+        putchar(186);
         for(int i = 0; i < screenWidth - 2; i++)
-            printf(" ");
-        printf("|\n");
+             printf(" ");
+        putchar(186);
     }
     else
     {
         int msg_len = strlen(message);
-        printf("|");
+        putchar(186);
         for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
-            printf(" ");
-        printf("%s", message);
-        for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
-            printf(" ");
-        printf("|\n");
+             printf(" ");
+         printf("%s", message);
+         for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
+             printf(" ");
+        putchar(186);
+        printf("\n");
     }
     return;
 }
@@ -82,37 +95,6 @@ void print_Message(char *message, bool doWait)
     print_Line(message);
     print_Line(" ");
     print_Line(NULL);
-
-    // int screenWidth = get_ScreenWidth();
-    // int msg_len = strlen(message);
-    
-    // printf("#");
-    // for(int i = 0; i < screenWidth - 2; i++)
-    //     printf("-");
-    // printf("#\n");
-// 
-    // printf("|");
-    //     for(int i = 0; i < screenWidth - 2; i++)
-    //     printf(" ");
-    // printf("|\n");
-// 
-    // printf("|");
-    //     for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
-    //         printf(" ");
-    //     printf("%s", message);
-    //     for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
-    //         printf(" ");
-    // printf("|\n");
-// 
-    //     printf("|");
-    //     for(int i = 0; i < screenWidth - 2; i++)
-    //     printf(" ");
-    // printf("|\n");
-// 
-    // printf("#");
-    // for(int i = 0; i < screenWidth - 2; i++)
-    //     printf("-");
-    // printf("#\n");
 
     if(doWait)
         Sleep(2000);
@@ -220,13 +202,22 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
 
 void info_Bottom()
 {
-    printf("===============================================\n");
-    printf("| [NumPad] Move Unit | [F] Fire At Enemy Unit |\n");
-    printf("| [Esc] Exit To Menu | [A] Set Tile As Target |\n");
-    printf("| [W] View Unit Wiki | [S] Set Unit As Target |\n");
-    printf("| [G] Get Tile Stats | [D] Current Unit Stats |\n");
-    printf("| [E] Build Trenches | [Enter] Skip Your Turn |\n");
-    printf("===============================================\n"); 
+
+    putchar(201);
+    for(int i = 0; i < 45; i++)
+        putchar(205);
+    putchar(187);
+    printf("\n");
+    printf("%c [NumPad] Move Unit | [F] Fire At Enemy Unit %c\n", 186, 186);
+    printf("%c [Esc] Exit To Menu | [A] Set Tile As Target %c\n", 186, 186);
+    printf("%c [W] View Unit Wiki | [S] Set Unit As Target %c\n", 186, 186);
+    printf("%c [G] Get Tile Stats | [D] Current Unit Stats %c\n", 186, 186);
+    printf("%c [E] Build Trenches | [Enter] Skip Your Turn %c\n", 186, 186);
+    putchar(200);
+    for(int i = 0; i < 45; i++)
+        putchar(205);
+    putchar(188);
+    printf("\n");
 }
 
 int screen_Menu(float version)

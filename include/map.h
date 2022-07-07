@@ -218,7 +218,7 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
-void show_Map(B_Map *source, int mode)
+void show_Map(B_Map *source, int mode, B_Pos *highlight)
 {
     // Printing upper division line
     printf("\n");
@@ -253,7 +253,10 @@ void show_Map(B_Map *source, int mode)
             if(source->tiles[i][j].unit.ID != NO_UNIT)
             {
                 // Units here
-                printf("|%.2s|", source->tiles[i][j].unit.name);
+                if(highlight)
+                    printf("|%c%c|", 219, 219);
+                else
+                    printf("|%.2s|", source->tiles[i][j].unit.name);
             }
             else
             {
