@@ -105,6 +105,8 @@ typedef struct S_Map
     B_Tile **tiles;
 } B_Map;
 
+short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
+
 float calcDistance(B_Tile A, B_Tile B)
 {
     return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
@@ -218,50 +220,46 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
-void show_Map(B_Map *source, int mode, B_Pos *highlight)
+void show_Map(B_Map *source, int mode)
 {
     // Printing upper division line
     printf("\n");
-    for(int i = 0; i < source->width * 2 + 4; i++)
-    {
-        printf("I ");
-    }
-    printf("\n   X ");
+    putchar(201);
+    for(int i = 0; i < source->width * 4 + 6; i++)
+        putchar(205);
+    printf("%c\n%c   X ", 187, 186);
     
     // Printing X coordinates
     for(int i = 0; i < source->width; i++)
-    {
         printf("\\%2d/", i);
-    }
-    printf("\n  Y  ");
+    printf(" %c\n%c  Y  ", 186, 186);
     for(int i = 0; i < source->width; i++)
-    {
         printf(" \\/ ");
-    }
-    printf("\n");
+    printf(" %c\n", 186);
 
     // Printing map & Y coordinates
     for(int i = 0; i < source->height; i++)
     {
         for(int j = 0; j < source->width; j++)
         {
-            
             if(j == 0) // Coordinates here
             {
+                putchar(186);
                 printf("%3d >", i);
+                putchar(179);
             }
             if(source->tiles[i][j].unit.ID != NO_UNIT)
             {
                 // Units here
-                if(highlight)
-                    printf("|%c%c|", 219, 219);
+                if((int) xHiLi == j && (int) yHiLi == i)
+                    printf(" %c%c%c", 179, 219, 219, 179);
                 else
-                    printf("|%.2s|", source->tiles[i][j].unit.name);
+                    printf(" %.2s%c", 179, source->tiles[i][j].unit.name, 179);
             }
             else
             {
                 if(mode == MODE_HEIGHT)
-                    printf("|%2d|", source->tiles[i][j].elevation);
+                    printf("%c%2d%c", 179, source->tiles[i][j].elevation, 179);
                 else if(mode ==  MODE_TERRAIN)
                     printf("|%-2d|", source->tiles[i][j].terrain);
                 else if(mode ==  MODE_VEGETAT)
@@ -272,13 +270,13 @@ void show_Map(B_Map *source, int mode, B_Pos *highlight)
                         printf("|##|");
                     // Printing spawns areas
                     else if(source->tiles[i][j].isSpawnA == true)
-                        printf("|*1|");
+                        printf("*1%c", 179, 179);
                     else if(source->tiles[i][j].isSpawnB == true)
-                        printf("|*2|");      
+                        printf("*2%c", 179, 179);      
                     else if(source->tiles[i][j].unit.ID == NO_UNIT)
-                        printf("|  |");
+                        printf("  %c", 179, 179);
                     else if(source->tiles[i][j].unit.ID >= 0)
-                        printf("|%.2s|", source->tiles[i][j].unit.name);
+                        printf("%.2s%c", 179, source->tiles[i][j].unit.name, 179);
                 }
             }
         }

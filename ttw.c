@@ -382,6 +382,7 @@ int main(/*int argc, char** argv*/)
 
     int unit_TableSize = 0, out = 0;
     extern short int A_Loss, B_Loss;
+    extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
     B_Unit *unit_Table = getFile_Unit("units/new.bin", &unit_TableSize);
 
@@ -418,6 +419,7 @@ startMenu:
         break;
     } while (1);
 
+    xHiLi = NO_UNIT, yHiLi = NO_UNIT;
     Side_A.units = (B_Unit *)malloc(sizeof(B_Unit));
     strcpy(Side_A.name, "Greeks");
     Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
@@ -477,6 +479,7 @@ startMenu:
             int FRes = false;
             int xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
             int xTarget = -1, yTarget = -1;
+            xHiLi = unitA.X, yHiLi = unitA.Y;
             system("cls");
             info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, Side_A.units[unitA_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
@@ -689,6 +692,7 @@ startMenu:
         }
 
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
+        xHiLi = NO_UNIT, yHiLi = NO_UNIT;
         for (moves = 0; moves < Side_B.units[unitB_I].moves; moves++) // Side_B turn
         {
             int FRes = false;
