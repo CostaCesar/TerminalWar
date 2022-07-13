@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <Windows.h>
 #include <math.h>
+#include "const.h"
 
 bool firstLine = true;
 typedef struct P_endStats
@@ -108,6 +109,82 @@ char get_KeyPress(bool fLowerCase)
     if(out >= 'A' && out <= 'Z' && fLowerCase == true)
         out += 32;
     return out;
+}
+
+void print_Map(short int mHeight, short int mWidth, int* data, int mode, bool isChar)
+{
+    // Top Line
+    bool mapEdge = false, edge = false;
+    char *word = NULL;
+    putchar(218);
+    for(short int i = 0; i < mWidth; i++)
+    {
+        printf("%c%c%c", 196, 196, 196);
+        if(edge == false) putchar(194);
+        else putchar (191);
+
+        if(i == mWidth-2) edge = true;
+    }
+    putchar('\n');
+
+    // Tiles
+    for(short int i = 0; i < mHeight; i++)
+    {
+        edge = false;
+        putchar(179);
+        for(short int j = 0; j < mWidth; j++)
+        {
+            switch (mode)
+            {
+            case MODE_UNITS:
+                if(data[i * mWidth + j] == ALT_MODE_A)
+                    printf("<A>");
+                else if (data[i * mWidth + j] == ALT_MODE_B)
+                    printf("<B>");
+                else if(isChar == true) // NÃO RODA
+                {
+                    word = (char *) data[i * mWidth + j];
+                    printf("%.3s", word);
+                }
+                else printf("   ", data[i * mWidth + j]);
+                break;
+            default:
+                printf("%3d", data[i * mWidth + j]);
+                break;
+            }
+            // printf("%3d%c", data[i * mWidth + j], 179);
+            putchar(179);
+        }
+        putchar('\n');
+        if(mapEdge == false)
+        {
+            putchar(195);
+            for(short int j = 0; j < mWidth; j++)
+            {
+                printf("%c%c%c", 196, 196, 196);
+                if(edge == false) putchar(197);
+                else putchar(180);
+
+                if(j == mWidth - 2) edge = true;
+            }
+            putchar('\n');
+        }
+        if(i == mHeight - 2) mapEdge = true;
+    }
+
+    // Bottom Line
+    edge = false;
+    putchar(192);
+    for(short int i = 0; i < mWidth; i++)
+    {
+        printf("%c%c%c", 196, 196, 196);
+        if(edge == false) putchar(193);
+        else putchar (217);
+
+        if(i == mWidth-2) edge = true;
+    }
+    putchar('\n');
+    return;
 }
 
 void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitName, int Id, short int X, short int Y, short int moves)

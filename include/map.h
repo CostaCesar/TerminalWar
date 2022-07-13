@@ -222,6 +222,36 @@ int getDirection(B_Tile *current, B_Tile *next)
 
 void show_Map(B_Map *source, int mode)
 {
+    int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
+    for(int i = 0; i < source->height; i++)
+    {
+        for(int j = 0; j < source->width; j++)
+        {
+            switch (mode)
+            {
+            case MODE_HEIGHT:
+                tiles[i * source->width + j] = source->tiles[i][j].elevation;
+                break;
+            case MODE_UNITS:
+                tiles[i * source->width + j] = source->tiles[i][j].unit.ID;
+                if(source->tiles[i][j].isSpawnA == true)
+                    tiles[i * source->width + j] = ALT_MODE_A;
+                else if(source->tiles[i][j].isSpawnB == true)
+                    tiles[i * source->width + j] = ALT_MODE_B;
+                if(source->tiles[i][j].unit.ID != NO_UNIT)  // Override spawn
+                    tiles[i * source->width + j] = (int) &source->tiles[i][j].unit.name;
+                break;
+            case MODE_TERRAIN:
+                tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    print_Map(source->height, source->width, tiles, mode, true);
+    free(tiles);
+    /*
     // Printing upper division line
     printf("\n");
     putchar(201);
@@ -313,6 +343,8 @@ void show_Map(B_Map *source, int mode)
         printf("I ");
     }
     printf("\n");
+    */
+   return;
 }
 
 int get_AbsHeigthDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)

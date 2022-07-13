@@ -37,3 +37,7 @@
 #define MODE_TERRAIN 1
 #define MODE_VEGETAT 2
 #define MODE_UNITS 3
+
+// UI.h
+#define ALT_MODE_A -2
+#define ALT_MODE_B -3
