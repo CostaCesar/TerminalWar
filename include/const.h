@@ -39,5 +39,7 @@
 #define MODE_UNITS 3
 
 // UI.h
-#define ALT_MODE_A -2
-#define ALT_MODE_B -3
+#define MAP_MODE_NULL -4
+#define MAP_MODE_A -5
+#define MAP_MODE_B -6
+#define MAP_MODE_CHAR -7

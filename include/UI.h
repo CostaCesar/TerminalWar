@@ -111,11 +111,11 @@ char get_KeyPress(bool fLowerCase)
     return out;
 }
 
-void print_Map(short int mHeight, short int mWidth, int* data, int mode, bool isChar)
+void print_Map(short int mHeight, short int mWidth, int* data, char** words)
 {
     // Top Line
     bool mapEdge = false, edge = false;
-    char *word = NULL;
+    int words_I = 0;
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
     {
@@ -134,25 +134,17 @@ void print_Map(short int mHeight, short int mWidth, int* data, int mode, bool is
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
-            switch (mode)
-            {
-            case MODE_UNITS:
-                if(data[i * mWidth + j] == ALT_MODE_A)
-                    printf("<A>");
-                else if (data[i * mWidth + j] == ALT_MODE_B)
-                    printf("<B>");
-                else if(isChar == true) // NÃO RODA
-                {
-                    word = (char *) data[i * mWidth + j];
-                    printf("%.3s", word);
-                }
-                else printf("   ", data[i * mWidth + j]);
-                break;
-            default:
-                printf("%3d", data[i * mWidth + j]);
-                break;
-            }
-            // printf("%3d%c", data[i * mWidth + j], 179);
+            if(data[i * mWidth + j] == MAP_MODE_A)
+                printf("<A>");
+            else if(data[i * mWidth + j] == MAP_MODE_B)
+                printf("<B>");
+            else if(data[i * mWidth + j] == MAP_MODE_CHAR) // NÃO RODA
+                printf("%.3s", words[words_I++]);
+            else if(data[i * mWidth + j] == MAP_MODE_NULL)
+                printf("   ");
+            else if(data[i * mWidth + j] < 0)
+                printf("%c%c%c", 126, 126, 126);
+            else printf("%3d", data[i * mWidth + j]);
             putchar(179);
         }
         putchar('\n');

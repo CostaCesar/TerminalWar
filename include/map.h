@@ -223,6 +223,8 @@ int getDirection(B_Tile *current, B_Tile *next)
 void show_Map(B_Map *source, int mode)
 {
     int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
+    char **names = (char **) calloc(1, sizeof(char *));
+    int cNames = 1;
     for(int i = 0; i < source->height; i++)
     {
         for(int j = 0; j < source->width; j++)
@@ -233,24 +235,27 @@ void show_Map(B_Map *source, int mode)
                 tiles[i * source->width + j] = source->tiles[i][j].elevation;
                 break;
             case MODE_UNITS:
-                tiles[i * source->width + j] = source->tiles[i][j].unit.ID;
                 if(source->tiles[i][j].isSpawnA == true)
-                    tiles[i * source->width + j] = ALT_MODE_A;
+                    tiles[i * source->width + j] = MAP_MODE_A;
                 else if(source->tiles[i][j].isSpawnB == true)
-                    tiles[i * source->width + j] = ALT_MODE_B;
-                if(source->tiles[i][j].unit.ID != NO_UNIT)  // Override spawn
-                    tiles[i * source->width + j] = (int) &source->tiles[i][j].unit.name;
+                    tiles[i * source->width + j] = MAP_MODE_B;
+                else tiles[i * source->width + j] = MAP_MODE_NULL;
                 break;
             case MODE_TERRAIN:
                 tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
                 break;
-            default:
-                break;
+            }
+            if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name
+            {   
+                names[cNames-1] = source->tiles[i][j].unit.name;
+                names = (char **) realloc(names, ++cNames * sizeof(char *));
+                tiles[i * source->width + j] = MAP_MODE_CHAR;
             }
         }
     }
-    print_Map(source->height, source->width, tiles, mode, true);
+    print_Map(source->height, source->width, tiles, names);
     free(tiles);
+    free(names);
     /*
     // Printing upper division line
     printf("\n");

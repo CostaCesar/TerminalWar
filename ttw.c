@@ -178,9 +178,9 @@ void show_gUnit(B_Unit *unit)
 
     print_Line(" ");
     if (unit->inCombat == true)
-        print_Line(" <!> Engaged In Combat ");
-    if (unit->inCombat == true)
-        print_Line(" <!> Retreating ");
+        print_Line("<!> Engaged In Combat");
+    if (unit->isRetreating == true)
+        print_Line("<!> Retreating");
     print_Line(NULL);
 }
 
