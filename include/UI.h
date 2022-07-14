@@ -16,6 +16,24 @@ typedef struct P_endStats
     int killed;
 } B_endStats;
 
+void reset_Cursor()
+{
+    COORD pos = {0, 0};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+void clear_afterMap(short int mHeight, bool evenComands)
+{
+    int n = 0;
+    if(evenComands) n = 7;
+    COORD pos = {0, 9+mHeight*2+n};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    for(int i = 0; i < 150; i++)
+        printf("                                                  ");
+    reset_Cursor();
+    return;   
+}
+
 int get_Digits(int num)
 {
     int i;

@@ -467,6 +467,7 @@ startMenu:
 
     // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    system("cls");
     for (int i = 0; i < TURNS; i++)
     {
         int unitA_I = 0, unitB_I = 0, moves = 0;
@@ -480,7 +481,7 @@ startMenu:
             int xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
             int xTarget = -1, yTarget = -1;
             xHiLi = unitA.X, yHiLi = unitA.Y;
-            system("cls");
+            clear_afterMap(battleMap.height, true);
             info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, Side_A.units[unitA_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
             if (moves < Side_A.units[unitA_I].moves && Side_A.units[unitA_I].isRetreating == false && Side_A.units[unitA_I].inCombat == false)
@@ -716,7 +717,7 @@ startMenu:
         for (moves = 0; moves < Side_B.units[unitB_I].moves; moves++) // Side_B turn
         {
             int FRes = false;
-            system("cls");
+            clear_afterMap(battleMap.height, true);
             info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, Side_B.units[unitB_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
             Sleep(2000);
@@ -746,7 +747,7 @@ startMenu:
             else
                 Side_B.units[unitB_I].inCombat = false;
         }
-        system("cls");
+        clear_afterMap(battleMap.height, false);
         info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, 0);
         show_Map(&battleMap, MODE_HEIGHT);
         Sleep(2000);

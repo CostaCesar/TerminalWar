@@ -105,6 +105,11 @@ typedef struct S_Map
     B_Tile **tiles;
 } B_Map;
 
+bool mapOnScreen = false;
+
+void reset_Map()
+{ mapOnScreen == false; return; }
+
 float calcDistance(B_Tile A, B_Tile B)
 {
     return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
@@ -220,6 +225,7 @@ int getDirection(B_Tile *current, B_Tile *next)
 
 void show_Map(B_Map *source, int mode)
 {
+    if(mapOnScreen == false) mapOnScreen = true;
     int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
     char **names = (char **) calloc(1, sizeof(char *));
     int cNames = 1;
