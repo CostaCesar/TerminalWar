@@ -7,6 +7,7 @@
 #include "const.h"
 
 bool firstLine = true;
+short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
 typedef struct P_endStats
 {
     char *name;
@@ -134,6 +135,8 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
+            //if(i == yHiLi && j == xHiLi)
+            //    printf("%c%c%c", 219, 219, 219);
             if(data[i * mWidth + j] == MAP_MODE_A)
                 printf("<A>");
             else if(data[i * mWidth + j] == MAP_MODE_B)
@@ -176,6 +179,15 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
         if(i == mWidth-2) edge = true;
     }
     putchar('\n');
+    return;
+}
+
+void update_Map(short int mapHeight,short int xUpdate, short int yUpdate, char *data)
+{
+    HANDLE consoleInfo = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD pos = {1+xUpdate*4, 9+yUpdate*2};
+    SetConsoleCursorPosition(consoleInfo, pos);
+    printf("%.3s", data);
     return;
 }
 
@@ -271,7 +283,6 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
 
 void info_Bottom()
 {
-
     putchar(201);
     for(int i = 0; i < 45; i++)
         putchar(205);

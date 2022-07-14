@@ -471,7 +471,7 @@ startMenu:
     {
         int unitA_I = 0, unitB_I = 0, moves = 0;
         B_Tile *position;
-        char action;
+        char action = '\0';
         unitA = set_MapUnit(&Side_A.units[unitA_I]);
 
         for (moves = 0; moves < Side_A.units[unitA_I].moves; moves++) // Side_A turn
@@ -487,7 +487,27 @@ startMenu:
             {
                 info_Bottom();
                 toggle_Cursor(true);
-                action = get_KeyPress(true);
+                while(1)
+                {
+                    if(_kbhit())
+                    {
+                        action = _getch();
+                        break;
+                    }
+                    char msg[3] = {219, 219, 219};
+                    update_Map(battleMap.height, unitA.X, unitA.Y, msg);
+                    Sleep(500);
+                    toggle_Cursor(false);
+                    if(_kbhit())
+                    {
+                        action = _getch();
+                        break;
+                    }
+                    update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
+                    Sleep(500);
+                }
+                COORD pos = {0, 9+battleMap.height*2+7};
+                SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                 if (action >= '0' && action <= '9') // Move to a adjacent tile
                 {
                     tNum_ToDirec(&action);

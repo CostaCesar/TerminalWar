@@ -105,8 +105,6 @@ typedef struct S_Map
     B_Tile **tiles;
 } B_Map;
 
-short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
-
 float calcDistance(B_Tile A, B_Tile B)
 {
     return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
