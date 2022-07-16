@@ -3,6 +3,8 @@
 #define STRING_FILE (20 + 1)
 #define FUNCTION_FAIL 0
 #define FUNCTION_SUCESS 1
+#define TIME_MAP 1000
+#define TIME_STRATEGY 2000
 
 // Keys
 #define KEY_ESCAPE 27

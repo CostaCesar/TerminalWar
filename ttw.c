@@ -477,16 +477,14 @@ startMenu:
 
         for (moves = 0; moves < Side_A.units[unitA_I].moves; moves++) // Side_A turn
         {
-            int FRes = false;
-            int xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
-            int xTarget = -1, yTarget = -1;
+            int FRes = false, xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y, xTarget = -1, yTarget = -1;
+            char msg[31];
             xHiLi = unitA.X, yHiLi = unitA.Y;
-            clear_afterMap(battleMap.height, true);
+            clear_afterMap(battleMap.height);
             info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, Side_A.units[unitA_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
             if (moves < Side_A.units[unitA_I].moves && Side_A.units[unitA_I].isRetreating == false && Side_A.units[unitA_I].inCombat == false)
             {
-                info_Bottom();
                 toggle_Cursor(true);
                 while(1)
                 {
@@ -507,7 +505,7 @@ startMenu:
                     update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
                     Sleep(500);
                 }
-                COORD pos = {0, 9+battleMap.height*2+7};
+                COORD pos = {0, 9+battleMap.height*2};
                 SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
                 if (action >= '0' && action <= '9') // Move to a adjacent tile
                 {
@@ -618,7 +616,6 @@ startMenu:
                     getchar();
                     if (xTarget >= 0 && xTarget < battleMap.width && yTarget >= 0 && yTarget < battleMap.height)
                     {
-                        char msg[30];
                         print_Line(NULL);
                         print_Line(" ");
                         snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap.tiles[yTarget][xTarget].terrain));
@@ -676,7 +673,17 @@ startMenu:
                             FRes = move_Unit(&battleMap, &unitA, Side_A.units[unitA_I].path[steps]);
                             if (FRes == OUT_COMBAT)
                             {
+                                // Show
+                                update_Map(battleMap.height, unitA.X, unitA.Y, "XXX");
+                                Sleep(TIME_MAP);
                                 position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
+                                update_Map(battleMap.height, position->unit.X, position->unit.Y, "OOO");
+                                Sleep(TIME_MAP);
+                                // Glow
+                                system("cls");   
+                                snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", position->unit.X, position->unit.Y);
+                                print_Message(msg, true);
+                                // Go
                                 unitB_I = get_UnitIndex(&Side_B, position->unit.ID);
                                 do_Combat(&Side_A.units[unitA_I], &Side_B.units[unitB_I], get_HeightDif(&battleMap, unitA, unitB), &battleMap.tiles[unitB.Y][unitB.X].fortLevel);
                                 show_gUnit(&Side_A.units[unitA_I]);
@@ -684,6 +691,7 @@ startMenu:
                                 Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                                 printf(">> Press ENTER to continue ");
                                 while (get_KeyPress(false) != KEY_ENTER) continue;
+                                system("cls");
                             }
                             else if (FRes == FUNCTION_FAIL)
                                 moves--;
@@ -698,11 +706,17 @@ startMenu:
                         moves--;
                     }
                 }
+                update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
                 if ((unitA.X == xGoal && unitA.Y == yGoal) || FRes == OUT_COMBAT)
                 {
                     Side_A.units[unitA_I].chaseID = NULL;
                     Side_A.units[unitA_I].goal.X = -1, Side_A.units[unitA_I].goal.Y = -1;
-                    if(position == NULL) print_Message("Auto move disabled!", true);
+                    if(position == NULL)
+                    {
+                        pos.X = 0, pos.Y = 9+battleMap.height*2;
+                        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+                        print_Message("Auto move disabled!", true);
+                    }
                 }
                 position = NULL;
                 update_Unit(&Side_A.units[unitA_I], unitA);
@@ -716,22 +730,37 @@ startMenu:
         xHiLi = NO_UNIT, yHiLi = NO_UNIT;
         for (moves = 0; moves < Side_B.units[unitB_I].moves; moves++) // Side_B turn
         {
+            char msg[31];
             int FRes = false;
-            clear_afterMap(battleMap.height, true);
+            clear_afterMap(battleMap.height);
             info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, Side_B.units[unitB_I].moves - moves);
             show_Map(&battleMap, MODE_HEIGHT);
-            Sleep(2000);
+            Sleep(TIME_STRATEGY);
 
             if (moves < Side_B.units[unitB_I].moves && Side_B.units[unitB_I].isRetreating == false && Side_B.units[unitB_I].inCombat == false)
             {
                 if (unitB.Y < 10)
+                {
+                    snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[unitB.Y][unitB.X].elevation);
+                    update_Map(battleMap.height, unitB.X, unitB.Y, msg);
                     FRes = move_Unit(&battleMap, &unitB, West);
+                }
                 else
                     inc_FortLevel(&battleMap, Side_B.units[unitB_I].build_Cap, unitB);
                 if (FRes == OUT_COMBAT)
                 {
+                    // Show
                     fflush(stdin);
+                    update_Map(battleMap.height, unitB.X, unitB.Y, "XXX");
+                    Sleep(TIME_MAP);
                     position = get_AdjTile(&battleMap, unitB, West, false);
+                    update_Map(battleMap.height, position->unit.X, position->unit.Y, "OOO");
+                    Sleep(TIME_MAP);
+                    // Glow
+                    system("cls");   
+                    snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", position->unit.X, position->unit.Y);
+                    print_Message(msg, true);
+                    // Go
                     unitA_I = get_UnitIndex(&Side_A, position->unit.ID);
                     do_Combat(&Side_B.units[unitB_I], &Side_A.units[unitA_I], get_HeightDif(&battleMap, unitB, unitA), &battleMap.tiles[unitA.Y][unitA.X].fortLevel);
                     Status_B.loss += A_Loss, Status_A.loss += B_Loss;
@@ -739,18 +768,20 @@ startMenu:
                     show_gUnit(&Side_B.units[unitB_I]);
                     printf(">> Press ENTER to continue ");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
+                    system("cls");
                 }
                 else if (FRes > -1)
                     moves += FRes;
                 update_Unit(&Side_B.units[unitB_I], unitB);
+                update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
             }
             else
                 Side_B.units[unitB_I].inCombat = false;
         }
-        clear_afterMap(battleMap.height, false);
+        clear_afterMap(battleMap.height);
         info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, 0);
         show_Map(&battleMap, MODE_HEIGHT);
-        Sleep(2000);
+        Sleep(TIME_STRATEGY);
 
         // Cheking for retreat
         for (int j = 0; j < Side_A.size && j < Side_B.size; j++)

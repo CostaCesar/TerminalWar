@@ -478,12 +478,7 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) != (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
-        {
-            char msg[31];   
-            snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", destPos.X, destPos.Y);
-            print_Message(msg, true);
             return OUT_COMBAT;
-        }
         
         short int mCost = 1;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
