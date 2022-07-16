@@ -57,9 +57,9 @@ void clear_afterMap(short int mHeight)
     int screenWidth = get_ScreenWidth();
     COORD pos = {0, 9+mHeight*2};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    // for(int i = 0; i < screenWidth*5; i++)
-    //     printf("                                                                                                              ");
-    reset_Cursor();
+    printf("                                                                                                                                                                        ");
+    printf("                                                                                                                                                                        ");
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     return;   
 }
 
@@ -201,6 +201,8 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
 
 void update_Map(short int mapHeight,short int xUpdate, short int yUpdate, char *data)
 {
+    if(!data)
+        return;
     HANDLE consoleInfo = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD pos = {1+xUpdate*4, 9+yUpdate*2};
     int hScreen = get_ScreenHeight();
@@ -216,7 +218,8 @@ void update_Map(short int mapHeight,short int xUpdate, short int yUpdate, char *
 void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitName, int Id, short int X, short int Y, short int moves)
 {
     int screenWidth = get_ScreenWidth() / 2;  
-    int msg_len = 0; 
+    int msg_len = 0;
+    reset_Cursor();
     
     // Upper Line
     putchar(201);

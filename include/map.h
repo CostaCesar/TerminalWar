@@ -223,7 +223,7 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
-void show_Map(B_Map *source, int mode)
+void show_Map(B_Map *source, int mode, bool skipBanner)
 {
     if(mapOnScreen == false) mapOnScreen = true;
     int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
@@ -257,9 +257,14 @@ void show_Map(B_Map *source, int mode)
             }
         }
     }
+    COORD pos = {0, 8};
+    if(skipBanner == true)
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     print_Map(source->height, source->width, tiles, names);
     free(tiles);
     free(names);
+    if(skipBanner == true)
+        reset_Cursor();
     /*
     // Printing upper division line
     printf("\n");

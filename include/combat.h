@@ -411,6 +411,7 @@ void do_Combat(B_Unit* attacker, B_Unit* defender, int heigthDif, short int *for
 int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vegetat, short int *fortLevel)
 {
     // Testing if in range of attack
+    char msg[31];
     if(defender->position.X > attacker->position.X + attacker->range || defender->position.Y > attacker->position.Y + attacker->range)
     {
         /* printf("\n");
@@ -443,18 +444,21 @@ int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vege
         return FUNCTION_FAIL;       
     }
 
-
     // If attaker != cavalary OR charriot, engage
     if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
         attacker->inCombat = true;
 
     // Signaling attack
-    printf("\n");
-    printf("#================================# \n");
-    printf("| %14s from %-10s | \n", attacker->name, attacker->faction);
-    printf("| Firing from %2hdX %2hdY at %2hdX %2hdY | \n",attacker->position.X, attacker->position.Y, defender->position.X, defender->position.Y);
-    printf("| %14s from %-10s | \n", defender->name, defender->faction);
-    printf("#================================# \n");
+    system("cls");
+    print_Line(NULL);
+    print_Line(" ");
+    snprintf(msg, sizeof(msg), "%14s [%s] at %hdX %2hdY ", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
+    print_Line(msg);
+    print_Line(" Is firing a volley into ");
+    snprintf(msg, sizeof(msg), "%14s [%s] at %hdX %2hdY ", defender->name, defender->faction, defender->position.X, defender->position.Y);
+    print_Line(msg);
+    print_Line(" ");
+    print_Line(NULL);
 
     // Doing damage
     attacker->ammo--;
