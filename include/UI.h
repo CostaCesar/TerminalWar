@@ -236,7 +236,7 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
     for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 1; i++)
         printf(" ");
     printf("%s", mapName);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 1; i++)
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(strlen(mapName) / 2.0f) - 1; i++)
         printf(" ");
     putchar(186);
     // -> Comands

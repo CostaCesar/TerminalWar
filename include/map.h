@@ -265,99 +265,6 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
     free(names);
     if(skipBanner == true)
         reset_Cursor();
-    /*
-    // Printing upper division line
-    printf("\n");
-    putchar(201);
-    for(int i = 0; i < source->width * 4 + 6; i++)
-        putchar(205);
-    printf("%c\n%c   X ", 187, 186);
-    
-    // Printing X coordinates
-    for(int i = 0; i < source->width; i++)
-        printf("\\%2d/", i);
-    printf(" %c\n%c  Y  ", 186, 186);
-    for(int i = 0; i < source->width; i++)
-        printf(" \\/ ");
-    printf(" %c\n", 186);
-
-    // Printing map & Y coordinates
-    for(int i = 0; i < source->height; i++)
-    {
-        for(int j = 0; j < source->width; j++)
-        {
-            if(j == 0) // Coordinates here
-            {
-                putchar(186);
-                printf("%3d >", i);
-                putchar(179);
-            }
-            if(source->tiles[i][j].unit.ID != NO_UNIT)
-            {
-                // Units here
-                if((int) xHiLi == j && (int) yHiLi == i)
-                    printf(" %c%c%c", 179, 219, 219, 179);
-                else
-                    printf(" %.2s%c", 179, source->tiles[i][j].unit.name, 179);
-            }
-            else
-            {
-                if(mode == MODE_HEIGHT)
-                    printf("%c%2d%c", 179, source->tiles[i][j].elevation, 179);
-                else if(mode ==  MODE_TERRAIN)
-                    printf("|%-2d|", source->tiles[i][j].terrain);
-                else if(mode ==  MODE_VEGETAT)
-                    printf("|%02d|", source->tiles[i][j].vegetation);
-                else if(mode == MODE_UNITS)
-                {
-                    if(source->tiles[i][j].node.isVisited == true)
-                        printf("|##|");
-                    // Printing spawns areas
-                    else if(source->tiles[i][j].isSpawnA == true)
-                        printf("*1%c", 179, 179);
-                    else if(source->tiles[i][j].isSpawnB == true)
-                        printf("*2%c", 179, 179);      
-                    else if(source->tiles[i][j].unit.ID == NO_UNIT)
-                        printf("  %c", 179, 179);
-                    else if(source->tiles[i][j].unit.ID >= 0)
-                        printf("%.2s%c", 179, source->tiles[i][j].unit.name, 179);
-                }
-            }
-        }
-        
-        // Creating horizontal lines
-        printf("\n");
-        if(i < source->height - 1)
-        {
-            for (int k = 0; k < source->width * 4 + 6; k++)
-            {
-            printf("-");
-            }
-            printf("\n");
-        }   
-    }
-
-    // Printing X coordinates (again)
-    printf("  Y  ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf(" /\\ ");
-    }
-    printf("\n   X ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf("/%2d\\", i);
-        
-    }
-    printf("\n");
-    
-    // Printing bottom division line
-    for(int i = 0; i < source->width * 2 + 4; i++)
-    {
-        printf("I ");
-    }
-    printf("\n");
-    */
    return;
 }
 
@@ -403,10 +310,6 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     // Checking if coordiantes are valid
     if((unitPos->X < 0 || unitPos->X >= source_Map->width) || (unitPos->Y  < 0 || unitPos->Y  >= source_Map->height))
     {
-        // printf("\n");
-        // printf("#================================# \n");
-        // printf("| Coordinates out of boundaries! | \n");
-        // printf("#================================# \n");
         print_Message("Coordinates out of boundaries!", true);       
         return FUNCTION_FAIL;
     }
@@ -417,10 +320,6 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         char msg[24];
         snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unitPos->X, unitPos->Y);
         print_Message(msg, true);
-        // printf("\n");
-        // printf("#================================# \n");
-        // printf("| Nothing in %3dX %3dY        | \n", unit_Pos->X, unit_Pos->Y);
-        // printf("#================================# \n");
         return FUNCTION_FAIL;
     }
 
@@ -485,7 +384,7 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         else if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) != (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
             return OUT_COMBAT;
         
-        short int mCost = 1;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
+        short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
         source_Map->tiles[destPos.Y][destPos.X].unit = destPos;
         source_Map->tiles[unitPos->Y][unitPos->X].unit.ID = NO_UNIT;

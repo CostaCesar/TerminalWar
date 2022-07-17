@@ -387,7 +387,7 @@ int main(/*int argc, char** argv*/)
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
-    B_Unit *unit_Table = getFile_Unit("units/new.bin", &unit_TableSize);
+    B_Unit *unit_Table = getFile_Unit("units/new2.bin", &unit_TableSize);
 
     // Side_A
     B_endStats Status_A = {0};
@@ -407,7 +407,7 @@ startMenu:
         {
         case 'i':
             // Setting up map & units
-            out = getFile_Map("maps/new.map", &battleMap);
+            out = getFile_Map("maps/Catalon.map", &battleMap);
             if (out != FUNCTION_SUCESS)
                 return FUNCTION_FAIL;
 
@@ -429,26 +429,16 @@ startMenu:
     strcpy(Side_B.name, "Gauls");
     Status_A.name = Side_A.name, Status_B.name = Side_B.name;
 
-    // Status_A.deployed = 5000, Status_B.deployed = 200;
-    // Status_A.killed = 300, Status_B.killed = 2345;
-    // screen_Victory(Status_B, Status_A);
-    // while (get_KeyPress(false) != KEY_ENTER) continue;
-
     // Setting up some units
     set_fUnitTable(unit_Table, 0, &Side_A);
-    set_fUnitTable(unit_Table, 0, &Side_A);
+    set_fUnitTable(unit_Table, 4, &Side_A);
     set_fUnitTable(unit_Table, 0, &Side_A);
     set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 2, &Side_B);
-    // set_fUnitTable(unit_Table, 0, &Side_A);
-    // set_fUnitTable(unit_Table, 0, &Side_A);
-    // set_fUnitTable(unit_Table, 2, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
+    set_fUnitTable(unit_Table, 1, &Side_B);
+    set_fUnitTable(unit_Table, 2, &Side_B);
 
     // Placing AI on Map
-    Map_Unit unitB;
+    Map_Unit unitB, unitA;
     for (int i = 0; i < Side_B.size; i++)
     {
         unitB = def_Unit(&Side_B.units[i], &battleMap);
@@ -463,10 +453,11 @@ startMenu:
 
     // Getting deployed troops
     for (int i = 0; i < Side_A.size; i++)
-        Status_A.deployed += Side_A.units[i].men;
+        if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
+            Status_A.deployed += Side_A.units[i].men;
     for (int i = 0; i < Side_B.size; i++)
-        Status_B.deployed += Side_B.units[i].men;
-    Map_Unit unitA;
+        if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
+            Status_B.deployed += Side_B.units[i].men;
 
     // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
@@ -474,7 +465,7 @@ startMenu:
     show_Map(&battleMap, MODE_HEIGHT, true);
     for (int i = 0; i < TURNS; i++)
     {
-        int unitA_I = 0, unitB_I = 0, moves = 0;
+        int unitA_I = 1, unitB_I = 0, moves = 0;
         B_Tile *position;
         char action = '\0';
         unitA = set_MapUnit(&Side_A.units[unitA_I]);
@@ -589,7 +580,7 @@ startMenu:
                         update_Map(battleMap.height, unitA.X, unitA.Y, "XXX");
                         Sleep(TIME_MAP);
                         position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
-                        update_Map(battleMap.height, position->unit.X, position->unit.Y, "OOO");
+                        update_Map(battleMap.height, unitB.X, unitB.Y, "OOO");
                         Sleep(TIME_MAP);
                         // Go
                         unitB = battleMap.tiles[yTarget][xTarget].unit;
@@ -598,12 +589,16 @@ startMenu:
                         short int *tFort = &battleMap.tiles[unitB.Y][unitB.X].fortLevel;
                         FRes = do_Combat_Ranged(&Side_A.units[unitA_I], &Side_B.units[unitB_I], tHeight, tVeget, tFort);
                         // Done
-                        show_gUnit(&Side_A.units[unitA_I]);
-                        show_gUnit(&Side_B.units[unitB_I]);
-                        printf(">> Press ENTER to continue ");
-                        Status_A.loss += A_Loss, Status_B.loss += B_Loss;
-                        while (get_KeyPress(false) != KEY_ENTER) continue;
-                        system("cls");
+                        if(FRes == FUNCTION_SUCESS)
+                        {
+                            show_gUnit(&Side_A.units[unitA_I]);
+                            show_gUnit(&Side_B.units[unitB_I]);
+                            printf(">> Press ENTER to continue ");
+                            Status_A.loss += A_Loss, Status_B.loss += B_Loss;
+                            while (get_KeyPress(false) != KEY_ENTER) continue;
+                            system("cls");
+                            show_Map(&battleMap, MODE_HEIGHT, true);
+                        }
                         break;
                     }
                     continue;
