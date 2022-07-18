@@ -576,14 +576,14 @@ startMenu:
                     }
                     else
                     {
+                        unitB = battleMap.tiles[yTarget][xTarget].unit;
                         // Show
                         update_Map(battleMap.height, unitA.X, unitA.Y, "XXX");
                         Sleep(TIME_MAP);
-                        position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
                         update_Map(battleMap.height, unitB.X, unitB.Y, "OOO");
                         Sleep(TIME_MAP);
+                        clear_afterMap(battleMap.height);
                         // Go
-                        unitB = battleMap.tiles[yTarget][xTarget].unit;
                         unitB_I = get_UnitIndex(&Side_B, unitB.ID);
                         int tVeget = getTile_Vegetat(&battleMap, unitB), tHeight = get_HeightDif(&battleMap, unitA, unitB);
                         short int *tFort = &battleMap.tiles[unitB.Y][unitB.X].fortLevel;
@@ -599,6 +599,7 @@ startMenu:
                             system("cls");
                             show_Map(&battleMap, MODE_HEIGHT, true);
                         }
+                        update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
                         break;
                     }
                     continue;
@@ -674,12 +675,15 @@ startMenu:
                 }
                 else if (action == KEY_ENTER) // Next Turn
                 {
+                    if(Side_A.units[unitA_I].goal.X == NO_UNIT || Side_A.units[unitA_I].goal.Y == NO_UNIT)
+                        moves = Side_A.units[unitA_I].moves;
                 }
                 else
                 {
                     clear_afterMap(battleMap.height);
                     print_Message("Invalid action!", true);
                     moves--;
+                    continue;
                 }
                 if (xGoal > -1 && yGoal > -1 && xGoal < battleMap.width && yGoal < battleMap.height)
                 {
@@ -696,7 +700,11 @@ startMenu:
                         for (int steps = 0; moves < Side_A.units[unitA_I].moves; steps++)
                         {
                             if ((unitA.X == xGoal && unitA.Y == yGoal) || FRes == OUT_COMBAT)
+                            {
+                                Side_A.units[unitA_I].goal.X = NO_UNIT, Side_A.units[unitA_I].goal.Y = NO_UNIT;
+                                moves--;
                                 break;
+                            }
                             FRes = move_Unit(&battleMap, &unitA, Side_A.units[unitA_I].path[steps]);
                             if (FRes == OUT_COMBAT)
                             {
@@ -723,12 +731,17 @@ startMenu:
                                 show_Map(&battleMap, MODE_HEIGHT, true);
                             }
                             else if (FRes == FUNCTION_FAIL)
+                            {
                                 moves--;
+                                break;
+                            }
                             else if (FRes > -1)
                             {
-                                snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[unitB.Y][unitB.X].elevation);
-                                update_Map(battleMap.height, Side_A.units[unitA_I].position.X,  Side_A.units[unitA_I].position.Y, msg);
-                                moves += FRes;
+                                pos.X = Side_A.units[unitA_I].position.X, pos.Y = Side_A.units[unitA_I].position.Y;
+                                snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[pos.Y][pos.X].elevation);
+                                update_Map(battleMap.height, Side_A.units[unitA_I].position.X, Side_A.units[unitA_I].position.Y, msg);
+                                moves += FRes+1;
+                                // steps += FRes;
                             }
                         }
                         free(Side_A.units[unitA_I].path);
@@ -767,7 +780,7 @@ startMenu:
             char msg[31];
             int FRes = false;
             // clear_afterMap(battleMap.height);
-            info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, Side_B.units[unitB_I].moves - moves);
+            info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, NO_UNIT);
             update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
             Sleep(TIME_STRATEGY);
             COORD pos = {0, 9+battleMap.height*2};
@@ -816,7 +829,7 @@ startMenu:
             else
                 Side_B.units[unitB_I].inCombat = false;
         }
-        info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, 0);
+        info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, NO_UNIT);
         // show_Map(&battleMap, MODE_HEIGHT, true);
         update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
         Sleep(TIME_STRATEGY);

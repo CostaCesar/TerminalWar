@@ -225,47 +225,54 @@ int getDirection(B_Tile *current, B_Tile *next)
 
 void show_Map(B_Map *source, int mode, bool skipBanner)
 {
-    if(mapOnScreen == false) mapOnScreen = true;
-    int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
-    char **names = (char **) calloc(1, sizeof(char *));
-    int cNames = 1;
-    for(int i = 0; i < source->height; i++)
-    {
-        for(int j = 0; j < source->width; j++)
+    // if(mapOnScreen == false)
+    // {
+        mapOnScreen = true;
+        int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
+        char **names = (char **) calloc(1, sizeof(char *));
+        int cNames = 1;
+        for(int i = 0; i < source->height; i++)
         {
-            switch (mode)
+            for(int j = 0; j < source->width; j++)
             {
-            case MODE_HEIGHT:
-                tiles[i * source->width + j] = source->tiles[i][j].elevation;
-                break;
-            case MODE_UNITS:
-                if(source->tiles[i][j].isSpawnA == true)
-                    tiles[i * source->width + j] = MAP_MODE_A;
-                else if(source->tiles[i][j].isSpawnB == true)
-                    tiles[i * source->width + j] = MAP_MODE_B;
-                else tiles[i * source->width + j] = MAP_MODE_NULL;
-                break;
-            case MODE_TERRAIN:
-                tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
-                break;
-            }
-            if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name
-            {   
-                names[cNames-1] = source->tiles[i][j].unit.name;
-                names = (char **) realloc(names, ++cNames * sizeof(char *));
-                tiles[i * source->width + j] = MAP_MODE_CHAR;
+                switch (mode)
+                {
+                case MODE_HEIGHT:
+                    tiles[i * source->width + j] = source->tiles[i][j].elevation;
+                    break;
+                case MODE_UNITS:
+                    if(source->tiles[i][j].isSpawnA == true)
+                        tiles[i * source->width + j] = MAP_MODE_A;
+                    else if(source->tiles[i][j].isSpawnB == true)
+                        tiles[i * source->width + j] = MAP_MODE_B;
+                    else tiles[i * source->width + j] = MAP_MODE_NULL;
+                    break;
+                case MODE_TERRAIN:
+                    tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
+                    break;
+                }
+                if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name
+                {   
+                    names[cNames-1] = source->tiles[i][j].unit.name;
+                    names = (char **) realloc(names, ++cNames * sizeof(char *));
+                    tiles[i * source->width + j] = MAP_MODE_CHAR;
+                }
             }
         }
-    }
-    COORD pos = {0, 8};
-    if(skipBanner == true)
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    print_Map(source->height, source->width, tiles, names);
-    free(tiles);
-    free(names);
-    if(skipBanner == true)
-        reset_Cursor();
-   return;
+        COORD pos = {0, 8};
+        if(skipBanner == true)
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+        print_Map(source->height, source->width, tiles, names);
+        free(tiles);
+        free(names);
+        if(skipBanner == true)
+            reset_Cursor();
+    //}
+    //else
+    //{
+//
+    //}
+    return;
 }
 
 int get_AbsHeigthDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)
