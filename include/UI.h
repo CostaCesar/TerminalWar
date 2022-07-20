@@ -4,7 +4,10 @@
 #include <conio.h>
 #include <Windows.h>
 #include <math.h>
+#include "const.h"
 
+bool firstLine = true;
+short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
 typedef struct P_endStats
 {
     char *name;
@@ -12,6 +15,12 @@ typedef struct P_endStats
     int loss;
     int killed;
 } B_endStats;
+
+void reset_Cursor()
+{
+    COORD pos = {0, 0};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
 
 int get_Digits(int num)
 {
@@ -43,34 +52,57 @@ void toggle_Cursor(bool cursor)
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
 }
 
+void clear_afterMap(short int mHeight)
+{
+    int screenWidth = get_ScreenWidth();
+    COORD pos = {0, 9+mHeight*2};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    printf("                                                                                                                                                                        ");
+    printf("                                                                                                                                                                        ");
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    return;   
+}
+
 void print_Line(char *message)
 {
     int screenWidth = get_ScreenWidth();
 
     if(!message)
     {
-        printf("#");
-        for(int i = 0; i < screenWidth - 2; i++)
-            printf("-");
-        printf("#\n"); 
+        if(firstLine == true)
+        {
+            putchar(201);
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(205);
+            putchar(187);
+        }
+        else
+        {
+            putchar(200);
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(205);
+            putchar(188); 
+        }
+        firstLine = !firstLine;
     }
     else if(message[0] == ' ')
     {
-        printf("|");
+        putchar(186);
         for(int i = 0; i < screenWidth - 2; i++)
-            printf(" ");
-        printf("|\n");
+             printf(" ");
+        putchar(186);
     }
     else
     {
         int msg_len = strlen(message);
-        printf("|");
+        putchar(186);
         for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
-            printf(" ");
-        printf("%s", message);
-        for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
-            printf(" ");
-        printf("|\n");
+             printf(" ");
+         printf("%s", message);
+         for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
+             printf(" ");
+        putchar(186);
+        printf("\n");
     }
     return;
 }
@@ -82,37 +114,6 @@ void print_Message(char *message, bool doWait)
     print_Line(message);
     print_Line(" ");
     print_Line(NULL);
-
-    // int screenWidth = get_ScreenWidth();
-    // int msg_len = strlen(message);
-    
-    // printf("#");
-    // for(int i = 0; i < screenWidth - 2; i++)
-    //     printf("-");
-    // printf("#\n");
-// 
-    // printf("|");
-    //     for(int i = 0; i < screenWidth - 2; i++)
-    //     printf(" ");
-    // printf("|\n");
-// 
-    // printf("|");
-    //     for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
-    //         printf(" ");
-    //     printf("%s", message);
-    //     for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
-    //         printf(" ");
-    // printf("|\n");
-// 
-    //     printf("|");
-    //     for(int i = 0; i < screenWidth - 2; i++)
-    //     printf(" ");
-    // printf("|\n");
-// 
-    // printf("#");
-    // for(int i = 0; i < screenWidth - 2; i++)
-    //     printf("-");
-    // printf("#\n");
 
     if(doWait)
         Sleep(2000);
@@ -128,96 +129,265 @@ char get_KeyPress(bool fLowerCase)
     return out;
 }
 
+void print_Map(short int mHeight, short int mWidth, int* data, char** words)
+{
+    // Top Line
+    bool mapEdge = false, edge = false;
+    int words_I = 0;
+    putchar(218);
+    for(short int i = 0; i < mWidth; i++)
+    {
+        printf("%c%c%c", 196, 196, 196);
+        if(edge == false) putchar(194);
+        else putchar (191);
+
+        if(i == mWidth-2) edge = true;
+    }
+    putchar('\n');
+
+    // Tiles
+    for(short int i = 0; i < mHeight; i++)
+    {
+        edge = false;
+        putchar(179);
+        for(short int j = 0; j < mWidth; j++)
+        {
+            //if(i == yHiLi && j == xHiLi)
+            //    printf("%c%c%c", 219, 219, 219);
+            if(data[i * mWidth + j] == MAP_MODE_A)
+                printf("<A>");
+            else if(data[i * mWidth + j] == MAP_MODE_B)
+                printf("<B>");
+            else if(data[i * mWidth + j] == MAP_MODE_CHAR) // NÃO RODA
+                printf("%.3s", words[words_I++]);
+            else if(data[i * mWidth + j] == MAP_MODE_NULL)
+                printf("   ");
+            else if(data[i * mWidth + j] < 0)
+                printf("%c%c%c", 126, 126, 126);
+            else printf("%3d", data[i * mWidth + j]);
+            putchar(179);
+        }
+        putchar('\n');
+        if(mapEdge == false)
+        {
+            putchar(195);
+            for(short int j = 0; j < mWidth; j++)
+            {
+                printf("%c%c%c", 196, 196, 196);
+                if(edge == false) putchar(197);
+                else putchar(180);
+
+                if(j == mWidth - 2) edge = true;
+            }
+            putchar('\n');
+        }
+        if(i == mHeight - 2) mapEdge = true;
+    }
+
+    // Bottom Line
+    edge = false;
+    putchar(192);
+    for(short int i = 0; i < mWidth; i++)
+    {
+        printf("%c%c%c", 196, 196, 196);
+        if(edge == false) putchar(193);
+        else putchar (217);
+
+        if(i == mWidth-2) edge = true;
+    }
+    putchar('\n');
+    return;
+}
+
+void update_Map(short int mapHeight,short int xUpdate, short int yUpdate, char *data)
+{
+    if(!data)
+        return;
+    HANDLE consoleInfo = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD pos = {1+xUpdate*4, 9+yUpdate*2};
+    int hScreen = get_ScreenHeight();
+    SetConsoleCursorPosition(consoleInfo, pos);
+    printf("%.3s", data);
+    if(pos.Y < hScreen)         // Top of terminal
+        pos.X = 0, pos.Y = 0;
+    else pos.Y -= (hScreen/2);  // Current Location - some offset
+    SetConsoleCursorPosition(consoleInfo, pos);
+    return;
+}
+
 void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitName, int Id, short int X, short int Y, short int moves)
 {
-    int screenWidth = get_ScreenWidth();  
-    int msg_len = 0; 
+    float screenWidth = get_ScreenWidth() / 2.0f;  
+    int msg_len = 0, aux = 0;
+    reset_Cursor();
+    if(screenWidth != ceilf(screenWidth)) aux++;
     
     // Upper Line
-    for(int i = 0; i < screenWidth; i++)
-        printf("=");
+    putchar(201);
+    for(int i = 0; i < ceilf(screenWidth) - 2; i++)
+        putchar(205);
+    putchar(203);
+    for(int i = 0; i < floorf(screenWidth) - 1; i++)
+        putchar(205);
+    putchar(187);
     printf("\n");
     
     // Map name
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 2; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 1; i++)
         printf(" ");
     printf("%s", mapName);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(strlen(mapName) / 2.0f) - 2; i++)
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - ceilf(strlen(mapName) / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    // -> Comands
+    msg_len = strlen("[NumPad] Move Unit | [F] Fire At Enemy Unit");
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    printf("[NumPad] Move Unit | [F] Fire At Enemy Unit");
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - floor(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    putchar(186);
+    printf("\n");
 
     // Turn
     msg_len = strlen("Turn ") + get_Digits(turns);
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 2; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
         printf(" ");
     printf("Turn %d", turns);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 2; i++)
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    // -> Comands
+    msg_len = strlen("[Esc] Exit To Menu | [A] Set Tile As Target");
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    printf("[Esc] Exit To Menu | [A] Set Tile As Target");
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - floorf(msg_len  / 2.0f) - 1; i++)
+        printf(" ");
+    putchar(186);
+    printf("\n");
 
     // Side
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(side) / 2.0f) - 8; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(strlen(side) / 2.0f) - 7; i++)
         printf(" ");
     if(isPlayer)
         printf("(You) ");
     else
         printf("      ");
     printf("%s", side);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(strlen(side) / 2.0f) - 2; i++)
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - ceilf(strlen(side) / 2.0f) - 1; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    // -> Comands
+    msg_len = strlen("[W] View Unit Wiki | [S] Set Unit As Target");
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    printf("[W] View Unit Wiki | [S] Set Unit As Target");
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - floorf(msg_len  / 2.0f) - 1; i++)
+        printf(" ");
+    putchar(186);
+    printf("\n");
 
     // Unit name
     int j = 0;
-    printf("||");
-    for(j = 0; j < ceilf(screenWidth / 2.0f) - 11; j++)
+    putchar(186);
+    for(j = 0; j < ceilf(screenWidth / 2.0f) - 10; j++)
         printf(" ");
     printf("[%04d] <||> %s", Id, unitName);
-    for(j = 0; j < floorf(screenWidth / 2.0f) - strlen(unitName) - 5; j++)
+    for(j = 0; j < aux + floorf(screenWidth / 2.0f) - strlen(unitName) - 4; j++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    // -> Comands
+    msg_len = strlen("[G] Get Tile Stats | [D] Current Unit Stats");
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    printf("[G] Get Tile Stats | [D] Current Unit Stats");
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - floorf(msg_len  / 2.0f) - 1; i++)
+        printf(" ");
+    putchar(186);
+    printf("\n");
 
     // Unit position
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - 10; i++)
+    putchar(186);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - 9; i++)
         printf(" ");
     printf("%3dX  <||>%3dY", X, Y);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - 8; i++)
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - 7; i++)
         printf(" ");
-    printf("||\n");
+    putchar(186);
+    // -> Comands
+    msg_len = strlen("[E] Build Trenches | [Enter] Skip Your Turn");
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    printf("[E] Build Trenches | [Enter] Skip Your Turn");
+    for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - floorf(msg_len  / 2.0f) - 1; i++)
+        printf(" ");
+    putchar(186);
+    printf("\n");
 
     // Moves left
-    msg_len = get_Digits(moves) + 11;
-    printf("||");
-    for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 2; i++)
-        printf(" ");
-    printf("%d Moves Left", moves);
-    for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 2; i++)
-        printf(" ");
-    printf("||\n");
+    putchar(186);
+    if(moves > -1)
+    {
+        msg_len = get_Digits(moves) + 11;
+        for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+            printf(" ");
+        printf("%d Moves Left", moves);
+        for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
+            printf(" ");
+        putchar(186);
+        // -> Comands
+        msg_len = strlen("[XXX] PLACEHOLDER1 | [XXX] BIG_PLACEHOLDER2");
+        for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+            printf(" ");
+        printf("[XXX] PLACEHOLDER1 | [XXX] BIG_PLACEHOLDER2");
+        for(int i = 0; i < aux + floorf(screenWidth / 2.0f) - floorf(msg_len  / 2.0f) - 1; i++)
+            printf(" ");
+    }
+    else
+    {
+        for(int i = 0; i < aux + screenWidth - 2; i++)
+            printf(" ");
+    }
+    putchar(186);
+    printf("\n");
 
     // Lower Line
-    for(int i = 0; i < screenWidth; i++)
-        printf("=");
+    putchar(200);
+    for(int i = 0; i < ceilf(screenWidth) - 2; i++)
+        putchar(205);
+    putchar(202);
+    for(int i = 0; i < floorf(screenWidth) - 1; i++)
+        putchar(205);
+    putchar(188);
     // if(screenWidth % 2 == 0)
     //     printf("=");
-
+    putchar('\n');
     return;
 }
 
-void info_Bottom()
-{
-    printf("===============================================\n");
-    printf("| [NumPad] Move Unit | [F] Fire At Enemy Unit |\n");
-    printf("| [Esc] Exit To Menu | [A] Set Tile As Target |\n");
-    printf("| [W] View Unit Wiki | [S] Set Unit As Target |\n");
-    printf("| [G] Get Tile Stats | [D] Current Unit Stats |\n");
-    printf("| [E] Build Trenches | [Enter] Skip Your Turn |\n");
-    printf("===============================================\n"); 
-}
+// void info_Bottom()
+// {
+//     putchar(201);
+//     for(int i = 0; i < 45; i++)
+//         putchar(205);
+//     putchar(187);
+//     printf("\n");
+//     printf("%c [NumPad] Move Unit | [F] Fire At Enemy Unit %c\n", 186, 186);
+//     printf("%c [Esc] Exit To Menu | [A] Set Tile As Target %c\n", 186, 186);
+//     printf("%c [W] View Unit Wiki | [S] Set Unit As Target %c\n", 186, 186);
+//     printf("%c [G] Get Tile Stats | [D] Current Unit Stats %c\n", 186, 186);
+//     printf("%c [E] Build Trenches | [Enter] Skip Your Turn %c\n", 186, 186);
+//     printf("%c [XXX] PLACEHOLDER1 | [XXX] BIG_PLACEHOLDER2 %c");
+//     putchar(200);
+//     for(int i = 0; i < 45; i++)
+//         putchar(205);
+//     putchar(188);
+//     printf("\n");
+// }
 
 int screen_Menu(float version)
 {

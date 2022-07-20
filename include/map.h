@@ -105,6 +105,11 @@ typedef struct S_Map
     B_Tile **tiles;
 } B_Map;
 
+bool mapOnScreen = false;
+
+void reset_Map()
+{ mapOnScreen == false; return; }
+
 float calcDistance(B_Tile A, B_Tile B)
 {
     return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
@@ -218,100 +223,56 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
-void show_Map(B_Map *source, int mode)
+void show_Map(B_Map *source, int mode, bool skipBanner)
 {
-    // Printing upper division line
-    printf("\n");
-    for(int i = 0; i < source->width * 2 + 4; i++)
-    {
-        printf("I ");
-    }
-    printf("\n   X ");
-    
-    // Printing X coordinates
-    for(int i = 0; i < source->width; i++)
-    {
-        printf("\\%2d/", i);
-    }
-    printf("\n  Y  ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf(" \\/ ");
-    }
-    printf("\n");
-
-    // Printing map & Y coordinates
-    for(int i = 0; i < source->height; i++)
-    {
-        for(int j = 0; j < source->width; j++)
+    // if(mapOnScreen == false)
+    // {
+        mapOnScreen = true;
+        int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
+        char **names = (char **) calloc(1, sizeof(char *));
+        int cNames = 1;
+        for(int i = 0; i < source->height; i++)
         {
-            
-            if(j == 0) // Coordinates here
+            for(int j = 0; j < source->width; j++)
             {
-                printf("%3d >", i);
-            }
-            if(source->tiles[i][j].unit.ID != NO_UNIT)
-            {
-                // Units here
-                printf("|%.2s|", source->tiles[i][j].unit.name);
-            }
-            else
-            {
-                if(mode == MODE_HEIGHT)
-                    printf("|%2d|", source->tiles[i][j].elevation);
-                else if(mode ==  MODE_TERRAIN)
-                    printf("|%-2d|", source->tiles[i][j].terrain);
-                else if(mode ==  MODE_VEGETAT)
-                    printf("|%02d|", source->tiles[i][j].vegetation);
-                else if(mode == MODE_UNITS)
+                switch (mode)
                 {
-                    if(source->tiles[i][j].node.isVisited == true)
-                        printf("|##|");
-                    // Printing spawns areas
-                    else if(source->tiles[i][j].isSpawnA == true)
-                        printf("|*1|");
+                case MODE_HEIGHT:
+                    tiles[i * source->width + j] = source->tiles[i][j].elevation;
+                    break;
+                case MODE_UNITS:
+                    if(source->tiles[i][j].isSpawnA == true)
+                        tiles[i * source->width + j] = MAP_MODE_A;
                     else if(source->tiles[i][j].isSpawnB == true)
-                        printf("|*2|");      
-                    else if(source->tiles[i][j].unit.ID == NO_UNIT)
-                        printf("|  |");
-                    else if(source->tiles[i][j].unit.ID >= 0)
-                        printf("|%.2s|", source->tiles[i][j].unit.name);
+                        tiles[i * source->width + j] = MAP_MODE_B;
+                    else tiles[i * source->width + j] = MAP_MODE_NULL;
+                    break;
+                case MODE_TERRAIN:
+                    tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
+                    break;
+                }
+                if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name
+                {   
+                    names[cNames-1] = source->tiles[i][j].unit.name;
+                    names = (char **) realloc(names, ++cNames * sizeof(char *));
+                    tiles[i * source->width + j] = MAP_MODE_CHAR;
                 }
             }
         }
-        
-        // Creating horizontal lines
-        printf("\n");
-        if(i < source->height - 1)
-        {
-            for (int k = 0; k < source->width * 4 + 6; k++)
-            {
-            printf("-");
-            }
-            printf("\n");
-        }   
-    }
-
-    // Printing X coordinates (again)
-    printf("  Y  ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf(" /\\ ");
-    }
-    printf("\n   X ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf("/%2d\\", i);
-        
-    }
-    printf("\n");
-    
-    // Printing bottom division line
-    for(int i = 0; i < source->width * 2 + 4; i++)
-    {
-        printf("I ");
-    }
-    printf("\n");
+        COORD pos = {0, 8};
+        if(skipBanner == true)
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+        print_Map(source->height, source->width, tiles, names);
+        free(tiles);
+        free(names);
+        if(skipBanner == true)
+            reset_Cursor();
+    //}
+    //else
+    //{
+//
+    //}
+    return;
 }
 
 int get_AbsHeigthDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)
@@ -356,10 +317,6 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     // Checking if coordiantes are valid
     if((unitPos->X < 0 || unitPos->X >= source_Map->width) || (unitPos->Y  < 0 || unitPos->Y  >= source_Map->height))
     {
-        // printf("\n");
-        // printf("#================================# \n");
-        // printf("| Coordinates out of boundaries! | \n");
-        // printf("#================================# \n");
         print_Message("Coordinates out of boundaries!", true);       
         return FUNCTION_FAIL;
     }
@@ -370,10 +327,6 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         char msg[24];
         snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unitPos->X, unitPos->Y);
         print_Message(msg, true);
-        // printf("\n");
-        // printf("#================================# \n");
-        // printf("| Nothing in %3dX %3dY        | \n", unit_Pos->X, unit_Pos->Y);
-        // printf("#================================# \n");
         return FUNCTION_FAIL;
     }
 
@@ -436,14 +389,9 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) != (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
-        {
-            char msg[31];   
-            snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", destPos.X, destPos.Y);
-            print_Message(msg, true);
             return OUT_COMBAT;
-        }
         
-        short int mCost = 1;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
+        short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
         source_Map->tiles[destPos.Y][destPos.X].unit = destPos;
         source_Map->tiles[unitPos->Y][unitPos->X].unit.ID = NO_UNIT;
@@ -579,15 +527,18 @@ bool unit_Retreat(Map_Unit* unit, B_Map* map)
 
     // Trying to move foward, then diagonals
     B_Tile* adj = get_AdjTile(map, *unit, direction, true);
-    if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction);
+    if((adj) && adj->unit.ID == NO_UNIT)
+        hasMoved = move_Unit(map, unit, direction);
     if (hasMoved == false)
     {
         adj = get_AdjTile(map, *unit, direction -1, true);
-        if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction -1);
+        if((adj) && adj->unit.ID == NO_UNIT)
+            hasMoved = move_Unit(map, unit, direction -1);
         if (hasMoved == false)
         {
             adj = get_AdjTile(map, *unit, direction +1, true);
-            if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction +1);
+            if((adj) && adj->unit.ID == NO_UNIT)
+                hasMoved = move_Unit(map, unit, direction +1);
             if (hasMoved == false)
                 return false;
         }

@@ -1,8 +1,10 @@
 // common
 #define STRING_NAME (50 + 1)
 #define STRING_FILE (20 + 1)
-#define FUNCTION_FAIL 0
-#define FUNCTION_SUCESS 1
+#define FUNCTION_FAIL -2
+#define FUNCTION_SUCESS -1
+#define TIME_MAP 1000
+#define TIME_STRATEGY 2000
 
 // Keys
 #define KEY_ESCAPE 27
@@ -37,3 +39,9 @@
 #define MODE_TERRAIN 1
 #define MODE_VEGETAT 2
 #define MODE_UNITS 3
+
+// UI.h
+#define MAP_MODE_NULL -4
+#define MAP_MODE_A -5
+#define MAP_MODE_B -6
+#define MAP_MODE_CHAR -7

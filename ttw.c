@@ -178,9 +178,9 @@ void show_gUnit(B_Unit *unit)
 
     print_Line(" ");
     if (unit->inCombat == true)
-        print_Line(" <!> Engaged In Combat ");
-    if (unit->inCombat == true)
-        print_Line(" <!> Retreating ");
+        print_Line("<!> Engaged In Combat");
+    if (unit->isRetreating == true)
+        print_Line("<!> Retreating");
     print_Line(NULL);
 }
 
@@ -225,7 +225,7 @@ int placementMenu(B_Map *map, B_Side *Side)
         }
         printf("\n");
 
-        show_Map(map, mode);
+        show_Map(map, mode, false);
         printf("===========================================\n");
         printf("| [T] Change Map Type  | [A] Place A Unit |\n");
         printf("| [Esc] Exit To Menu   | [M] Replace Unit |\n");
@@ -254,6 +254,7 @@ int placementMenu(B_Map *map, B_Side *Side)
             toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
             scanf(" %d", &out);
+            toggle_Cursor(false);
 
             Index = get_UnitIndex(Side, out);
             if (Index > -1 && (Side->units[Index].position.X < 0 && Side->units[Index].position.Y < 0))
@@ -292,6 +293,7 @@ int placementMenu(B_Map *map, B_Side *Side)
             toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
             scanf("%d", &out);
+            toggle_Cursor(false);
 
             Index = get_UnitIndex(Side, out);
             if (Index > -1 && (Side->units[Index].position.X > -1 && Side->units[Index].position.Y > -1))
@@ -332,6 +334,7 @@ int placementMenu(B_Map *map, B_Side *Side)
             toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
             scanf("%d", &out);
+            toggle_Cursor(false);
 
             Index = get_UnitIndex(Side, out);
             if (Index > -1 && (Side->units[Index].position.X > -1 && Side->units[Index].position.Y > -1))
@@ -382,8 +385,9 @@ int main(/*int argc, char** argv*/)
 
     int unit_TableSize = 0, out = 0;
     extern short int A_Loss, B_Loss;
+    extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
-    B_Unit *unit_Table = getFile_Unit("units/new.bin", &unit_TableSize);
+    B_Unit *unit_Table = getFile_Unit("units/new2.bin", &unit_TableSize);
 
     // Side_A
     B_endStats Status_A = {0};
@@ -403,7 +407,7 @@ startMenu:
         {
         case 'i':
             // Setting up map & units
-            out = getFile_Map("maps/new.map", &battleMap);
+            out = getFile_Map("maps/Catalon.map", &battleMap);
             if (out != FUNCTION_SUCESS)
                 return FUNCTION_FAIL;
 
@@ -418,32 +422,23 @@ startMenu:
         break;
     } while (1);
 
+    xHiLi = NO_UNIT, yHiLi = NO_UNIT;
     Side_A.units = (B_Unit *)malloc(sizeof(B_Unit));
     strcpy(Side_A.name, "Greeks");
     Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
     strcpy(Side_B.name, "Gauls");
     Status_A.name = Side_A.name, Status_B.name = Side_B.name;
 
-    // Status_A.deployed = 5000, Status_B.deployed = 200;
-    // Status_A.killed = 300, Status_B.killed = 2345;
-    // screen_Victory(Status_B, Status_A);
-    // while (get_KeyPress(false) != KEY_ENTER) continue;
-
     // Setting up some units
     set_fUnitTable(unit_Table, 0, &Side_A);
-    set_fUnitTable(unit_Table, 0, &Side_A);
+    set_fUnitTable(unit_Table, 4, &Side_A);
     set_fUnitTable(unit_Table, 0, &Side_A);
     set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 2, &Side_B);
-    // set_fUnitTable(unit_Table, 0, &Side_A);
-    // set_fUnitTable(unit_Table, 0, &Side_A);
-    // set_fUnitTable(unit_Table, 2, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
+    set_fUnitTable(unit_Table, 1, &Side_B);
+    set_fUnitTable(unit_Table, 2, &Side_B);
 
     // Placing AI on Map
-    Map_Unit unitB;
+    Map_Unit unitB, unitA;
     for (int i = 0; i < Side_B.size; i++)
     {
         unitB = def_Unit(&Side_B.units[i], &battleMap);
@@ -458,121 +453,201 @@ startMenu:
 
     // Getting deployed troops
     for (int i = 0; i < Side_A.size; i++)
-        Status_A.deployed += Side_A.units[i].men;
+        if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
+            Status_A.deployed += Side_A.units[i].men;
     for (int i = 0; i < Side_B.size; i++)
-        Status_B.deployed += Side_B.units[i].men;
-    Map_Unit unitA;
+        if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
+            Status_B.deployed += Side_B.units[i].men;
 
     // Game Starts
     PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    system("cls");
+    show_Map(&battleMap, MODE_HEIGHT, true);
+    
+    int unitA_I = 0, unitB_I = 0, target_I = 0, moves = 0;
+    B_Tile *position;
+    char action = '\0';
     for (int i = 0; i < TURNS; i++)
     {
-        int unitA_I = 0, unitB_I = 0, moves = 0;
-        B_Tile *position;
-        char action;
-        unitA = set_MapUnit(&Side_A.units[unitA_I]);
+        // Get next unit
+        for(int index = 0; index < Side_A.size; index++)
+        {
+            if(unitA_I >= Side_A.size)
+                unitA_I = 0;
+            if(Side_A.units[unitA_I].position.X == NO_UNIT || Side_A.units[unitA_I].position.Y == NO_UNIT)
+                unitA_I++;
+            else break;
+        }
 
+        unitA = set_MapUnit(&Side_A.units[unitA_I]);
         for (moves = 0; moves < Side_A.units[unitA_I].moves; moves++) // Side_A turn
         {
+            short int xGoal = NO_UNIT, yGoal = NO_UNIT, xTarget = NO_UNIT, yTarget = NO_UNIT;
             int FRes = false;
-            int xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
-            int xTarget = -1, yTarget = -1;
-            system("cls");
+            char msg[STRING_NAME];
+            xHiLi = unitA.X, yHiLi = unitA.Y;
             info_Upper(battleMap.name, i, Side_A.name, true, unitA.name, unitA.ID, unitA.X, unitA.Y, Side_A.units[unitA_I].moves - moves);
-            show_Map(&battleMap, MODE_HEIGHT);
             if (moves < Side_A.units[unitA_I].moves && Side_A.units[unitA_I].isRetreating == false && Side_A.units[unitA_I].inCombat == false)
             {
-                info_Bottom();
-                toggle_Cursor(true);
-                action = get_KeyPress(true);
+                toggle_Cursor(false);
+                while(1)
+                {
+                    if(_kbhit())
+                    {
+                        action = _getch();
+                        break;
+                    }
+                    char msg[3] = {219, 219, 219};
+                    update_Map(battleMap.height, unitA.X, unitA.Y, msg);
+                    Sleep(500);
+                    toggle_Cursor(false);
+                    if(_kbhit())
+                    {
+                        action = _getch();
+                        break;
+                    }
+                    update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
+                    Sleep(500);
+                }
+                COORD pos = {0, 9+battleMap.height*2};
                 if (action >= '0' && action <= '9') // Move to a adjacent tile
                 {
                     tNum_ToDirec(&action);
                     position = get_AdjTile(&battleMap, unitA, action, false);
-                    xGoal = position->unit.X, yGoal = position->unit.Y;
+                    Side_A.units[unitA_I].goal.X = position->unit.X, Side_A.units[unitA_I].goal.Y = position->unit.Y;
                 }
                 else if (action == 'a') // Move to a location
                 {
+                    clear_afterMap(battleMap.height);
                     toggle_Cursor(true);
                     printf(">> Goal coordinates <X Y> \n");
                     printf(" >=> ");
-                    scanf("%hd %hd", &Side_A.units[unitA_I].goal.X, &Side_A.units[unitA_I].goal.Y);
-                    xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
-                    print_Message("Moving to tile!", true);
-                }
-                else if (action == 's') // Intercept a unit
-                {
-                    toggle_Cursor(true);
-                    printf(">> Target unit coordinates <X Y> \n");
-                    printf(" >=> ");
-                    scanf("%hd %hd", &Side_A.units[unitA_I].goal.X, &Side_A.units[unitA_I].goal.Y);
-                    xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
-                    if (xGoal >= 0 && xGoal < battleMap.width && yGoal >= 0 && yGoal < battleMap.height)
+                    scanf("%hd %hd", &xGoal, &yGoal);
+                    toggle_Cursor(false);
+                    if(xGoal < 0 || yGoal < 0 || xGoal >= battleMap.width || yGoal >= battleMap.height)
                     {
-                        unitB = battleMap.tiles[yGoal][xGoal].unit;
-                        if (unitB.ID != NO_UNIT)
-                        {
-                            Side_A.units[unitA_I].chaseID = &unitB.ID;
-                            // unitB_I = get_UnitIndex(&Side_B, unitB.ID);
-                            // xChase = &Side_B.units[unitB_I].position.X, yChase = &Side_B.units[unitB_I].position.Y,
-                            print_Message("Chasing Target!", true);
-                        }
-                        else
-                        {
-                            print_Message("Target Not Found!", true);
-                            xGoal = -1, yGoal = -1, Side_A.units[unitA_I].goal.X = -1, Side_A.units[unitA_I].goal.Y = -1;
-                            moves--;
-                        }
+                        print_Message("Invalid Coords", true);
+                        moves--; continue;
+                    }
+                    else if(!autoMove(&battleMap, &battleMap.tiles[unitA.Y][unitA.Y], &battleMap.tiles[yGoal][xGoal]))
+                    {
+                        snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", xGoal, yGoal);
+                        print_Message(msg, true);
+                        moves--; continue;
                     }
                     else
                     {
-                        print_Message("Invalid Coordinates! ", true);
-                        xGoal = -1, yGoal = -1, Side_A.units[unitA_I].goal.X = -1, Side_A.units[unitA_I].goal.Y = -1;
-                        moves--;
+                        Side_A.units[unitA_I].goal.X = xGoal, Side_A.units[unitA_I].goal.Y = yGoal;
+                        print_Message("Moving to tile!", true);
                     }
                 }
-                else if (action == 'f')
+                else if (action == 's') // Intercept a unit
+                {
+                    clear_afterMap(battleMap.height);
+                    toggle_Cursor(true);
+                    printf(">> Target unit coordinates <X Y> \n");
+                    printf(" >=> ");
+                    scanf("%hd %hd", &xGoal, &yGoal);
+                    toggle_Cursor(false);
+                    if(xGoal < 0 || yGoal < 0 || xGoal >= battleMap.width || yGoal >= battleMap.height)
+                    {
+                        print_Message("Invalid Coords", true);
+                        moves--; continue;
+                    }
+                    else if(battleMap.tiles[yGoal][xGoal].unit.ID == NO_UNIT)
+                    {
+                        print_Message("Target Not Found!", true);
+                        moves--; continue;
+                    }
+                    else if(!autoMove(&battleMap, &battleMap.tiles[unitA.Y][unitA.Y], &battleMap.tiles[yGoal][xGoal]))
+                    {
+                        snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", xGoal, yGoal);
+                        print_Message(msg, true);
+                        moves--; continue;
+                    }
+                    else
+                    {
+                        Side_A.units[unitA_I].goal.X = xGoal, Side_A.units[unitA_I].goal.Y = yGoal;
+                        print_Message("Moving to tile!", true);
+                    }
+                }
+                else if (action == 'f') // Fire at unit
                 {
                     if (Side_A.units[unitA_I].range < 1)
                     {
                         print_Message("This unit can't do ranged attacks!", true);
-                        moves--;
-                        continue;
+                        moves--; continue;
                     }
+                    clear_afterMap(battleMap.height);
                     toggle_Cursor(true);
                     printf(">> Target coodiantes <X Y> \n");
                     printf(" >=> ");
-                    scanf("%d %d", &xTarget, &yTarget);
-                    if (xTarget >= 0 && xTarget < battleMap.width && yTarget >= 0 && yTarget < battleMap.height)
+                    scanf("%hd %hd", &xTarget, &yTarget);
+                    toggle_Cursor(false);
+                    if (xTarget < 0 || xTarget >= battleMap.width || yTarget < 0 || yTarget >= battleMap.height)
                     {
-                        unitB = battleMap.tiles[yTarget][xTarget].unit;
-                        unitB_I = get_UnitIndex(&Side_B, unitB.ID);
-                        int tVeget = getTile_Vegetat(&battleMap, unitB), tHeight = get_HeightDif(&battleMap, unitA, unitB);
-                        short int *tFort = &battleMap.tiles[unitB.Y][unitB.X].fortLevel;
-                        FRes = do_Combat_Ranged(&Side_A.units[unitA_I], &Side_B.units[unitB_I], tHeight, tVeget, tFort);
-                        show_gUnit(&Side_A.units[unitA_I]);
-                        show_gUnit(&Side_B.units[unitB_I]);
-                        printf(">> Press ENTER to continue ");
-                        while (get_KeyPress(false) != KEY_ENTER) continue;
-                        break;
+                        print_Message("Coordinates out of boundaries!", true);
+                        moves--; continue;
+                    }
+                    else if(battleMap.tiles[yTarget][xTarget].unit.ID == NO_UNIT)
+                    {
+                        print_Message("There's nothing to attack here!", true);
+                        moves--; continue;
+                    }
+                    else if(battleMap.tiles[yTarget][xTarget].unit.ID % 2 == unitA.ID % 2)
+                    {
+                        print_Message("These are our own troops Sir!", true);
+                        moves--; continue;
                     }
                     else
                     {
-                        print_Message("Coordinates out of boundaries!", true);
-                        moves--;
+                        unitB = battleMap.tiles[yTarget][xTarget].unit;
+                        // Show
+                        update_Map(battleMap.height, unitA.X, unitA.Y, "XXX");
+                        Sleep(TIME_MAP);
+                        update_Map(battleMap.height, unitB.X, unitB.Y, "OOO");
+                        Sleep(TIME_MAP);
+                        clear_afterMap(battleMap.height);
+                        // Go
+                        target_I = get_UnitIndex(&Side_B, unitB.ID);
+                        int tVeget = getTile_Vegetat(&battleMap, unitB), tHeight = get_HeightDif(&battleMap, unitA, unitB);
+                        short int *tFort = &battleMap.tiles[unitB.Y][unitB.X].fortLevel;
+                        FRes = do_Combat_Ranged(&Side_A.units[unitA_I], &Side_B.units[target_I], tHeight, tVeget, tFort);
+                        // Done
+                        if(FRes == FUNCTION_SUCESS)
+                        {
+                            show_gUnit(&Side_A.units[unitA_I]);
+                            show_gUnit(&Side_B.units[target_I]);
+                            printf(">> Press ENTER to continue ");
+                            Status_A.loss += A_Loss, Status_B.loss += B_Loss;
+                            while (get_KeyPress(false) != KEY_ENTER) continue;
+                            system("cls");
+                            show_Map(&battleMap, MODE_HEIGHT, true);
+                        }
+                        else
+                        {
+                            moves--; break;
+                        }
+                        update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
+                        update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
+                        break;
                     }
                     continue;
                 }
-                else if (action == 'd')
+                else if (action == 'd') // View unit stats
                 {
+                    reset_Cursor();
                     system("cls");
                     show_gUnit(&Side_A.units[unitA_I]);
                     printf(">> Press ENTER to continue \n");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
+                    system("cls");
+                    show_Map(&battleMap, MODE_HEIGHT, true);
                     moves--;
                 }
-                else if (action == 'e')
+                else if (action == 'e') // Fortify
                 {
+                    clear_afterMap(battleMap.height);
                     if (Side_A.units[unitA_I].build_Cap > 0)
                     {
                         out = inc_FortLevel(&battleMap, Side_A.units[unitA_I].build_Cap, unitA);
@@ -585,16 +660,17 @@ startMenu:
                         moves--;
                     }
                 }
-                else if (action == 'g')
+                else if (action == 'g') // See tile stats
                 {
+                    clear_afterMap(battleMap.height);
                     toggle_Cursor(true);
                     printf(">> Target coodiantes <X Y> \n");
                     printf(" >=> ");
-                    scanf("%d %d", &xTarget, &yTarget);
+                    scanf("%hd %hd", &xTarget, &yTarget);
                     getchar();
+                    toggle_Cursor(false);
                     if (xTarget >= 0 && xTarget < battleMap.width && yTarget >= 0 && yTarget < battleMap.height)
                     {
-                        char msg[30];
                         print_Line(NULL);
                         print_Line(" ");
                         snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap.tiles[yTarget][xTarget].terrain));
@@ -611,6 +687,8 @@ startMenu:
                         print_Line(NULL);
                         printf(">> Press ENTER to continue \n");
                         while (get_KeyPress(false) != KEY_ENTER) continue;
+                        system("cls");
+                        show_Map(&battleMap, MODE_HEIGHT, true);
                         moves--;
                     }
                     else
@@ -619,7 +697,7 @@ startMenu:
                         moves--;
                     }
                 }
-                else if (action == KEY_ESCAPE)
+                else if (action == KEY_ESCAPE) // Return to Menu
                 {
                     (void)dealloc_ToMenu();
                     PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
@@ -627,12 +705,16 @@ startMenu:
                 }
                 else if (action == KEY_ENTER) // Next Turn
                 {
+                    if(Side_A.units[unitA_I].goal.X == NO_UNIT || Side_A.units[unitA_I].goal.Y == NO_UNIT)
+                        moves = Side_A.units[unitA_I].moves;
                 }
-                else
+                else // Invalid
                 {
+                    clear_afterMap(battleMap.height);
                     print_Message("Invalid action!", true);
-                    moves--;
+                    moves--; continue;
                 }
+                xGoal = Side_A.units[unitA_I].goal.X, yGoal = Side_A.units[unitA_I].goal.Y;
                 if (xGoal > -1 && yGoal > -1 && xGoal < battleMap.width && yGoal < battleMap.height)
                 {
                     // Change to coordinates of unitB if unitA is chasing
@@ -648,37 +730,66 @@ startMenu:
                         for (int steps = 0; moves < Side_A.units[unitA_I].moves; steps++)
                         {
                             if ((unitA.X == xGoal && unitA.Y == yGoal) || FRes == OUT_COMBAT)
-                                break;
+                            {
+                                Side_A.units[unitA_I].goal.X = NO_UNIT, Side_A.units[unitA_I].goal.Y = NO_UNIT;
+                                moves--; break;
+                            }
                             FRes = move_Unit(&battleMap, &unitA, Side_A.units[unitA_I].path[steps]);
                             if (FRes == OUT_COMBAT)
                             {
+                                // Show
+                                update_Map(battleMap.height, unitA.X, unitA.Y, "XXX");
+                                Sleep(TIME_MAP);
                                 position = get_AdjTile(&battleMap, unitA, Side_A.units[unitA_I].path[0], false);
+                                update_Map(battleMap.height, position->unit.X, position->unit.Y, "OOO");
+                                Sleep(TIME_MAP);
+                                // Glow
+                                system("cls");   
+                                snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", position->unit.X, position->unit.Y);
+                                print_Message(msg, true);
+                                // Go
                                 unitB_I = get_UnitIndex(&Side_B, position->unit.ID);
                                 do_Combat(&Side_A.units[unitA_I], &Side_B.units[unitB_I], get_HeightDif(&battleMap, unitA, unitB), &battleMap.tiles[unitB.Y][unitB.X].fortLevel);
+                                // Done
                                 show_gUnit(&Side_A.units[unitA_I]);
                                 show_gUnit(&Side_B.units[unitB_I]);
                                 Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                                 printf(">> Press ENTER to continue ");
                                 while (get_KeyPress(false) != KEY_ENTER) continue;
+                                system("cls");
+                                show_Map(&battleMap, MODE_HEIGHT, true);
                             }
                             else if (FRes == FUNCTION_FAIL)
-                                moves--;
+                            {
+                                moves--; break;
+                            }
                             else if (FRes > -1)
-                                moves += FRes;
+                            {
+                                pos.X = Side_A.units[unitA_I].position.X, pos.Y = Side_A.units[unitA_I].position.Y;
+                                snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[pos.Y][pos.X].elevation);
+                                update_Map(battleMap.height, Side_A.units[unitA_I].position.X, Side_A.units[unitA_I].position.Y, msg);
+                                moves += FRes+1;
+                            }
                         }
                         free(Side_A.units[unitA_I].path);
                     }
                     else
                     {
+                        clear_afterMap(battleMap.height);
                         print_Message("Can't move in this direction!", true);
                         moves--;
                     }
                 }
+                update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
                 if ((unitA.X == xGoal && unitA.Y == yGoal) || FRes == OUT_COMBAT)
                 {
                     Side_A.units[unitA_I].chaseID = NULL;
                     Side_A.units[unitA_I].goal.X = -1, Side_A.units[unitA_I].goal.Y = -1;
-                    if(position == NULL) print_Message("Auto move disabled!", true);
+                    if(position == NULL)
+                    {
+                        clear_afterMap(battleMap.height);
+                        print_Message("Auto move disabled!", true);
+                    }
                 }
                 position = NULL;
                 update_Unit(&Side_A.units[unitA_I], unitA);
@@ -687,53 +798,78 @@ startMenu:
             else
                 Side_A.units[unitA_I].inCombat = false; 
         }
+        unitA_I++;
 
         unitB = set_MapUnit(&Side_B.units[unitB_I]);
+        xHiLi = NO_UNIT, yHiLi = NO_UNIT;
         for (moves = 0; moves < Side_B.units[unitB_I].moves; moves++) // Side_B turn
         {
+            // show_Map(&battleMap, MODE_HEIGHT);
+            char msg[STRING_NAME];
             int FRes = false;
-            system("cls");
-            info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, Side_B.units[unitB_I].moves - moves);
-            show_Map(&battleMap, MODE_HEIGHT);
-            Sleep(2000);
+            info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, NO_UNIT);
+            update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
+            Sleep(TIME_STRATEGY);
+            COORD pos = {0, 9+battleMap.height*2};
 
             if (moves < Side_B.units[unitB_I].moves && Side_B.units[unitB_I].isRetreating == false && Side_B.units[unitB_I].inCombat == false)
             {
-                if (unitB.Y < 10)
-                    FRes = move_Unit(&battleMap, &unitB, West);
+                if (unitB.Y > 10)
+                {
+                    snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[unitB.Y][unitB.X].elevation);
+                    update_Map(battleMap.height, unitB.X, unitB.Y, msg);
+                    FRes = move_Unit(&battleMap, &unitB, Northeast);
+                }
                 else
+                {
+                    clear_afterMap(battleMap.height);
                     inc_FortLevel(&battleMap, Side_B.units[unitB_I].build_Cap, unitB);
+                }
                 if (FRes == OUT_COMBAT)
                 {
-                    fflush(stdin);
+                    // Show
+                    update_Map(battleMap.height, unitB.X, unitB.Y, "XXX");
+                    Sleep(TIME_MAP);
                     position = get_AdjTile(&battleMap, unitB, West, false);
-                    unitA_I = get_UnitIndex(&Side_A, position->unit.ID);
-                    do_Combat(&Side_B.units[unitB_I], &Side_A.units[unitA_I], get_HeightDif(&battleMap, unitB, unitA), &battleMap.tiles[unitA.Y][unitA.X].fortLevel);
+                    update_Map(battleMap.height, position->unit.X, position->unit.Y, "OOO");
+                    Sleep(TIME_MAP);
+                    // Glow
+                    system("cls");   
+                    snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", position->unit.X, position->unit.Y);
+                    print_Message(msg, true);
+                    // Go
+                    target_I = get_UnitIndex(&Side_A, position->unit.ID);
+                    do_Combat(&Side_B.units[unitB_I], &Side_A.units[target_I], get_HeightDif(&battleMap, unitB, unitA), &battleMap.tiles[unitA.Y][unitA.X].fortLevel);
                     Status_B.loss += A_Loss, Status_A.loss += B_Loss;
-                    show_gUnit(&Side_A.units[unitA_I]);
                     show_gUnit(&Side_B.units[unitB_I]);
+                    show_gUnit(&Side_A.units[target_I]);
                     printf(">> Press ENTER to continue ");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
+                    system("cls");
                 }
                 else if (FRes > -1)
-                    moves += FRes;
+                    moves += FRes+1;
                 update_Unit(&Side_B.units[unitB_I], unitB);
+                update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
             }
             else
                 Side_B.units[unitB_I].inCombat = false;
         }
-        system("cls");
-        info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, 0);
-        show_Map(&battleMap, MODE_HEIGHT);
-        Sleep(2000);
+        info_Upper(battleMap.name, i, Side_B.name, false, unitB.name, unitB.ID, unitB.X, unitB.Y, NO_UNIT);
+        // show_Map(&battleMap, MODE_HEIGHT, true);
+        update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
+        Sleep(TIME_STRATEGY);
 
         // Cheking for retreat
         for (int j = 0; j < Side_A.size && j < Side_B.size; j++)
         {
             bool retreated = true;
+            char msg[STRING_NAME];
             if (Side_A.units[j].isRetreating == true)
             {
                 unitA = set_MapUnit(&Side_A.units[j]);
+                snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[unitA.Y][unitA.X].elevation);
+                update_Map(battleMap.height, unitA.X, unitA.Y, msg);
                 for (int moves = 0; moves < Side_A.units[j].moves; moves++)
                 {
                     retreated = unit_Retreat(&unitA, &battleMap);
@@ -744,11 +880,14 @@ startMenu:
                         delete_Unit(Side_A.units, &Side_A.size, j);
                         break;
                     }
+                    update_Map(battleMap.height, unitA.X, unitA.Y, unitA.name);
                 }
             }
             if (Side_B.units[j].isRetreating == true)
             {
                 unitB = set_MapUnit(&Side_B.units[j]);
+                snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[unitB.Y][unitB.X].elevation);
+                update_Map(battleMap.height, unitB.X, unitB.Y, msg);
                 for (int moves = 0; moves < Side_B.units[j].moves; moves++)
                 {
                     retreated = unit_Retreat(&unitB, &battleMap);
@@ -759,6 +898,7 @@ startMenu:
                         delete_Unit(Side_B.units, &Side_B.size, j);
                         break;
                     }
+                    update_Map(battleMap.height, unitB.X, unitB.Y, unitB.name);
                 }
             }
         }

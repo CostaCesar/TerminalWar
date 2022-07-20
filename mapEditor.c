@@ -164,7 +164,7 @@ int map_Edit(B_Map* map)
     {   
         char mElevat = 'X', mFortif = 'X';
         system("cls");
-        show_Map(map, fMode);
+        show_Map(map, fMode, false);
         printf(">> %s << \n", map->name);
         printf("<Area> \n");
         printf("Ponto 1: %dX - %dY \n", fArea.aPosX, fArea.aPosY);
