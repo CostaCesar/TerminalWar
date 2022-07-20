@@ -527,15 +527,18 @@ bool unit_Retreat(Map_Unit* unit, B_Map* map)
 
     // Trying to move foward, then diagonals
     B_Tile* adj = get_AdjTile(map, *unit, direction, true);
-    if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction);
+    if((adj) && adj->unit.ID == NO_UNIT)
+        hasMoved = move_Unit(map, unit, direction);
     if (hasMoved == false)
     {
         adj = get_AdjTile(map, *unit, direction -1, true);
-        if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction -1);
+        if((adj) && adj->unit.ID == NO_UNIT)
+            hasMoved = move_Unit(map, unit, direction -1);
         if (hasMoved == false)
         {
             adj = get_AdjTile(map, *unit, direction +1, true);
-            if((adj) && adj->unit.ID == NO_UNIT) hasMoved = move_Unit(map, unit, direction +1);
+            if((adj) && adj->unit.ID == NO_UNIT)
+                hasMoved = move_Unit(map, unit, direction +1);
             if (hasMoved == false)
                 return false;
         }
