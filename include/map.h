@@ -510,7 +510,7 @@ B_Tile* get_AdjTile(B_Map* map, Map_Unit unit, T_Direc direction, bool isAI)
 
 bool unit_Retreat(Map_Unit* unit, B_Map* map)
 {
-    bool hasMoved = false;
+    int hasMoved = false;
     T_Direc direction;
 
     // What direction it should move
@@ -529,17 +529,17 @@ bool unit_Retreat(Map_Unit* unit, B_Map* map)
     B_Tile* adj = get_AdjTile(map, *unit, direction, true);
     if((adj) && adj->unit.ID == NO_UNIT)
         hasMoved = move_Unit(map, unit, direction);
-    if (hasMoved == false)
+    if (hasMoved == FUNCTION_FAIL)
     {
         adj = get_AdjTile(map, *unit, direction -1, true);
         if((adj) && adj->unit.ID == NO_UNIT)
             hasMoved = move_Unit(map, unit, direction -1);
-        if (hasMoved == false)
+        if (hasMoved == FUNCTION_FAIL)
         {
             adj = get_AdjTile(map, *unit, direction +1, true);
             if((adj) && adj->unit.ID == NO_UNIT)
                 hasMoved = move_Unit(map, unit, direction +1);
-            if (hasMoved == false)
+            if (hasMoved == FUNCTION_FAIL)
                 return false;
         }
     }

@@ -199,7 +199,7 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
     return;
 }
 
-void update_Map(short int mapHeight,short int xUpdate, short int yUpdate, char *data)
+void update_Map(short int xUpdate, short int yUpdate, char *data)
 {
     if(!data)
         return;

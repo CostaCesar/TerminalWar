@@ -450,6 +450,8 @@ int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vege
     // If attaker != cavalary OR charriot, engage
     if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
         attacker->inCombat = true;
+    // Defender must be engaged
+    // defender->inCombat = true;
 
     // Signaling attack
     system("cls");
