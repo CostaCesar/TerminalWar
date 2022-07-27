@@ -107,6 +107,42 @@ void print_Line(char *message)
     return;
 }
 
+void print_LineOffset(char *message, int offset)
+{
+    int screenWidth = get_ScreenWidth();
+    if(!message)
+    {
+        if(firstLine == true)
+        {
+            putchar(201);
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(205);
+            putchar(187);
+        }
+        else
+        {
+            putchar(200);
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(205);
+            putchar(188); 
+        }
+        firstLine = !firstLine;
+    }
+    else
+    {
+        int msg_len = strlen(message);
+        putchar(186);
+        for(int i = 0; i < offset - 1; i++)
+             printf(" ");
+         printf("%s", message);
+         for(int i = 0; i < screenWidth - offset - msg_len - 1; i++)
+             printf(" ");
+        putchar(186);
+        printf("\n");
+    }
+    return;
+}
+
 void print_Message(char *message, bool doWait)
 {
     print_Line(NULL);
@@ -399,6 +435,70 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
 //     putchar(188);
 //     printf("\n");
 // }
+
+int listScen()
+{
+    system("cls");
+    int nScen = 0;
+    WIN32_FIND_DATA fd;
+    HANDLE handle = FindFirstFile("scenarios/*.txt", &fd);
+    if(handle != INVALID_HANDLE_VALUE)
+    {
+        print_Line(NULL);
+        print_Line(" ");
+        do
+        {
+            if(fd.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY)
+            {
+                nScen++;
+                print_LineOffset(fd.cFileName, 7);
+            }  
+        } while (FindNextFile(handle, &fd));
+        print_Line(" ");
+        print_Line(NULL);
+        FindClose(handle);
+    }
+    else
+        print_Message("Can't load the scenarios folder, get at least one scenario in there!", true);
+    return nScen;
+}
+
+int screen_Scenery()
+{
+    int key = 0, nScen = 0;
+    COORD pos = {3, 2};
+    toggle_Cursor(false);
+    nScen = listScen();
+    do 
+    {
+        pos.X = 3;
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+        printf(">");
+        key = get_KeyPress(false);
+        if(key == -32)
+        {
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            printf(" ");
+            switch ((int) getch())
+            {
+            case 72: // Up
+                pos.Y--;
+                if(pos.Y < 2)
+                    pos.Y = nScen+1;
+                break;
+            case 80: // Down
+                pos.Y++;
+                if(pos.Y > nScen+1)
+                    pos.Y = 2;
+                break;
+            default:
+                break;
+            }
+        }
+        else if( key == KEY_ENTER) break;
+    } while(1);
+    return pos.Y-1;
+}
 
 int screen_Menu(float version)
 {

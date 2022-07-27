@@ -1,0 +1,16 @@
+# Catalon.map
+! new2.bin 
+- Greeks
+0 4 0 4 0
+- Romans
+1 1 1 2 2
+$
+# new.map
+! new2.bin
+- Gauls
+2 2
+- Romans
+1 1 1 1
+* Basic description
+for the map :) *
+

@@ -37,7 +37,10 @@ B_Unit *getFile_Unit(char *path, int *size)
 
 int getFile_Map(char *fPath, B_Map *map)
 {
-    FILE *file = fopen(fPath, "rb");
+    char rPath[STRING_FILE+STRING_NAME] = "maps/";
+    strcat(rPath, fPath);
+
+    FILE *file = fopen(rPath, "rb");
     if (file == NULL)
     {
         fprintf(stderr, "ERROR: File could not be opened! \n");
@@ -193,6 +196,66 @@ int dealloc_ToMenu()
     free(Side_A.units);
     free(Side_B.units);
     Side_A.size = 0, Side_B.size = 0;
+    return FUNCTION_SUCESS;
+}
+
+int load_Scenery(int nScen, int playMap)
+{
+    char file[STRING_NAME+STRING_FILE] = "scenarios/";
+    
+    // Getting file name
+    WIN32_FIND_DATA fd;
+    HANDLE handle = FindFirstFile("scenarios/*.txt", &fd);
+    if(handle == INVALID_HANDLE_VALUE)
+    {
+        print_Message("Can't find scenarios folder!", true);
+        return FUNCTION_FAIL;    
+    }
+    for(int i = 0; i < nScen; i++)
+    {
+        if(i == nScen - 1) strcat(file, fd.cFileName);
+        FindNextFile(handle, &fd);
+    }
+    FindClose(handle);
+
+    // Reading File
+    char reading = 'x';
+    char word[STRING_NAME] = {0};
+    int cMap = 0;
+    FILE *scen = fopen(file, "r");
+    if(!scen)
+    {
+        print_Message("Can't open file!", true);
+        return FUNCTION_FAIL;
+    }
+    while(1)
+    {
+        // Ttraverse the file
+        if(cMap < playMap) 
+        {
+            while(1)
+            {
+                if(fgets(word, sizeof(word), scen) == NULL) // Not in file
+                {
+                    print_Message("Can't find map!", true);
+                    return FUNCTION_FAIL;
+                }
+                else if(word[0] == '$') break;              // Wanted Map Found
+            }
+        }
+        // Get Map
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(word[0] != '#')
+        {
+            print_Message("The map can't be read", true);
+            return FUNCTION_FAIL; 
+        }
+        if(getFile_Map(word+2, &battleMap) == FUNCTION_FAIL) return FUNCTION_FAIL;
+
+        if(feof(scen)) break;
+    }
+    fclose(scen);
     return FUNCTION_SUCESS;
 }
 
@@ -392,7 +455,7 @@ int main(/*int argc, char** argv*/)
     SetConsoleTitle("Total Terminal War");
     toggle_Cursor(false);
 
-    int unit_TableSize = 0, out = 0;
+    int unit_TableSize = 0, cMap = 0, out = 0;
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
@@ -412,7 +475,8 @@ startMenu:
         switch (screen_Menu(VERSION))
         {
         case 'i':
-            // Setting up map & units
+            out = screen_Scenery();
+            load_Scenery(out, cMap);
             out = getFile_Map("maps/Catalon.map", &battleMap);
             if (out != FUNCTION_SUCESS)
                 return FUNCTION_FAIL;
