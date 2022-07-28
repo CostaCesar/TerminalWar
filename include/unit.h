@@ -79,6 +79,7 @@ typedef struct S_Side
     int size;
     int ID;
     B_Pos cCoords;
+    bool canPlace;
     bool isAI;
 } B_Side;
 

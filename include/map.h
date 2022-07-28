@@ -403,7 +403,7 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     return FUNCTION_FAIL;
 }
 
-int put_Unit_OnMap(B_Map *map, Map_Unit *unit)
+int put_Unit_OnMap(B_Map *map, Map_Unit *unit, int ignoreSpawn)
 {
     short int X = unit->X;
     short int Y = unit->Y;
@@ -416,7 +416,7 @@ int put_Unit_OnMap(B_Map *map, Map_Unit *unit)
     }
 
     // Cheking if it's spawn tiles
-    if((!map->tiles[Y][X].isSpawnA && unit->ID % 2 == 0) || (!map->tiles[Y][X].isSpawnB && unit->ID % 2 == 1))
+    if(((!map->tiles[Y][X].isSpawnA && unit->ID % 2 == 0) || (!map->tiles[Y][X].isSpawnB && unit->ID % 2 == 1)) && ignoreSpawn == 0)
     {
         fprintf(stderr, "Not in spawn coordinates!");
         return FUNCTION_FAIL;    

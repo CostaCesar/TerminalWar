@@ -107,6 +107,16 @@ void print_Line(char *message)
     return;
 }
 
+void fillSpace_ToBottom(int offset)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
+    int sHeight = get_ScreenHeight();
+    for(int i = csbi.dwCursorPosition.Y; i < sHeight - offset - 1; i++)
+        print_Line(" ");
+    return;
+}
+
 void print_LineOffset(char *message, int offset)
 {
     int screenWidth = get_ScreenWidth();
@@ -498,6 +508,34 @@ int screen_Scenery()
         else if( key == KEY_ENTER) break;
     } while(1);
     return pos.Y-1;
+}
+
+void screen_TopMap(char *scn_Name, char *map_Name)
+{
+    char word[STRING_NAME+5] = {0};
+
+    system("cls");
+    print_Line(NULL);
+    print_Line(" ");
+    
+    // Scenario Name
+    snprintf(word, sizeof(word), "%c", 218);
+    for(int i = 1; i < strlen(scn_Name)+3; i++)
+        word[i] = 196;
+    word[strlen(scn_Name)+3] = 191;
+    print_Line(word);
+    snprintf(word, sizeof(word), "%c %s %c", 179, scn_Name, 179);
+    print_Line(word);
+    for(int i = 1; i < strlen(scn_Name)+3; i++)
+        word[i] = 196;
+    word[0] = 192; word[strlen(scn_Name)+3] = 217;
+    print_Line(word);
+    
+    print_Line(" ");
+    snprintf(word, sizeof(word), "%c %s %c", 175, map_Name, 174);
+    print_Line(word);
+    print_Line(" ");
+    return;
 }
 
 int screen_Menu(float version)

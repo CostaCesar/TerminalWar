@@ -1,16 +1,35 @@
-# Catalon.map
-! new2.bin 
-- Greeks
-0 4 0 4 0
-- Romans
-1 1 1 2 2
+scenario: The Conquest Of The East
+map: Catalon.map
+mapTitle: At Arduino's Heart
+table: new2.bin
+sideA: Greeks
+placement: chosen
+units: 5
+0
+4
+0
+4
+0
+sideB: Romans
+placement: forced
+units: 5
+1 5 15
+1 6 15
+1 7 15
+2 6 17
+2 6 18
+mapDesc: Not much to say
+I HAVE XD
+#plz subscribe;
 $
+// Não funciona a partir daqui, usar modelo anterior
 # new.map
 ! new2.bin
 - Gauls
 2 2
 - Romans
 1 1 1 1
-* Basic description
-for the map :) *
+* At The Gates Of Constantinople 
+| Here starts the description for your map
+and here it ends :) |
 

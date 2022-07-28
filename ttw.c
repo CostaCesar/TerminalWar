@@ -16,11 +16,15 @@
 B_Map battleMap;
 B_Side Side_A, Side_B;
 B_endStats Status_A = {0}, Status_B = {0};
+B_Unit *unit_Table = NULL;
+int unit_TableSize = 0;
 
 // File->Game functions
 B_Unit *getFile_Unit(char *path, int *size)
 {
-    FILE *file = fopen(path, "rb");
+    char rPath[STRING_FILE+STRING_NAME] = "units/";
+    strcat(rPath, path);
+    FILE *file = fopen(rPath, "rb");
     if (file == NULL)
     {
         fprintf(stderr, "ERROR: could not open file <%s>! \n", path);
@@ -78,6 +82,7 @@ void set_fUnitTable(B_Unit *table, int index, B_Side *side)
     side->units[pos] = table[index];
     side->units[pos].faction = side->name;
     side->units[pos].ID = pos * 2 + side->ID;
+    return;
 }
 
 // Map<->Unit functions
@@ -91,9 +96,14 @@ Map_Unit set_MapUnit(B_Unit *source)
     return choke;
 }
 
-Map_Unit def_Unit(B_Unit *unit, B_Map *map)
+Map_Unit def_Unit(B_Unit *unit, B_Map *map, bool ignoreSpawn)
 {
     Map_Unit out = {-1, -1, NO_UNIT, "\0"};
+    if(ignoreSpawn == true && unit->position.X > NO_UNIT && unit->position.Y > NO_UNIT)
+    {
+        out = set_MapUnit(unit);
+        return out;
+    }
     for (int i = 0; i < map->height; i++)
         for (int j = 0; j < map->width; j++)
         {
@@ -202,6 +212,7 @@ int dealloc_ToMenu()
 int load_Scenery(int nScen, int playMap)
 {
     char file[STRING_NAME+STRING_FILE] = "scenarios/";
+    int output = FUNCTION_SUCESS;
     
     // Getting file name
     WIN32_FIND_DATA fd;
@@ -219,18 +230,17 @@ int load_Scenery(int nScen, int playMap)
     FindClose(handle);
 
     // Reading File
-    char reading = 'x';
-    char word[STRING_NAME] = {0};
-    int cMap = 0;
+    char word[STRING_NAME*3] = {0}, scen_Name[STRING_NAME] = {0}, scen_Map[STRING_NAME] = {0};
+    int cMap = 0, strBuff = 0, unit_N = NO_UNIT;
     FILE *scen = fopen(file, "r");
     if(!scen)
     {
         print_Message("Can't open file!", true);
         return FUNCTION_FAIL;
     }
-    while(1)
+    while(!feof(scen))
     {
-        // Ttraverse the file
+        // Traverse the file
         if(cMap < playMap) 
         {
             while(1)
@@ -238,25 +248,208 @@ int load_Scenery(int nScen, int playMap)
                 if(fgets(word, sizeof(word), scen) == NULL) // Not in file
                 {
                     print_Message("Can't find map!", true);
-                    return FUNCTION_FAIL;
+                    output = FUNCTION_FAIL; break;
                 }
                 else if(word[0] == '$') break;              // Wanted Map Found
             }
         }
+        // Get Scenario Name
+        strBuff = strlen("scenario: ");
+        fgets(scen_Name, sizeof(scen_Name), scen);
+        scen_Name[strlen(scen_Name)-1] = '\0';
+        if(strlen(scen_Name) < strBuff)
+        {
+            print_Message("Invalid Scenario Title!", true);
+            output = FUNCTION_FAIL; break;
+        }
+        strcpy(scen_Name, scen_Name+strBuff);
         // Get Map
+        strBuff = strlen("map: ");
         fgets(word, sizeof(word), scen);
         word[strlen(word)-1] = '\0';
-        if(word[0] != '#')
+        if(strlen(word) < strBuff)
         {
-            print_Message("The map can't be read", true);
-            return FUNCTION_FAIL; 
+            print_Message("The map can't be read!", true);
+            output = FUNCTION_FAIL; break; 
         }
-        if(getFile_Map(word+2, &battleMap) == FUNCTION_FAIL) return FUNCTION_FAIL;
+        if(getFile_Map(word+strBuff, &battleMap) == FUNCTION_FAIL){ output = FUNCTION_FAIL; break; }
+        // Get Map Name (for player)
+        strBuff = strlen("mapTitle: ");
+        fgets(scen_Map, sizeof(scen_Map), scen);
+        scen_Map[strlen(scen_Map)-1] = '\0';
+        if(strlen(scen_Map) < strBuff)
+        {
+            print_Message("Can't load map title!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        strcpy(scen_Map, scen_Map+strBuff);
+        // Get Unit Table
+        strBuff = strlen("table: ");
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(strlen(word) < strBuff)
+        {
+            print_Message("Can't load the units!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        unit_Table = getFile_Unit(word+strBuff, &unit_TableSize);
+        if(!unit_Table){ output = FUNCTION_FAIL; break; }
+        
+        // Get side_A stats
+        // Name
+        strBuff = strlen("sideA: ");
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(strlen(word) < strBuff)
+        {
+            print_Message("Can't load Side_A name!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        strcpy(Side_A.name, word+strBuff);
+        // How to place units
+        strBuff = strlen("placement: ");
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(strlen(word) < strBuff)
+        {
+            print_Message("Can't read Side_A placement!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        if(word[strBuff] == 'c' || word[strBuff] == 'C') Side_A.canPlace = true;
+        else if(word[strBuff] == 'f' || word[strBuff] == 'F') Side_A.canPlace = false;
+        else
+        {
+            print_Message("Can't load Side_A placement!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        // Get units in map
+        // Quantity
+        strBuff = strlen("units: ");
+        fgets(word, strBuff, scen); // Ignore this part of parameter
+        fscanf(scen, "%c", &word[0]);
+        if(word[0] != ' ')
+        {
+            print_Message("Can't read Side_A placement!", true);
+            output = FUNCTION_FAIL; break;  
+        }
+        fscanf(scen, "%d", &unit_N);
+        if(unit_N < 1)
+        {
+            print_Message("Can't load Side_A placement!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        // Unit
+        if(Side_A.canPlace == true)
+        {
+            for(int i = 0; i < unit_N; i++)
+            {
+                int index = NO_UNIT;
+                fscanf(scen, "%d", &index);
+                set_fUnitTable(unit_Table, index, &Side_A);
+                fgets(word, sizeof(word), scen);    // Get rid of anything until \n
+            }
+        }
+        else
+        {
+            for(int i = 0; i < unit_N; i++)
+            {
+                int unit_I = NO_UNIT, unit_X = NO_UNIT, unit_Y = NO_UNIT;
+                fscanf(scen, "%d %d %d", &unit_I, &unit_X, &unit_Y);
+                set_fUnitTable(unit_Table, unit_I, &Side_A);
+                Side_A.units[i].position.X = unit_X, Side_A.units[i].position.Y = unit_Y;
+                fgets(word, sizeof(word), scen);    // Get rid of anything until \n
+            }            
+        }
 
-        if(feof(scen)) break;
+        // Side_B
+        // Name
+        strBuff = strlen("sideA: ");
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(strlen(word) < strBuff)
+        {
+            print_Message("Can't load Side_B name!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        strcpy(Side_B.name, word+strBuff);
+        // How to place units
+        strBuff = strlen("placement: ");
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(strlen(word) < strBuff)
+        {
+            print_Message("Can't read Side_B placement!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        if(word[strBuff] == 'c' || word[strBuff] == 'C') Side_B.canPlace = true;
+        else if(word[strBuff] == 'f' || word[strBuff] == 'F') Side_B.canPlace = false;
+        else
+        {
+            print_Message("Can't load Side_B placement!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        // Get units in map
+        // Quantity
+        strBuff = strlen("units: ");
+        fgets(word, strBuff, scen); // Ignore this part of parameter
+        fscanf(scen, "%c", &word[0]);
+        if(word[0] != ' ')
+        {
+            print_Message("Can't read Side_B placement!", true);
+            output = FUNCTION_FAIL; break;  
+        }
+        fscanf(scen, "%d", &unit_N);
+        if(unit_N < 1)
+        {
+            print_Message("Can't load Side_B placement!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        // Unit
+        if(Side_B.canPlace == true)
+        {
+            for(int i = 0; i < unit_N; i++)
+            {
+                int index = NO_UNIT;
+                fscanf(scen, "%d", &index);
+                set_fUnitTable(unit_Table, index, &Side_B);
+                fgets(word, sizeof(word), scen);    // Get rid of anything until \n
+            }
+        }
+        else
+        {
+            for(int i = 0; i < unit_N; i++)
+            {
+                int unit_I = NO_UNIT, unit_X = NO_UNIT, unit_Y = NO_UNIT;
+                fscanf(scen, "%d %d %d", &unit_I, &unit_X, &unit_Y);
+                set_fUnitTable(unit_Table, unit_I, &Side_B);
+                Side_B.units[i].position.X = unit_X, Side_B.units[i].position.Y = unit_Y;
+                fgets(word, sizeof(word), scen);    // Get rid of anything until \n
+            }            
+        }
+        // Printing results
+        screen_TopMap(scen_Name, scen_Map);
+        // Map Description
+        strBuff = strlen("mapDesc: ");
+        fgets(word, strBuff+1, scen);
+        if(word[0] != '$') 
+        {
+            do
+            {
+                fgets(word, sizeof(word), scen);
+                if(word[0] == '$') break;
+                word[strlen(word)-1] = '\0';
+                print_Line(word);
+            } while (!feof(scen));
+            print_Line(" ");
+            fillSpace_ToBottom(3);
+            print_Line("[ARROW KEY] Change map | [ENTER] Select Map");
+            print_Line(" ");
+            print_Line(NULL);
+        }
+        break;
     }
     fclose(scen);
-    return FUNCTION_SUCESS;
+    return output;
 }
 
 int placementMenu(B_Map *map, B_Side *Side)
@@ -331,7 +524,7 @@ int placementMenu(B_Map *map, B_Side *Side)
                 toggle_Cursor(false);
 
                 unit = set_MapUnit(&Side->units[Index]);
-                out = put_Unit_OnMap(map, &unit);
+                out = put_Unit_OnMap(map, &unit, false);
                 if (out == FUNCTION_FAIL)
                 {
                     print_Message("Invalid coordinates!", true);
@@ -373,7 +566,7 @@ int placementMenu(B_Map *map, B_Side *Side)
                 toggle_Cursor(false);
 
                 unit = set_MapUnit(&Side->units[Index]);
-                out = put_Unit_OnMap(map, &unit);
+                out = put_Unit_OnMap(map, &unit, false);
                 if (out == FUNCTION_FAIL)
                 {
                     Side->units[Index].position.X = unitPos.X, Side->units[Index].position.Y = unitPos.Y;
@@ -455,11 +648,11 @@ int main(/*int argc, char** argv*/)
     SetConsoleTitle("Total Terminal War");
     toggle_Cursor(false);
 
-    int unit_TableSize = 0, cMap = 0, out = 0;
+    int cMap = 0, out = 0;
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
-    B_Unit *unit_Table = getFile_Unit("units/new2.bin", &unit_TableSize);
+    // unit_Table = getFile_Unit("units/new2.bin", &unit_TableSize);
 
     // Side_A
     Side_A.size = 0, Side_A.ID = 0, Side_A.units = NULL, Side_A.isAI = false;
@@ -476,10 +669,12 @@ startMenu:
         {
         case 'i':
             out = screen_Scenery();
+            Side_A.units = (B_Unit *)malloc(sizeof(B_Unit));
+            Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
             load_Scenery(out, cMap);
-            out = getFile_Map("maps/Catalon.map", &battleMap);
-            if (out != FUNCTION_SUCESS)
-                return FUNCTION_FAIL;
+            // out = getFile_Map("maps/Catalon.map", &battleMap);
+            // if (out != FUNCTION_SUCESS)
+            //     return FUNCTION_FAIL;
 
             // Continue
             break;
@@ -493,26 +688,25 @@ startMenu:
     } while (1);
 
     xHiLi = NO_UNIT, yHiLi = NO_UNIT;
-    Side_A.units = (B_Unit *)malloc(sizeof(B_Unit));
-    strcpy(Side_A.name, "Greeks");
-    Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
-    strcpy(Side_B.name, "Gauls");
     Status_A.name = Side_A.name, Status_B.name = Side_B.name;
 
     // Setting up some units
-    set_fUnitTable(unit_Table, 0, &Side_A);
-    set_fUnitTable(unit_Table, 4, &Side_A);
-    set_fUnitTable(unit_Table, 0, &Side_A);
-    set_fUnitTable(unit_Table, 1, &Side_B);
-    set_fUnitTable(unit_Table, 1, &Side_B);
-    set_fUnitTable(unit_Table, 2, &Side_B);
+    // set_fUnitTable(unit_Table, 0, &Side_A);
+    // set_fUnitTable(unit_Table, 4, &Side_A);
+    // set_fUnitTable(unit_Table, 0, &Side_A);
+    // set_fUnitTable(unit_Table, 1, &Side_B);
+    // set_fUnitTable(unit_Table, 1, &Side_B);
+    // set_fUnitTable(unit_Table, 2, &Side_B);
 
     // Placing AI on Map
     Map_Unit unitB, unitA;
-    for (int i = 0; i < Side_B.size; i++)
+    if(Side_B.isAI == true)
     {
-        unitB = def_Unit(&Side_B.units[i], &battleMap);
-        put_Unit_OnMap(&battleMap, &unitB);
+        for (int i = 0; i < Side_B.size; i++)
+        {
+            unitB = def_Unit(&Side_B.units[i], &battleMap, !Side_B.canPlace);
+            put_Unit_OnMap(&battleMap, &unitB, !Side_B.canPlace);
+        }
     }
     // Placing Player on map
     if (placementMenu(&battleMap, &Side_A) == FUNCTION_FAIL)
@@ -795,14 +989,11 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             while (get_KeyPress(false) != KEY_ENTER) continue;
                             system("cls");
                             show_Map(battleMap, mode, true);
+                            moves = Side_A.units[unitA_I].moves;
                         }
-                        else
-                        {
-                            moves--; break;
-                        }
+                        else moves--;
                         update_Map(unitA.X, unitA.Y, unitA.name);
                         update_Map(unitB.X, unitB.Y, unitB.name);
-                        break;
                     }
                     continue;
                 }
