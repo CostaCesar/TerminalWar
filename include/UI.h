@@ -505,9 +505,12 @@ int screen_Scenery()
                 break;
             }
         }
-        else if( key == KEY_ENTER) break;
+        else if(key == KEY_ENTER) break;
     } while(1);
-    return pos.Y-1;
+    nScen = pos.Y-1;
+    pos.X = 0, pos.Y = nScen+5;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    return nScen;
 }
 
 void screen_TopMap(char *scn_Name, char *map_Name)
@@ -536,6 +539,34 @@ void screen_TopMap(char *scn_Name, char *map_Name)
     print_Line(word);
     print_Line(" ");
     return;
+}
+
+int screen_MapInput(int cMap, int nMaps)
+{
+    int key = '\0';
+    while(1)
+    {
+        key = get_KeyPress(false);
+        if(key == -32)
+        {
+            key = getch();
+            switch (key)
+            {
+            case 77: // Up
+                cMap++;
+                if(cMap >= nMaps) cMap = 0;
+                return cMap;
+            case 75: // Down
+                cMap--;
+                if(cMap < 0) cMap = nMaps-1;
+                return cMap;
+            default:
+                break;
+            }
+        }
+        else if(key == KEY_ENTER) return FUNCTION_SUCESS;
+        else if(key == KEY_ESCAPE) return FUNCTION_FAIL;
+    }
 }
 
 int screen_Menu(float version)

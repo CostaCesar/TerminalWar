@@ -81,6 +81,7 @@ typedef struct S_Side
     B_Pos cCoords;
     bool canPlace;
     bool isAI;
+    bool attacker;
 } B_Side;
 
 // Alloc & Dealloc of Units

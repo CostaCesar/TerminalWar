@@ -2,3 +2,13 @@
 sdfhsdhgaf
 htrsrhwwr
 Isso é um texto normal
+// Não funciona a partir daqui, usar modelo anterior
+# new.map
+! new2.bin
+- Gauls
+2 2
+- Romans
+1 1 1 1
+* At The Gates Of Constantinople 
+| Here starts the description for your map
+and here it ends :) |

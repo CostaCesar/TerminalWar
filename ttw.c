@@ -60,7 +60,8 @@ int getFile_Map(char *fPath, B_Map *map)
     map->tiles = (B_Tile **)calloc(map->height, sizeof(B_Tile *));
     if (map->tiles == NULL)
     {
-        map = NULL;
+        free(map->tiles);
+        map == NULL;
         fprintf(stderr, "ERROR: Not enough memory! \n");
         return FUNCTION_FAIL;
     }
@@ -212,7 +213,7 @@ int dealloc_ToMenu()
 int load_Scenery(int nScen, int playMap)
 {
     char file[STRING_NAME+STRING_FILE] = "scenarios/";
-    int output = FUNCTION_SUCESS;
+    int output = 0;
     
     // Getting file name
     WIN32_FIND_DATA fd;
@@ -231,7 +232,7 @@ int load_Scenery(int nScen, int playMap)
 
     // Reading File
     char word[STRING_NAME*3] = {0}, scen_Name[STRING_NAME] = {0}, scen_Map[STRING_NAME] = {0};
-    int cMap = 0, strBuff = 0, unit_N = NO_UNIT;
+    int cMap = 0, strBuff = 0, unit_N = NO_UNIT, lvlFree = 0;
     FILE *scen = fopen(file, "r");
     if(!scen)
     {
@@ -240,19 +241,6 @@ int load_Scenery(int nScen, int playMap)
     }
     while(!feof(scen))
     {
-        // Traverse the file
-        if(cMap < playMap) 
-        {
-            while(1)
-            {
-                if(fgets(word, sizeof(word), scen) == NULL) // Not in file
-                {
-                    print_Message("Can't find map!", true);
-                    output = FUNCTION_FAIL; break;
-                }
-                else if(word[0] == '$') break;              // Wanted Map Found
-            }
-        }
         // Get Scenario Name
         strBuff = strlen("scenario: ");
         fgets(scen_Name, sizeof(scen_Name), scen);
@@ -263,6 +251,18 @@ int load_Scenery(int nScen, int playMap)
             output = FUNCTION_FAIL; break;
         }
         strcpy(scen_Name, scen_Name+strBuff);
+
+        // Traverse the file in search of chosen map
+        while(cMap < playMap)
+        {
+            if(fgets(word, sizeof(word), scen) == NULL) // Not in file
+            {
+                print_Message("Can't find map!", true);
+                output = FUNCTION_FAIL; break;
+            }
+            else if(word[0] == '$') cMap++;              // Increment map counter
+        }
+
         // Get Map
         strBuff = strlen("map: ");
         fgets(word, sizeof(word), scen);
@@ -273,6 +273,7 @@ int load_Scenery(int nScen, int playMap)
             output = FUNCTION_FAIL; break; 
         }
         if(getFile_Map(word+strBuff, &battleMap) == FUNCTION_FAIL){ output = FUNCTION_FAIL; break; }
+        lvlFree++;
         // Get Map Name (for player)
         strBuff = strlen("mapTitle: ");
         fgets(scen_Map, sizeof(scen_Map), scen);
@@ -294,7 +295,27 @@ int load_Scenery(int nScen, int playMap)
         }
         unit_Table = getFile_Unit(word+strBuff, &unit_TableSize);
         if(!unit_Table){ output = FUNCTION_FAIL; break; }
-        
+        lvlFree++;
+        // Get side attacking
+        strBuff = strlen("attacker: ");
+        fgets(word, sizeof(word), scen);
+        word[strlen(word)-1] = '\0';
+        if(strlen(word) < strBuff)
+        {
+            print_Message("Can't read the side attacking!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+        strBuff = strlen(word);
+        if(word[strBuff-1] == 'A' || word[strBuff-1] == 'a')
+            Side_A.attacker = true, Side_B.attacker = false;
+        else if(word[strBuff-1] == 'B' || word[strBuff-1] == 'b')
+            Side_A.attacker = false, Side_B.attacker = true;
+        else
+        {
+            print_Message("Can't load the side attacking!", true);
+            output = FUNCTION_FAIL; break; 
+        }
+
         // Get side_A stats
         // Name
         strBuff = strlen("sideA: ");
@@ -360,10 +381,11 @@ int load_Scenery(int nScen, int playMap)
                 fgets(word, sizeof(word), scen);    // Get rid of anything until \n
             }            
         }
+        lvlFree++;
 
         // Side_B
         // Name
-        strBuff = strlen("sideA: ");
+        strBuff = strlen("sideB: ");
         fgets(word, sizeof(word), scen);
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
@@ -426,6 +448,7 @@ int load_Scenery(int nScen, int playMap)
                 fgets(word, sizeof(word), scen);    // Get rid of anything until \n
             }            
         }
+        lvlFree++;
         // Printing results
         screen_TopMap(scen_Name, scen_Map);
         // Map Description
@@ -442,13 +465,44 @@ int load_Scenery(int nScen, int playMap)
             } while (!feof(scen));
             print_Line(" ");
             fillSpace_ToBottom(3);
-            print_Line("[ARROW KEY] Change map | [ENTER] Select Map");
+            print_Line("[ARROW KEY] Change map | [ENTER] Select Map | [ESC] Return To Menu");
             print_Line(" ");
             print_Line(NULL);
         }
         break;
     }
+
+    // Treating free levels
+    if(lvlFree != 4)
+    {
+        if(lvlFree > 0) // Map
+        {
+            for(int i = 0; i < battleMap.height; i++)
+                free(battleMap.tiles[i]);
+            free(battleMap.tiles);
+        }
+        if(lvlFree > 1) // Side_B Units
+            free(Side_B.units);
+        if(lvlFree > 2) // Side_A Units
+            free(Side_A.units);
+        if(lvlFree > 3) // Unit Table
+            free(unit_Table);
+    }
+
+    // Get number of maps in scenario
+    if(output != FUNCTION_FAIL)
+    {
+        rewind(scen);
+        while(1)
+        {
+            fgets(word, sizeof(word), scen);
+            if(feof(scen)) break;
+            if(word[0] == '$')
+                output++;
+        }
+    }
     fclose(scen);
+
     return output;
 }
 
@@ -648,7 +702,7 @@ int main(/*int argc, char** argv*/)
     SetConsoleTitle("Total Terminal War");
     toggle_Cursor(false);
 
-    int cMap = 0, out = 0;
+    int nMaps = 0, cScen = 0, cMap = 0, out = 0;
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
@@ -663,15 +717,33 @@ int main(/*int argc, char** argv*/)
     PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 
 startMenu:
+    cMap = 0;
     do
     {
         switch (screen_Menu(VERSION))
         {
         case 'i':
-            out = screen_Scenery();
-            Side_A.units = (B_Unit *)malloc(sizeof(B_Unit));
-            Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
-            load_Scenery(out, cMap);
+            cScen = screen_Scenery();
+            do
+            {   // Scroll through maps
+                Side_A.units = (B_Unit *)malloc(sizeof(B_Unit));
+                Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
+                nMaps = load_Scenery(cScen, cMap);
+                if(nMaps < 1) // Error
+                {
+                    free(Side_A.units), free(Side_B.units);
+                    goto startMenu;
+                }
+                cMap = screen_MapInput(cMap, nMaps);
+                if(cMap == FUNCTION_SUCESS) break;
+                else if(cMap == FUNCTION_FAIL)
+                {
+                    dealloc_ToMenu();
+                    goto startMenu;
+                }
+                else dealloc_ToMenu();
+            } while (1);
+            
             // out = getFile_Map("maps/Catalon.map", &battleMap);
             // if (out != FUNCTION_SUCESS)
             //     return FUNCTION_FAIL;

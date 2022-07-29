@@ -2,6 +2,7 @@ scenario: The Conquest Of The East
 map: Catalon.map
 mapTitle: At Arduino's Heart
 table: new2.bin
+attacker: sideA
 sideA: Greeks
 placement: chosen
 units: 5
@@ -22,14 +23,23 @@ mapDesc: Not much to say
 I HAVE XD
 #plz subscribe;
 $
-// Não funciona a partir daqui, usar modelo anterior
-# new.map
-! new2.bin
-- Gauls
-2 2
-- Romans
-1 1 1 1
-* At The Gates Of Constantinople 
-| Here starts the description for your map
-and here it ends :) |
-
+map: Catalon.map
+mapTitle: At Arduino's Heart II
+table: new2.bin
+attacker: sideA
+sideA: Greeks
+placement: chosen
+units: 3
+0
+4
+0
+sideB: Romans
+placement: forced
+units: 3
+1 5 15
+1 6 15
+2 6 17
+mapDesc: Not much to say
+I HAVE XD
+#this is my 2nd map ;)
+$
