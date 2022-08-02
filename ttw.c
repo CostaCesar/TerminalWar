@@ -1188,6 +1188,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 unitB = position->unit;
                                 target_I = get_UnitIndex(opponent, position->unit.ID);
                                 do_Combat(&player->units[unitA_I], &opponent->units[target_I], get_HeightDif(battleMap, unitA, unitB), &battleMap->tiles[unitB.Y][unitB.X].fortLevel);
+                                moves = player->units[unitA_I].moves;
                                 // Done
                                 show_gUnit(&player->units[unitA_I]);
                                 show_gUnit(&opponent->units[target_I]);
