@@ -23,7 +23,8 @@ typedef enum E_Terrain
     Sand,
     Rock,
     Mud,
-    Water
+    Water,
+    Snow
 } T_Terrain;
 
 typedef enum E_Vegetation
@@ -104,11 +105,6 @@ typedef struct S_Map
     T_Time time;
     B_Tile **tiles;
 } B_Map;
-
-bool mapOnScreen = false;
-
-void reset_Map()
-{ mapOnScreen == false; return; }
 
 float calcDistance(B_Tile A, B_Tile B)
 {
@@ -223,55 +219,125 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
+char *get_MapSprite(B_Tile *tile, int mode)
+{
+    static char msg[4] = {0};
+    if(tile->unit.ID != NO_UNIT)
+    {
+       strcpy(msg, tile->unit.name);
+       return msg;
+    }
+    switch (mode)
+    {
+    case MODE_GRAPHIC:
+        if(tile->elevation < 0)
+            for(int pixel = 0; pixel < 3; pixel++) msg[pixel] = '~';
+        else if(tile->elevation > 4)
+            for(int pixel= 0; pixel < 3; pixel++) msg[pixel] = 219;
+        else if(tile->terrain == Mud)
+            for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 178;
+        else if(tile->terrain == Rock)
+            for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = '#';
+        else if(tile->terrain == Sand)
+            for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 177;
+        else for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 176;
+        switch (tile->vegetation)
+        {
+        case Sparse:
+            msg[rand() % 3] = 213, msg[rand() % 3] = 213;
+            break;
+        case Grove:
+            msg[rand() % 3] = 179, msg[rand() % 3] = 179;
+            break;
+        case Forest:
+            msg[rand() % 3] = 215, msg[rand() % 3] = 215;
+            break;
+        case Jungle:
+            msg[rand() % 3] = 186, msg[rand() % 3] = 186;
+            break;
+        }
+        break;
+    case MODE_HEIGHT:
+        snprintf(msg, sizeof(msg), "%3d", tile->elevation);
+        break;
+    case MODE_VEGETAT:
+        snprintf(msg, sizeof(msg), "%3d", tile->vegetation);
+        break;
+    case MODE_TERRAIN:
+        snprintf(msg, sizeof(msg), "%3d", tile->terrain);
+        break;
+    case MODE_UNITS:
+        if(tile->isSpawnA == true) snprintf(msg, sizeof(msg), "<A>");
+        else if(tile->isSpawnB == true) snprintf(msg, sizeof(msg), "<B>");
+        else snprintf(msg, sizeof(msg), "   ");
+        break;
+    }
+    return msg;
+}
+
 void show_Map(B_Map *source, int mode, bool skipBanner)
 {
-    // if(mapOnScreen == false)
-    // {
-        mapOnScreen = true;
-        int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
-        char **names = (char **) calloc(1, sizeof(char *));
-        int cNames = 1;
-        for(int i = 0; i < source->height; i++)
+    int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
+    char **names = (char **) calloc(1, sizeof(char *));
+    char tileAux[4] = {0};
+    int cNames = 1;
+    
+    if(mode == MODE_GRAPHIC) names = realloc(names, source->height * source->width * sizeof(char *));
+    for(int i = 0; i < source->height; i++)
+    {
+        for(int j = 0; j < source->width; j++)
         {
-            for(int j = 0; j < source->width; j++)
+            switch (mode)
             {
-                switch (mode)
+            case MODE_HEIGHT:
+                tiles[i * source->width + j] = source->tiles[i][j].elevation;
+                break;
+            case MODE_UNITS:
+                if(source->tiles[i][j].isSpawnA == true)
+                    tiles[i * source->width + j] = MAP_MODE_A;
+                else if(source->tiles[i][j].isSpawnB == true)
+                    tiles[i * source->width + j] = MAP_MODE_B;
+                else tiles[i * source->width + j] = MAP_MODE_NULL;
+                break;
+            case MODE_TERRAIN:
+                tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
+                break;
+            case MODE_GRAPHIC:
+                if(source->tiles[i][j].unit.ID == NO_UNIT)
                 {
-                case MODE_HEIGHT:
-                    tiles[i * source->width + j] = source->tiles[i][j].elevation;
-                    break;
-                case MODE_UNITS:
-                    if(source->tiles[i][j].isSpawnA == true)
-                        tiles[i * source->width + j] = MAP_MODE_A;
-                    else if(source->tiles[i][j].isSpawnB == true)
-                        tiles[i * source->width + j] = MAP_MODE_B;
-                    else tiles[i * source->width + j] = MAP_MODE_NULL;
-                    break;
-                case MODE_TERRAIN:
-                    tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
-                    break;
+                    names[i * source->width + j] = (char *) malloc(4 * sizeof(char));
+                    strcpy(names[i * source->width + j], get_MapSprite(&source->tiles[i][j], MODE_GRAPHIC));
                 }
-                if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name
-                {   
-                    names[cNames-1] = source->tiles[i][j].unit.name;
-                    names = (char **) realloc(names, ++cNames * sizeof(char *));
-                    tiles[i * source->width + j] = MAP_MODE_CHAR;
-                }
+                else
+                    names[i * source->width + j] = source->tiles[i][j].unit.name;
+                tiles[i * source->width + j] = MAP_MODE_CHAR;
+                break;
+            case MODE_VEGETAT:
+                tiles[i * source->width + j] = (int) source->tiles[i][j].vegetation;
+                break;
+            }
+            if(source->tiles[i][j].unit.ID != NO_UNIT && mode != MODE_GRAPHIC) // Override tile with unit name
+            {   
+                names[cNames-1] = source->tiles[i][j].unit.name;
+                names = (char **) realloc(names, ++cNames * sizeof(char *));
+                tiles[i * source->width + j] = MAP_MODE_CHAR;
             }
         }
-        COORD pos = {0, 8};
-        if(skipBanner == true)
-            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-        print_Map(source->height, source->width, tiles, names);
-        free(tiles);
-        free(names);
-        if(skipBanner == true)
-            reset_Cursor();
-    //}
-    //else
-    //{
-//
-    //}
+    }
+    COORD pos = {0, 8};
+    if(skipBanner == true) SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    print_Map(source->height, source->width, tiles, names);
+    
+    if(mode == MODE_GRAPHIC)
+    {
+        for(int i = 0; i < source->height; i++)
+            for(int j = 0; j < source->width; j++)
+                if(source->tiles[i][j].unit.ID == NO_UNIT) free(names[i * source->width + j]);
+    }
+    free(tiles);
+    free(names);
+    if(skipBanner == true)
+        reset_Cursor();
     return;
 }
 

@@ -950,6 +950,13 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         print_Message("Moving to tile!", true);
                     }
                 }
+                else if (action == 't') // Change Map Mode
+                {
+                    mode++;
+                    if(mode > MODE_UNITS) mode = MODE_HEIGHT;
+                    show_Map(battleMap, mode, true);
+                    moves--;
+                }
                 else if (action == 's') // Intercept a unit
                 {
                     clear_afterMap(battleMap->height);
@@ -1121,8 +1128,6 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 if (xGoal > -1 && yGoal > -1 && xGoal < battleMap->width && yGoal < battleMap->height)
                 {
                     pos.X = player->units[unitA_I].position.X, pos.Y = player->units[unitA_I].position.Y;
-                    snprintf(msg, sizeof(msg), "%3d", battleMap->tiles[pos.Y][pos.X].elevation);
-                    update_Map(player->units[unitA_I].position.X, player->units[unitA_I].position.Y, msg);
                     // Change to coordinates of unitB if unitA is chasing
                     if (player->units[unitA_I].chaseID != NULL)
                     {
@@ -1141,6 +1146,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 moves--; break;
                             }
                             FRes = move_Unit(battleMap, &unitA, player->units[unitA_I].path[steps]);
+                            update_Map(player->units[unitA_I].position.X, player->units[unitA_I].position.Y,
+                            get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
                             if (FRes == OUT_COMBAT)
                             {
                                 // Show
@@ -1224,9 +1231,10 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             {
                 if (unitA.Y > 10)
                 {
+                    pos.X = player->units[unitA_I].position.X, pos.Y = player->units[unitA_I].position.Y;
                     snprintf(msg, sizeof(msg), "%3d", battleMap->tiles[unitA.Y][unitA.X].elevation);
-                    update_Map(unitA.X, unitA.Y, msg);
                     FRes = move_Unit(battleMap, &unitA, Northeast);
+                    update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
                 }
                 else
                 {

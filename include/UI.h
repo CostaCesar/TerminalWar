@@ -208,8 +208,6 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
-            //if(i == yHiLi && j == xHiLi)
-            //    printf("%c%c%c", 219, 219, 219);
             if(data[i * mWidth + j] == MAP_MODE_A)
                 printf("<A>");
             else if(data[i * mWidth + j] == MAP_MODE_B)
@@ -218,8 +216,6 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
                 printf("%.3s", words[words_I++]);
             else if(data[i * mWidth + j] == MAP_MODE_NULL)
                 printf("   ");
-            else if(data[i * mWidth + j] < 0)
-                printf("%c%c%c", 126, 126, 126);
             else printf("%3d", data[i * mWidth + j]);
             putchar(179);
         }
@@ -632,38 +628,18 @@ int screen_Menu(float version)
     for(int i = 0; i < sWidth / 2 - 12; i++)
         printf(" ");
     printf("[ENTER] Iniciar um mapa");
-    // for(int i = 0; i < sWidth / 2 - 12; i++)
-    //     printf(" ");
     printf("\n");
     
     for(int i = 0; i < sWidth / 2 - 11; i++)
         printf(" ");
     printf(" [S] Sobre o jogo");
-    // for(int i = 0; i < sWidth / 2 - 9; i++)
-    //     printf(" ");
     printf("\n");
 
     for(int i = 0; i < sWidth / 2 - 11; i++)
         printf(" ");
     printf("[ESC] Encerrar jogo");
-    // for(int i = 0; i < sWidth / 2 - 10; i++)
-    //     printf(" ");
     printf("\n");
     ShowCursor(FALSE);
-
-    // print_Message("Hello there!", true);
-
-    /*
-    printf("--------------------#==========================#-------------------- \n");
-    printf("--------------------|                          |-------------------- \n");
-    printf("--------------------|    Total Terminal War    |-------------------- \n");
-    printf("--------------------|        V. %.2f           |-------------------- \n", version);
-    printf("--------------------|                          |-------------------- \n");
-    printf("--------------------#==========================#-------------------- \n");
-    printf("                        [I]> Iniciar um mapa                         \n");
-    printf("                         [C]> Carregar mapa                          \n");
-    printf("                         [S]> Encerrar jogo                          \n"); */
-
     return get_KeyPress(true);
 }
 

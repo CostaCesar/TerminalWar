@@ -38,7 +38,9 @@
 #define MODE_HEIGHT 0
 #define MODE_TERRAIN 1
 #define MODE_VEGETAT 2
-#define MODE_UNITS 3
+#define MODE_GRAPHIC 3
+#define MODE_UNITS 4
+
 
 // UI.h
 #define MAP_MODE_NULL -4
