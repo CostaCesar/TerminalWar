@@ -34,8 +34,7 @@ int get_ScreenWidth()
 {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
-    return (int) csbi.srWindow.Right - csbi.srWindow.Left + 1;         
-    // tSize_Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;   
+    return (int) csbi.srWindow.Right - csbi.srWindow.Left + 1;            
 }
 int get_ScreenHeight()
 {
@@ -117,7 +116,7 @@ void fillSpace_ToBottom(int offset)
     return;
 }
 
-void print_LineOffset(char *message, int offset)
+void print_LineOffset(char *message, int offset, bool doBorders)
 {
     int screenWidth = get_ScreenWidth();
     if(!message)
@@ -141,13 +140,24 @@ void print_LineOffset(char *message, int offset)
     else
     {
         int msg_len = strlen(message);
-        putchar(186);
-        for(int i = 0; i < offset - 1; i++)
-             printf(" ");
-         printf("%s", message);
-         for(int i = 0; i < screenWidth - offset - msg_len - 1; i++)
-             printf(" ");
-        putchar(186);
+        if(doBorders == true)
+        {
+            putchar(186);
+            for(int i = 0; i < offset - 1; i++)
+                printf(" ");
+            printf("%s", message);
+            for(int i = 0; i < screenWidth - offset - msg_len - 1; i++)
+                printf(" ");
+            putchar(186);
+        }
+        else
+        {
+            for(int i = 0; i < offset; i++)
+                printf(" ");
+            printf("%s", message);
+            for(int i = 0; i < screenWidth - offset - msg_len; i++)
+                printf(" ");
+        }
         printf("\n");
     }
     return;
@@ -461,7 +471,7 @@ int listScen()
             if(fd.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY)
             {
                 nScen++;
-                print_LineOffset(fd.cFileName, 7);
+                print_LineOffset(fd.cFileName, 7, true);
             }  
         } while (FindNextFile(handle, &fd));
         print_Line(" ");
@@ -572,69 +582,72 @@ int screen_MapInput(int cMap, int nMaps)
 int screen_Menu(float version)
 {
     int sWidth = get_ScreenWidth();
-    
+    bool isOdd = (sWidth % 2) == 1;
+    COORD pos = {(sWidth / 2 - 15), 0};
+    HANDLE hand = GetStdHandle(STD_OUTPUT_HANDLE);
+
     system("cls");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
-    printf("#==========================#");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
+    SetConsoleCursorPosition(hand, pos);
+    if(isOdd) putchar(218);
+    putchar(201);
+    for(int i = 0; i < 28; i++)
+        putchar(205);
+    putchar(187);
     printf("\n");
+    pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
-    printf("|                          |");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
+    SetConsoleCursorPosition(hand, pos);
+    if(isOdd) putchar(179);
+    printf("%c                            %c", 186, 186);;
     printf("\n");
+    pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
-    printf("|    Total Terminal War    |");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
+    SetConsoleCursorPosition(hand, pos);
+    if(isOdd) putchar(179);
+    printf("%c     Total Terminal War     %c", 186, 186);
     printf("\n");
+    pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
-    printf("|        V. %.2f           |", version);
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
+    SetConsoleCursorPosition(hand, pos);
+    if(isOdd) putchar(179);
+    printf("%c         V. %.2f            %c", 186, version, 186);
     printf("\n");
+    pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
-    printf("|                          |");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
+    SetConsoleCursorPosition(hand, pos);
+    if(isOdd) putchar(179);
+    printf("%c                            %c", 186, 186);;
     printf("\n");
+    pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
-    printf("#==========================#");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf("-");
+    SetConsoleCursorPosition(hand, pos);
+    if(isOdd) putchar(192);
+    putchar(200);
+    for(int i = 0; i < 28; i++)
+        putchar(205);
+    putchar(188);
     printf("\n");
+    pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
+    for(int i = 0; i < sWidth / 2 - 12; i++)
         printf(" ");
-    printf("    [I]> Iniciar um mapa    ");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf(" ");
+    printf("[ENTER] Iniciar um mapa");
+    // for(int i = 0; i < sWidth / 2 - 12; i++)
+    //     printf(" ");
     printf("\n");
     
-    for(int i = 0; i < sWidth / 2 - 14; i++)
+    for(int i = 0; i < sWidth / 2 - 11; i++)
         printf(" ");
-    printf("     [C]> Carregar mapa     ");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf(" ");
+    printf(" [S] Sobre o jogo");
+    // for(int i = 0; i < sWidth / 2 - 9; i++)
+    //     printf(" ");
     printf("\n");
 
-    for(int i = 0; i < sWidth / 2 - 14; i++)
+    for(int i = 0; i < sWidth / 2 - 11; i++)
         printf(" ");
-    printf("     [S]> Encerrar jogo     ");
-    for(int i = 0; i < sWidth / 2 - 14; i++)
-        printf(" ");
+    printf("[ESC] Encerrar jogo");
+    // for(int i = 0; i < sWidth / 2 - 10; i++)
+    //     printf(" ");
     printf("\n");
     ShowCursor(FALSE);
 

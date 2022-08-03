@@ -10,7 +10,7 @@
 
 #define MAP_DELAY (2 * 1000)
 #define TURNS 30
-#define VERSION 0.575f
+#define VERSION 1.0f
 
 // Game Variables
 B_Map battleMap;
@@ -199,14 +199,16 @@ void show_gUnit(B_Unit *unit)
     print_Line(NULL);
 }
 
-int dealloc_ToMenu()
+int deallocAll()
 {
     for (int i = 0; i < battleMap.height; i++)
-        free(battleMap.tiles[i]);
-    free(battleMap.tiles);
-    free(Side_A.units);
-    free(Side_B.units);
-    Side_A.size = 0, Side_B.size = 0;
+    {
+        if(battleMap.tiles[i])
+            free(battleMap.tiles[i]);
+    }
+    if(battleMap.tiles) free(battleMap.tiles);
+    if(Side_A.units) free(Side_A.units);
+    if(Side_B.units) free(Side_B.units);
     return FUNCTION_SUCESS;
 }
 
@@ -232,7 +234,7 @@ int load_Scenery(int nScen, int playMap)
 
     // Reading File
     char word[STRING_NAME*3] = {0}, scen_Name[STRING_NAME] = {0}, scen_Map[STRING_NAME] = {0};
-    int cMap = 0, strBuff = 0, unit_N = NO_UNIT, lvlFree = 0;
+    int cMap = 0, strBuff = 0, unit_N = NO_UNIT;
     FILE *scen = fopen(file, "r");
     if(!scen)
     {
@@ -273,7 +275,6 @@ int load_Scenery(int nScen, int playMap)
             output = FUNCTION_FAIL; break; 
         }
         if(getFile_Map(word+strBuff, &battleMap) == FUNCTION_FAIL){ output = FUNCTION_FAIL; break; }
-        lvlFree++;
         // Get Map Name (for player)
         strBuff = strlen("mapTitle: ");
         fgets(scen_Map, sizeof(scen_Map), scen);
@@ -295,7 +296,7 @@ int load_Scenery(int nScen, int playMap)
         }
         unit_Table = getFile_Unit(word+strBuff, &unit_TableSize);
         if(!unit_Table){ output = FUNCTION_FAIL; break; }
-        lvlFree++;
+        
         // Get side attacking
         strBuff = strlen("attacker: ");
         fgets(word, sizeof(word), scen);
@@ -381,7 +382,7 @@ int load_Scenery(int nScen, int playMap)
                 fgets(word, sizeof(word), scen);    // Get rid of anything until \n
             }            
         }
-        lvlFree++;
+        
 
         // Side_B
         // Name
@@ -448,7 +449,7 @@ int load_Scenery(int nScen, int playMap)
                 fgets(word, sizeof(word), scen);    // Get rid of anything until \n
             }            
         }
-        lvlFree++;
+        
         // Printing results
         screen_TopMap(scen_Name, scen_Map);
         // Map Description
@@ -473,25 +474,10 @@ int load_Scenery(int nScen, int playMap)
     }
 
     // Treating free levels
-    if(lvlFree != 4)
-    {
-        if(lvlFree > 0) // Map
-        {
-            for(int i = 0; i < battleMap.height; i++)
-                free(battleMap.tiles[i]);
-            free(battleMap.tiles);
-        }
-        if(lvlFree > 1) // Side_B Units
-            free(Side_B.units);
-        if(lvlFree > 2) // Side_A Units
-            free(Side_A.units);
-        if(lvlFree > 3) // Unit Table
-            free(unit_Table);
-    }
-
-    // Get number of maps in scenario
-    if(output != FUNCTION_FAIL)
-    {
+    if(output == FUNCTION_FAIL)
+        deallocAll();
+    else
+    {   // Get number of maps in scenario
         rewind(scen);
         while(1)
         {
@@ -706,23 +692,24 @@ int main(/*int argc, char** argv*/)
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     A_Loss = 0, B_Loss = 0;
-    // unit_Table = getFile_Unit("units/new2.bin", &unit_TableSize);
-
-    // Side_A
-    Side_A.size = 0, Side_A.ID = 0, Side_A.units = NULL, Side_A.isAI = false;
-    // Side_B
-    Side_B.size = 0, Side_B.ID = 1, Side_B.units = NULL, Side_B.isAI = true;
 
     // Playing music
     PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 
 startMenu:
+    // Map
+    // battleMap.tiles = NULL;
+    // Side_A
+    Side_A.size = 0, Side_A.ID = 0, Side_A.isAI = false;
+    // Side_B
+    Side_B.size = 0, Side_B.ID = 1, Side_B.isAI = true;
+
     cMap = 0;
     do
     {
         switch (screen_Menu(VERSION))
         {
-        case 'i':
+        case KEY_ENTER:
             cScen = screen_Scenery();
             do
             {   // Scroll through maps
@@ -730,27 +717,14 @@ startMenu:
                 Side_B.units = (B_Unit *)malloc(sizeof(B_Unit));
                 nMaps = load_Scenery(cScen, cMap);
                 if(nMaps < 1) // Error
-                {
-                    free(Side_A.units), free(Side_B.units);
                     goto startMenu;
-                }
                 cMap = screen_MapInput(cMap, nMaps);
                 if(cMap == FUNCTION_SUCESS) break;
-                else if(cMap == FUNCTION_FAIL)
-                {
-                    dealloc_ToMenu();
-                    goto startMenu;
-                }
-                else dealloc_ToMenu();
+                else deallocAll();
+                if(cMap == FUNCTION_FAIL) goto startMenu;
             } while (1);
-            
-            // out = getFile_Map("maps/Catalon.map", &battleMap);
-            // if (out != FUNCTION_SUCESS)
-            //     return FUNCTION_FAIL;
-
-            // Continue
             break;
-        case 's':
+        case KEY_ESCAPE:
             free(unit_Table);
             return 0;
         default:
@@ -783,7 +757,7 @@ startMenu:
     // Placing Player on map
     if (placementMenu(&battleMap, &Side_A) == FUNCTION_FAIL)
     {
-        (void)dealloc_ToMenu();
+        (void)deallocAll();
         goto startMenu;
     }
 
@@ -891,10 +865,9 @@ startMenu:
         }
     }
 
-    // Freeing
-    (void)dealloc_ToMenu();
-    // Playing music
-    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
+    // Freeing to Menu
+    (void)deallocAll();
+    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP); 
     goto startMenu;
 
     return 0;
@@ -1132,11 +1105,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     }
                 }
                 else if (action == KEY_ESCAPE) // Return to Menu
-                {
-                    (void)dealloc_ToMenu();
-                    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
                     return FUNCTION_FAIL;
-                }
                 else if (action == KEY_ENTER) // Next Turn
                 {
                     if(player->units[unitA_I].goal.X == NO_UNIT || player->units[unitA_I].goal.Y == NO_UNIT)
