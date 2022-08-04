@@ -16,6 +16,15 @@ typedef struct P_endStats
     int killed;
 } B_endStats;
 
+typedef struct P_tileData
+{
+    int *veget;
+    int *terrain;
+    short int *height;
+    char *unit;
+    int spawn;
+} B_tileData;
+
 void reset_Cursor()
 {
     COORD pos = {0, 0};
@@ -185,7 +194,7 @@ char get_KeyPress(bool fLowerCase)
     return out;
 }
 
-void print_Map(short int mHeight, short int mWidth, int* data, char** words)
+void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 {
     // Top Line
     bool mapEdge = false, edge = false;
@@ -208,15 +217,94 @@ void print_Map(short int mHeight, short int mWidth, int* data, char** words)
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
-            if(data[i * mWidth + j] == MAP_MODE_A)
-                printf("<A>");
-            else if(data[i * mWidth + j] == MAP_MODE_B)
-                printf("<B>");
-            else if(data[i * mWidth + j] == MAP_MODE_CHAR) // NÃO RODA
-                printf("%.3s", words[words_I++]);
-            else if(data[i * mWidth + j] == MAP_MODE_NULL)
-                printf("   ");
-            else printf("%3d", data[i * mWidth + j]);
+            // Data
+        }
+        putchar('\n');
+        if(mapEdge == false)
+        {
+            putchar(195);
+            for(short int j = 0; j < mWidth; j++)
+            {
+                printf("%c%c%c", 196, 196, 196);
+                if(edge == false) putchar(197);
+                else putchar(180);
+
+                if(j == mWidth - 2) edge = true;
+            }
+            putchar('\n');
+        }
+        if(i == mHeight - 2) mapEdge = true;
+    }
+
+    // Bottom Line
+    edge = false;
+    putchar(192);
+    for(short int i = 0; i < mWidth; i++)
+    {
+        printf("%c%c%c", 196, 196, 196);
+        if(edge == false) putchar(193);
+        else putchar (217);
+
+        if(i == mWidth-2) edge = true;
+    }
+    putchar('\n');
+    return;
+}
+
+void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
+{
+    // Top Line
+    bool mapEdge = false, edge = false;
+    int words_I = 0, tile = 0;
+    putchar(218);
+    for(short int i = 0; i < mWidth; i++)
+    {
+        printf("%c%c%c", 196, 196, 196);
+        if(edge == false) putchar(194);
+        else putchar (191);
+
+        if(i == mWidth-2) edge = true;
+    }
+    putchar('\n');
+
+    // Tiles
+    for(short int i = 0; i < mHeight; i++)
+    {
+        edge = false;
+        putchar(179);
+        for(short int j = 0; j < mWidth; j++)
+        {
+            if(data->spawn >= 0)
+            {
+                if(data[i * mWidth + j].unit) printf("%.3s", data[i * mWidth + j].unit);
+                else
+                {
+                    switch (data[i * mWidth + j].spawn)
+                    {
+                    case 0:
+                        printf("   ");
+                        break;
+                    case 1:
+                        printf("<A>");
+                        break;
+                    case 2:
+                        printf("<B>");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if(data->terrain)
+                    tile = (int) *(data[i * mWidth + j].terrain);
+                else if(data->veget != NULL)
+                    tile = (int) *(data[i * mWidth + j].veget);
+                else
+                    tile = (int) *(data[i * mWidth + j].height);
+                    
+                if(data[i * mWidth + j].unit) printf("%.3s", data[i * mWidth + j].unit);
+                else printf("%3d", tile);
+            }
             putchar(179);
         }
         putchar('\n');

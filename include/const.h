@@ -40,10 +40,3 @@
 #define MODE_VEGETAT 2
 #define MODE_GRAPHIC 3
 #define MODE_UNITS 4
-
-
-// UI.h
-#define MAP_MODE_NULL -4
-#define MAP_MODE_A -5
-#define MAP_MODE_B -6
-#define MAP_MODE_CHAR -7

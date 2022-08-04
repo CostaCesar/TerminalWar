@@ -4,7 +4,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include "const.h"
-
 typedef enum E_Direction
 {
     North,
@@ -277,12 +276,10 @@ char *get_MapSprite(B_Tile *tile, int mode)
 
 void show_Map(B_Map *source, int mode, bool skipBanner)
 {
-    int *tiles = (int *) malloc(source->height * source->width * sizeof(int));
-    char **names = (char **) calloc(1, sizeof(char *));
+    B_tileData *tiles = (B_tileData*) malloc(source->height * source->width * sizeof(B_tileData));
     char tileAux[4] = {0};
     int cNames = 1;
     
-    if(mode == MODE_GRAPHIC) names = realloc(names, source->height * source->width * sizeof(char *));
     for(int i = 0; i < source->height; i++)
     {
         for(int j = 0; j < source->width; j++)
@@ -290,52 +287,54 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
             switch (mode)
             {
             case MODE_HEIGHT:
-                tiles[i * source->width + j] = source->tiles[i][j].elevation;
+                tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
+                tiles[i * source->width + j].veget = NULL;
+                tiles[i * source->width + j].terrain = NULL;
+                tiles[i * source->width + j].spawn = NO_UNIT;
                 break;
             case MODE_UNITS:
                 if(source->tiles[i][j].isSpawnA == true)
-                    tiles[i * source->width + j] = MAP_MODE_A;
+                    tiles[i * source->width + j].spawn = 1;
                 else if(source->tiles[i][j].isSpawnB == true)
-                    tiles[i * source->width + j] = MAP_MODE_B;
-                else tiles[i * source->width + j] = MAP_MODE_NULL;
+                    tiles[i * source->width + j].spawn = 2;
+                else tiles[i * source->width + j].spawn = 0;
                 break;
             case MODE_TERRAIN:
-                tiles[i * source->width + j] = (int) source->tiles[i][j].terrain;
+                tiles[i * source->width + j].terrain = (int *) &source->tiles[i][j].terrain;
+                tiles[i * source->width + j].spawn  = NO_UNIT;
+                tiles[i * source->width + j].veget = NULL;
+                tiles[i * source->width + j].height = NULL;
                 break;
             case MODE_GRAPHIC:
                 if(source->tiles[i][j].unit.ID == NO_UNIT)
                 {
-                    names[i * source->width + j] = (char *) malloc(4 * sizeof(char));
-                    strcpy(names[i * source->width + j], get_MapSprite(&source->tiles[i][j], MODE_GRAPHIC));
+                    tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
+                    tiles[i * source->width + j].veget = (int *) source->tiles[i][j].vegetation;
+                    tiles[i * source->width + j].terrain = (int *) &source->tiles[i][j].terrain;
+                    tiles[i * source->width + j].unit = NULL;
                 }
                 else
-                    names[i * source->width + j] = source->tiles[i][j].unit.name;
-                tiles[i * source->width + j] = MAP_MODE_CHAR;
+                    tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
                 break;
             case MODE_VEGETAT:
-                tiles[i * source->width + j] = (int) source->tiles[i][j].vegetation;
+                tiles[i * source->width + j].veget = (int *) source->tiles[i][j].vegetation;
+                tiles[i * source->width + j].terrain = NULL;
+                tiles[i * source->width + j].spawn = NO_UNIT;
+                tiles[i * source->width + j].height = NULL;
                 break;
             }
-            if(source->tiles[i][j].unit.ID != NO_UNIT && mode != MODE_GRAPHIC) // Override tile with unit name
-            {   
-                names[cNames-1] = source->tiles[i][j].unit.name;
-                names = (char **) realloc(names, ++cNames * sizeof(char *));
-                tiles[i * source->width + j] = MAP_MODE_CHAR;
-            }
+            if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name 
+                tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
+            else tiles[i * source->width + j].unit = NULL;
         }
     }
     COORD pos = {0, 8};
     if(skipBanner == true) SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    print_Map(source->height, source->width, tiles, names);
     
     if(mode == MODE_GRAPHIC)
-    {
-        for(int i = 0; i < source->height; i++)
-            for(int j = 0; j < source->width; j++)
-                if(source->tiles[i][j].unit.ID == NO_UNIT) free(names[i * source->width + j]);
-    }
+        print_MapGraphic(source->height, source->width, tiles);
+    else print_MapStats(source->height, source->width, tiles);
     free(tiles);
-    free(names);
     if(skipBanner == true)
         reset_Cursor();
     return;
