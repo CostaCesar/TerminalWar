@@ -1146,8 +1146,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 moves--; break;
                             }
                             FRes = move_Unit(battleMap, &unitA, player->units[unitA_I].path[steps]);
-                            update_Map(player->units[unitA_I].position.X, player->units[unitA_I].position.Y,
-                            get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
+                            pos.X = player->units[unitA_I].position.X,pos.Y = player->units[unitA_I].position.Y;
+                            update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
                             if (FRes == OUT_COMBAT)
                             {
                                 // Show
@@ -1232,7 +1232,6 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 if (unitA.Y > 10)
                 {
                     pos.X = player->units[unitA_I].position.X, pos.Y = player->units[unitA_I].position.Y;
-                    snprintf(msg, sizeof(msg), "%3d", battleMap->tiles[unitA.Y][unitA.X].elevation);
                     FRes = move_Unit(battleMap, &unitA, Northeast);
                     update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
                 }

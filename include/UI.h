@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <Windows.h>
 #include <math.h>
+#include <time.h>
 #include "const.h"
 
 bool firstLine = true;
@@ -194,11 +195,43 @@ char get_KeyPress(bool fLowerCase)
     return out;
 }
 
+void get_MapSprite_Graphic(B_tileData *tile, char *msg)
+{
+    if(*(tile->height) < 0)
+        for(int pixel = 0; pixel < 3; pixel++) msg[pixel] = '~';
+    else if(*(tile->height) > 4)
+        for(int pixel= 0; pixel < 3; pixel++) msg[pixel] = 219;
+    else if(*(tile->terrain) == Mud)
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 178;
+    else if(*(tile->terrain) == Rock)
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = '#';
+    else if(*(tile->terrain) == Sand)
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 177;
+    else for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 176;
+    switch (*(tile->veget))
+    {
+    case Sparse:
+        msg[rand() % 3] = 213, msg[rand() % 3] = 213;
+        break;
+    case Grove:
+        msg[rand() % 3] = 179, msg[rand() % 3] = 179;
+        break;
+    case Forest:
+        msg[rand() % 3] = 215, msg[rand() % 3] = 215;
+        break;
+    case Jungle:
+        msg[rand() % 3] = 186, msg[rand() % 3] = 186;
+        break;
+    }
+    return;
+}
+
 void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 {
     // Top Line
     bool mapEdge = false, edge = false;
     int words_I = 0;
+    char msg[4] = {0};
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
     {
@@ -217,7 +250,13 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
-            // Data
+            if(data[i * mWidth + j].unit) printf("%.3s", data[i * mWidth + j].unit);
+            else
+            {
+                get_MapSprite_Graphic(&data[i * mWidth + j], msg);
+                printf("%3s", msg);
+            }
+            putchar(179);
         }
         putchar('\n');
         if(mapEdge == false)
@@ -336,6 +375,15 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
         if(i == mWidth-2) edge = true;
     }
     putchar('\n');
+    return;
+}
+
+void set_MapCursor(short int xUpdate, short int yUpdate)
+{
+    HANDLE consoleInfo = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD pos = {1+xUpdate*4, 9+yUpdate*2};
+    int hScreen = get_ScreenHeight();
+    SetConsoleCursorPosition(consoleInfo, pos);
     return;
 }
 

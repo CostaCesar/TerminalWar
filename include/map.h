@@ -16,26 +16,6 @@ typedef enum E_Direction
     Northwest
 } T_Direc;
 
-typedef enum E_Terrain
-{
-    Grass,
-    Sand,
-    Rock,
-    Mud,
-    Water,
-    Snow
-} T_Terrain;
-
-typedef enum E_Vegetation
-{
-    None,
-    Field,
-    Sparse,
-    Grove,
-    Forest,
-    Jungle
-} T_Veget;
-
 typedef enum E_Climate
 {
     Sunny,
@@ -218,60 +198,42 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
-char *get_MapSprite(B_Tile *tile, int mode)
+char *get_MapSprite(B_Tile* tile, int mode)
 {
-    static char msg[4] = {0};
+    static char mapStat[4] = {0};
+    B_tileData tileData;
     if(tile->unit.ID != NO_UNIT)
     {
-       strcpy(msg, tile->unit.name);
-       return msg;
+        strcpy(mapStat, tile->unit.name);
+        return mapStat;
     }
     switch (mode)
     {
-    case MODE_GRAPHIC:
-        if(tile->elevation < 0)
-            for(int pixel = 0; pixel < 3; pixel++) msg[pixel] = '~';
-        else if(tile->elevation > 4)
-            for(int pixel= 0; pixel < 3; pixel++) msg[pixel] = 219;
-        else if(tile->terrain == Mud)
-            for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 178;
-        else if(tile->terrain == Rock)
-            for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = '#';
-        else if(tile->terrain == Sand)
-            for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 177;
-        else for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 176;
-        switch (tile->vegetation)
-        {
-        case Sparse:
-            msg[rand() % 3] = 213, msg[rand() % 3] = 213;
-            break;
-        case Grove:
-            msg[rand() % 3] = 179, msg[rand() % 3] = 179;
-            break;
-        case Forest:
-            msg[rand() % 3] = 215, msg[rand() % 3] = 215;
-            break;
-        case Jungle:
-            msg[rand() % 3] = 186, msg[rand() % 3] = 186;
-            break;
-        }
-        break;
     case MODE_HEIGHT:
-        snprintf(msg, sizeof(msg), "%3d", tile->elevation);
-        break;
-    case MODE_VEGETAT:
-        snprintf(msg, sizeof(msg), "%3d", tile->vegetation);
-        break;
-    case MODE_TERRAIN:
-        snprintf(msg, sizeof(msg), "%3d", tile->terrain);
+        snprintf(mapStat, sizeof(mapStat), "%3d", tile->elevation);
         break;
     case MODE_UNITS:
-        if(tile->isSpawnA == true) snprintf(msg, sizeof(msg), "<A>");
-        else if(tile->isSpawnB == true) snprintf(msg, sizeof(msg), "<B>");
-        else snprintf(msg, sizeof(msg), "   ");
+        if(tile->isSpawnA)
+            snprintf(mapStat, sizeof(mapStat), "<A>");
+        else if(tile->isSpawnB)
+            snprintf(mapStat, sizeof(mapStat), "<B>");
+        else snprintf(mapStat, sizeof(mapStat), "   ");
+        break;
+    case MODE_VEGETAT:
+        snprintf(mapStat, sizeof(mapStat), "%3d", tile->vegetation);
+        break;
+    case MODE_TERRAIN:
+        snprintf(mapStat, sizeof(mapStat), "%3d", tile->terrain);
+        break;
+    case MODE_GRAPHIC:
+        tileData.height = &tile->elevation, tileData.veget = (int *) &tile->vegetation;
+        tileData.terrain = (int *) &tile->terrain, tileData.unit = tile->unit.name;
+        tileData.spawn = 0;
+        get_MapSprite_Graphic(&tileData, mapStat);
+    default:
         break;
     }
-    return msg;
+    return mapStat;
 }
 
 void show_Map(B_Map *source, int mode, bool skipBanner)
@@ -309,7 +271,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                 if(source->tiles[i][j].unit.ID == NO_UNIT)
                 {
                     tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
-                    tiles[i * source->width + j].veget = (int *) source->tiles[i][j].vegetation;
+                    tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
                     tiles[i * source->width + j].terrain = (int *) &source->tiles[i][j].terrain;
                     tiles[i * source->width + j].unit = NULL;
                 }
@@ -317,7 +279,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                     tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
                 break;
             case MODE_VEGETAT:
-                tiles[i * source->width + j].veget = (int *) source->tiles[i][j].vegetation;
+                tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
                 tiles[i * source->width + j].terrain = NULL;
                 tiles[i * source->width + j].spawn = NO_UNIT;
                 tiles[i * source->width + j].height = NULL;
