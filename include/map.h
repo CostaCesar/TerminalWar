@@ -201,6 +201,7 @@ int getDirection(B_Tile *current, B_Tile *next)
 char *get_MapSprite(B_Tile* tile, int mode)
 {
     static char mapStat[4] = {0};
+    int colorOut = 0;
     B_tileData tileData;
     if(tile->unit.ID != NO_UNIT)
     {
@@ -229,7 +230,8 @@ char *get_MapSprite(B_Tile* tile, int mode)
         tileData.height = &tile->elevation, tileData.veget = (int *) &tile->vegetation;
         tileData.terrain = (int *) &tile->terrain, tileData.unit = tile->unit.name;
         tileData.spawn = 0;
-        get_MapSprite_Graphic(&tileData, mapStat);
+        colorOut = get_MapSprite_Graphic(&tileData, mapStat);
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorOut);
     default:
         break;
     }

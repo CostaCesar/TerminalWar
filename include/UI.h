@@ -195,42 +195,68 @@ char get_KeyPress(bool fLowerCase)
     return out;
 }
 
-void get_MapSprite_Graphic(B_tileData *tile, char *msg)
+int get_MapSprite_Graphic(B_tileData *tile, char *msg)
 {
+    int colorOut = 0;
+    HANDLE nmd = GetStdHandle(STD_OUTPUT_HANDLE);
     if(*(tile->height) < 0)
-        for(int pixel = 0; pixel < 3; pixel++) msg[pixel] = '~';
-    else if(*(tile->height) > 4)
-        for(int pixel= 0; pixel < 3; pixel++) msg[pixel] = 219;
-    else if(*(tile->terrain) == Mud)
-        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 178;
-    else if(*(tile->terrain) == Rock)
-        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = '#';
-    else if(*(tile->terrain) == Sand)
-        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 177;
-    else for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 176;
-    switch (*(tile->veget))
     {
-    case Sparse:
-        msg[rand() % 3] = 213, msg[rand() % 3] = 213;
-        break;
-    case Grove:
-        msg[rand() % 3] = 179, msg[rand() % 3] = 179;
-        break;
-    case Forest:
-        msg[rand() % 3] = 215, msg[rand() % 3] = 215;
-        break;
-    case Jungle:
-        msg[rand() % 3] = 186, msg[rand() % 3] = 186;
-        break;
+        for(int pixel = 0; pixel < 3; pixel++) msg[pixel] = '~';
+        colorOut = BACKGROUND_BLUE;
     }
-    return;
+    else if(*(tile->height) > 4)
+    {
+        for(int pixel= 0; pixel < 3; pixel++) msg[pixel] = 219;
+        colorOut = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
+    }
+    else if(*(tile->terrain) == Mud)
+    {
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 178;
+        colorOut = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+    }
+    else if(*(tile->terrain) == Rock)
+    {
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = '#';
+        colorOut = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+    }
+    else if(*(tile->terrain) == Sand)
+    {
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 177;
+        colorOut = BACKGROUND_GREEN | BACKGROUND_RED;
+    }
+    else
+    {
+        for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 176;
+        colorOut = BACKGROUND_GREEN;
+    }
+    if(*(tile->veget) > Field)
+    {
+        colorOut |= FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+        switch (*(tile->veget))
+        {
+        case Sparse:
+            msg[rand() % 3] = 213, msg[rand() % 3] = 213;
+            break;
+        case Grove:
+            msg[rand() % 3] = 179, msg[rand() % 3] = 179;
+            break;
+        case Forest:
+            msg[rand() % 3] = 215, msg[rand() % 3] = 215;
+            break;
+        case Jungle:
+            msg[rand() % 3] = 186, msg[rand() % 3] = 186;
+            break;
+        }
+    }
+    return colorOut;
 }
 
 void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 {
     // Top Line
+    HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
     bool mapEdge = false, edge = false;
-    int words_I = 0;
+    int words_I = 0, color = 0;
     char msg[4] = {0};
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
@@ -253,9 +279,11 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
             if(data[i * mWidth + j].unit) printf("%.3s", data[i * mWidth + j].unit);
             else
             {
-                get_MapSprite_Graphic(&data[i * mWidth + j], msg);
+                color = get_MapSprite_Graphic(&data[i * mWidth + j], msg);
+                SetConsoleTextAttribute(hnd, color);
                 printf("%3s", msg);
             }
+            SetConsoleTextAttribute(hnd, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
             putchar(179);
         }
         putchar('\n');
@@ -399,6 +427,7 @@ void update_Map(short int xUpdate, short int yUpdate, char *data)
     if(pos.Y < hScreen)         // Top of terminal
         pos.X = 0, pos.Y = 0;
     else pos.Y -= (hScreen/2);  // Current Location - some offset
+    SetConsoleTextAttribute(consoleInfo, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
     SetConsoleCursorPosition(consoleInfo, pos);
     return;
 }
