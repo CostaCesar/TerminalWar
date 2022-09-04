@@ -717,16 +717,16 @@ int main(/*int argc, char** argv*/)
     extern bool muted;
     A_Loss = 0, B_Loss = 0;
 
-    // Playing music
-    PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 
 startMenu:
+    // Playing music
+    jukebox("Menu.wav", SND_ASYNC | SND_FILENAME | SND_LOOP);
     // Side_A
     Side_A.size = 0, Side_A.ID = 0, Side_A.isAI = false;
     // Side_B
     Side_B.size = 0, Side_B.ID = 1, Side_B.isAI = true;
     // Menu 
-    cMap = 0, out = 0;
+    cMap = 0;
     do
     {
         switch (screen_Menu(VERSION))
@@ -757,7 +757,7 @@ startMenu:
             continue;
         case 3:
             muted = !muted;
-            jukebox("sound/Menu.wav", SND_ASYNC | SND_FILENAME | SND_LOOP);
+            jukebox("Menu.wav", SND_ASYNC | SND_FILENAME | SND_LOOP);
             continue;
         case 4:
             free(unit_Table);
@@ -798,8 +798,7 @@ startMenu:
 
     // Game Starts
     int mode = MODE_HEIGHT;
-    if(jukebox("  ", true, true) == false)
-        jukebox("Game1.wav", true, true);
+    jukebox("Game1.wav", SND_ASYNC | SND_LOOP | SND_FILENAME);
     system("cls");
     show_Map(&battleMap, mode, true);
     
