@@ -193,7 +193,7 @@ void show_gUnit(B_Unit *unit)
 
     if(unit->chaseID != NULL)
     {
-        snprintf(buff, sizeof(buff), "Chasing unit %d", unit->chaseID);
+        snprintf(buff, sizeof(buff), "Chasing unit %d", *(unit->chaseID));
         print_Line(buff);
     }
     if(unit->goal.X != NO_UNIT && unit->goal.Y != NO_UNIT)
@@ -515,9 +515,9 @@ int load_Scenery(int nScen, int playMap)
     return output;
 }
 
-int placementMenu(B_Map *map, B_Side *Side)
+int placementMenu(B_Map *map, B_Side *Side, int *mode)
 {
-    int mode = MODE_UNITS, Index = -1, out = 0, i = 0;
+    int Index = -1, out = 0, i = 0;
     short int dUnits = 0;
     do
     {
@@ -528,7 +528,7 @@ int placementMenu(B_Map *map, B_Side *Side)
         toggle_Cursor(false);
 
         printf(">> ");
-        switch (mode)
+        switch (*mode)
         {
         case MODE_HEIGHT:
             printf("Heigth Map");
@@ -542,10 +542,13 @@ int placementMenu(B_Map *map, B_Side *Side)
         case MODE_UNITS:
             printf("Units Map");
             break;
+        case MODE_GRAPHIC:
+            printf("Battle Map");
+            break;
         }
         printf("\n");
 
-        show_Map(map, mode, false);
+        show_Map(map, *mode, false);
         print_Line(NULL);
         print_Line(" ");
         print_Line("[T] Change Map Type  | [A] Place A Unit");
@@ -558,9 +561,9 @@ int placementMenu(B_Map *map, B_Side *Side)
         switch (out)
         {
         case 't':
-            mode++;
-            if (mode > MODE_UNITS)
-                mode = MODE_HEIGHT;
+            (*mode)++;
+            if (*mode > MODE_UNITS)
+                *mode = MODE_HEIGHT;
             continue;
         case 'a':
             printf(">> Placeable units: \n");
@@ -700,7 +703,7 @@ int placementMenu(B_Map *map, B_Side *Side)
     } while (1);
 }
 
-int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int turn);
+int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int turn, int *mode);
 
 int main(/*int argc, char** argv*/)
 {
@@ -711,7 +714,7 @@ int main(/*int argc, char** argv*/)
     SetConsoleTitle("Total Terminal War");
     toggle_Cursor(false);
 
-    int nMaps = 0, cScen = 0, cMap = 0, out = 0;
+    int nMaps = 0, cScen = 0, cMap = 0, out = 0, mode = MODE_UNITS;
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     extern bool muted;
@@ -782,7 +785,7 @@ startMenu:
         }
     }
     // Placing Player on map
-    if (placementMenu(&battleMap, &Side_A) == FUNCTION_FAIL)
+    if (placementMenu(&battleMap, &Side_A, &mode) == FUNCTION_FAIL)
     {
         (void)deallocAll();
         goto startMenu;
@@ -797,7 +800,6 @@ startMenu:
             Status_B.deployed += Side_B.units[i].men;
 
     // Game Starts
-    int mode = MODE_HEIGHT;
     jukebox("Game1.wav", SND_ASYNC | SND_LOOP | SND_FILENAME);
     system("cls");
     show_Map(&battleMap, mode, true);
@@ -815,7 +817,7 @@ startMenu:
                 unitA_I++;
             else break;
         } // Side_A turn
-        if(do_Turn(&Side_A, &Side_B, &battleMap, unitA_I, i) == FUNCTION_FAIL)
+        if(do_Turn(&Side_A, &Side_B, &battleMap, unitA_I, i, &mode) == FUNCTION_FAIL)
             break;
         unitA_I++;
 
@@ -828,7 +830,7 @@ startMenu:
                 unitB_I++;
             else break;
         } // Side_B turn
-        if (do_Turn(&Side_B, &Side_A, &battleMap, unitB_I, i) == FUNCTION_FAIL)
+        if (do_Turn(&Side_B, &Side_A, &battleMap, unitB_I, i, &mode) == FUNCTION_FAIL)
             break;
         unitB_I++;
         
@@ -900,9 +902,8 @@ startMenu:
     return 0;
 }
 
-int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int turn)
+int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int turn, int *mode)
 {
-    static int mode = MODE_HEIGHT;
     B_Tile *position = NULL;   
     int target_I = 0;
     char action = 'x', msg[STRING_NAME];
@@ -979,9 +980,9 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 }
                 else if (action == 't') // Change Map Mode
                 {
-                    mode++;
-                    if(mode > MODE_UNITS) mode = MODE_HEIGHT;
-                    show_Map(battleMap, mode, true);
+                    (*mode)++;
+                    if(*mode > MODE_UNITS) *mode = MODE_HEIGHT;
+                    show_Map(battleMap, *mode, true);
                     moves--;
                 }
                 else if (action == 's') // Intercept a unit
@@ -1067,7 +1068,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                             while (get_KeyPress(false) != KEY_ENTER) continue;
                             system("cls");
-                            show_Map(battleMap, mode, true);
+                            show_Map(battleMap, *mode, true);
                             moves = Side_A.units[unitA_I].moves;
                         }
                         else moves--;
@@ -1084,7 +1085,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     printf(">> Press ENTER to continue \n");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
                     system("cls");
-                    show_Map(battleMap, mode, true);
+                    show_Map(battleMap, *mode, true);
                     moves--;
                 }
                 else if (action == 'e') // Fortify
@@ -1129,7 +1130,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         printf(">> Press ENTER to continue \n");
                         while (get_KeyPress(false) != KEY_ENTER) continue;
                         system("cls");
-                        show_Map(battleMap, mode, true);
+                        show_Map(battleMap, *mode, true);
                         moves--;
                     }
                     else
@@ -1174,7 +1175,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             }
                             FRes = move_Unit(battleMap, &unitA, player->units[unitA_I].path[steps]);
                             pos.X = player->units[unitA_I].position.X,pos.Y = player->units[unitA_I].position.Y;
-                            update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
+                            update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], *mode));
                             if (FRes == OUT_COMBAT)
                             {
                                 // Show
@@ -1199,7 +1200,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 printf(">> Press ENTER to continue ");
                                 while (get_KeyPress(false) != KEY_ENTER) continue;
                                 system("cls");
-                                show_Map(battleMap, mode, true);
+                                show_Map(battleMap, *mode, true);
                             }
                             else if (FRes == FUNCTION_FAIL)
                             {
@@ -1234,6 +1235,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             }
             else
             {
+                clear_afterMap(battleMap->height);
                 player->units[unitA_I].inCombat = false;
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
@@ -1260,7 +1262,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 {
                     pos.X = player->units[unitA_I].position.X, pos.Y = player->units[unitA_I].position.Y;
                     FRes = move_Unit(battleMap, &unitA, Northeast);
-                    update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], mode));
+                    update_Map(pos.X, pos.Y, get_MapSprite(&battleMap->tiles[pos.Y][pos.X], *mode));
                 }
                 else
                 {
@@ -1289,7 +1291,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     printf(">> Press ENTER to continue ");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
                     system("cls");
-                    show_Map(battleMap, mode, true);
+                    show_Map(battleMap, *mode, true);
                 }
                 else if (FRes > -1)
                     moves += FRes+1;
@@ -1298,6 +1300,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             }
             else
             {
+                clear_afterMap(battleMap->height);
                 player->units[unitA_I].inCombat = false;
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);

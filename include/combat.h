@@ -406,6 +406,7 @@ void do_Combat(B_Unit* attacker, B_Unit* defender, int heigthDif, short int *for
         *defender = Result.winner;
         *attacker = Result.looser;               
     }
+    return;
 }
 
 int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vegetat, short int *fortLevel)
