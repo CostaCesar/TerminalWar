@@ -173,7 +173,7 @@ void show_gUnit(B_Unit *unit)
 
     if (unit->range > 0)
     {
-        snprintf(msg, sizeof(msg), "Range: %d tiles| Ammo: %d left", unit->range, unit->ammo);
+        snprintf(msg, sizeof(msg), "Range: %d tiles | Ammo: %d left", unit->range, unit->ammo);
         print_Line(msg);
     }
     print_Line(" ");
@@ -190,6 +190,17 @@ void show_gUnit(B_Unit *unit)
         }
     }
     if (msg[0] != '\0')print_Line(msg);
+
+    if(unit->chaseID != NULL)
+    {
+        snprintf(buff, sizeof(buff), "Chasing unit %d", unit->chaseID);
+        print_Line(buff);
+    }
+    if(unit->goal.X != NO_UNIT && unit->goal.Y != NO_UNIT)
+    {
+        snprintf(buff, sizeof(buff), "Going to %dX %dY", unit->goal.X, unit->goal.Y);
+        print_Line(buff);
+    }
 
     print_Line(" ");
     if (unit->inCombat == true)
@@ -691,25 +702,24 @@ int main(/*int argc, char** argv*/)
     int nMaps = 0, cScen = 0, cMap = 0, out = 0;
     extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
+    extern bool muted;
     A_Loss = 0, B_Loss = 0;
 
     // Playing music
     PlaySound("sound/Menu.wav", NULL, SND_ASYNC | SND_FILENAME | SND_LOOP);
 
 startMenu:
-    // Map
-    // battleMap.tiles = NULL;
     // Side_A
     Side_A.size = 0, Side_A.ID = 0, Side_A.isAI = false;
     // Side_B
     Side_B.size = 0, Side_B.ID = 1, Side_B.isAI = true;
-
-    cMap = 0;
+    // Menu 
+    cMap = 0, out = 0;
     do
     {
         switch (screen_Menu(VERSION))
         {
-        case KEY_ENTER:
+        case 0:
             cScen = screen_Scenery();
             do
             {   // Scroll through maps
@@ -724,7 +734,20 @@ startMenu:
                 if(cMap == FUNCTION_FAIL) goto startMenu;
             } while (1);
             break;
-        case KEY_ESCAPE:
+        case 1:
+            system("cls");
+            show_TextFile("tutorial.txt");
+            do { /* Nothing */ }
+            while(get_KeyPress(false) != KEY_ENTER);
+            continue;
+        case 2:
+            screen_Credits(VERSION);
+            continue;
+        case 3:
+            muted = !muted;
+            jukebox("sound/Menu.wav", SND_ASYNC | SND_FILENAME | SND_LOOP);
+            continue;
+        case 4:
             free(unit_Table);
             return 0;
         default:
@@ -735,14 +758,6 @@ startMenu:
 
     xHiLi = NO_UNIT, yHiLi = NO_UNIT;
     Status_A.name = Side_A.name, Status_B.name = Side_B.name;
-
-    // Setting up some units
-    // set_fUnitTable(unit_Table, 0, &Side_A);
-    // set_fUnitTable(unit_Table, 4, &Side_A);
-    // set_fUnitTable(unit_Table, 0, &Side_A);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 1, &Side_B);
-    // set_fUnitTable(unit_Table, 2, &Side_B);
 
     // Placing AI on Map
     Map_Unit unitB, unitA;

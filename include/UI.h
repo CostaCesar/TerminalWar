@@ -7,7 +7,7 @@
 #include <time.h>
 #include "const.h"
 
-bool firstLine = true;
+bool firstLine = true, muted = false;
 short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
 typedef struct P_endStats
 {
@@ -94,7 +94,7 @@ void print_Line(char *message)
         }
         firstLine = !firstLine;
     }
-    else if(message[0] == ' ')
+    else if(message[0] == ' ' && strlen(message) == 1)
     {
         putchar(186);
         for(int i = 0; i < screenWidth - 2; i++)
@@ -197,41 +197,42 @@ char get_KeyPress(bool fLowerCase)
 
 int get_MapSprite_Graphic(B_tileData *tile, char *msg)
 {
-    int colorOut = 0;
+    int colorOut = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED;
     HANDLE nmd = GetStdHandle(STD_OUTPUT_HANDLE);
-    if(*(tile->height) < 0)
+    if(*(tile->height) < 0 || *(tile->terrain) == Water)
     {
         for(int pixel = 0; pixel < 3; pixel++) msg[pixel] = '~';
-        colorOut = BACKGROUND_BLUE;
+        colorOut |= BACKGROUND_BLUE;
     }
-    else if(*(tile->height) > 4)
+    else if(*(tile->height) > 4 || *(tile->terrain) == Snow)
     {
         for(int pixel= 0; pixel < 3; pixel++) msg[pixel] = 219;
-        colorOut = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
+        colorOut |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
     }
     else if(*(tile->terrain) == Mud)
     {
         for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 178;
-        colorOut = BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+        colorOut |= BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
     }
     else if(*(tile->terrain) == Rock)
     {
         for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = '#';
-        colorOut = BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY;
+        colorOut |= BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED;
+        colorOut ^= FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED;
     }
     else if(*(tile->terrain) == Sand)
     {
         for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 177;
-        colorOut = BACKGROUND_GREEN | BACKGROUND_RED;
+        colorOut |= BACKGROUND_GREEN | BACKGROUND_RED;
     }
     else
     {
         for(int pixel= 0; pixel< 3; pixel++) msg[pixel] = 176;
-        colorOut = BACKGROUND_GREEN;
+        colorOut |= BACKGROUND_GREEN;
     }
     if(*(tile->veget) > Field)
     {
-        colorOut |= FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+        colorOut ^= FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY;
         switch (*(tile->veget))
         {
         case Sparse:
@@ -591,31 +592,16 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
     for(int i = 0; i < floorf(screenWidth) - 1; i++)
         putchar(205);
     putchar(188);
-    // if(screenWidth % 2 == 0)
-    //     printf("=");
     putchar('\n');
     return;
 }
 
-// void info_Bottom()
-// {
-//     putchar(201);
-//     for(int i = 0; i < 45; i++)
-//         putchar(205);
-//     putchar(187);
-//     printf("\n");
-//     printf("%c [NumPad] Move Unit | [F] Fire At Enemy Unit %c\n", 186, 186);
-//     printf("%c [Esc] Exit To Menu | [A] Set Tile As Target %c\n", 186, 186);
-//     printf("%c [W] View Unit Wiki | [S] Set Unit As Target %c\n", 186, 186);
-//     printf("%c [G] Get Tile Stats | [D] Current Unit Stats %c\n", 186, 186);
-//     printf("%c [E] Build Trenches | [Enter] Skip Your Turn %c\n", 186, 186);
-//     printf("%c [XXX] PLACEHOLDER1 | [XXX] BIG_PLACEHOLDER2 %c");
-//     putchar(200);
-//     for(int i = 0; i < 45; i++)
-//         putchar(205);
-//     putchar(188);
-//     printf("\n");
-// }
+void jukebox(char *sound, DWORD param)
+{
+    if(!muted) PlaySound(sound, NULL, param | SND_NODEFAULT);
+    else PlaySound(NULL, NULL, param);
+    return;
+}
 
 int listScen()
 {
@@ -644,6 +630,60 @@ int listScen()
     return nScen;
 }
 
+void show_TextFile(char *path)
+{
+    int width = get_ScreenWidth();
+    FILE *text = fopen(path, "r");
+    if(!text)
+        return;
+    
+    char *word = (char *) malloc(width * sizeof(char));
+    if(!word)
+        return;
+    
+    print_Line(NULL);
+    while(!feof(text))
+    {
+        fgets(word, width - 4, text);
+        word[strlen(word) - 1] = '\0';
+        print_Line(word);
+    }
+    print_Line(NULL);
+    
+    fclose(text);
+    free(word);
+    return;
+}
+
+void screen_Credits(float version)
+{
+    char vers[10] = {0};
+    snprintf(vers, sizeof(vers), "%2.2f", version);
+    system("cls");
+
+    print_Line(NULL);
+    print_Line(" ");
+    print_Line("Total Terminal War");
+    print_Line(vers);
+    print_Line("CostaCesar 2022");
+    print_Line(" ");
+    print_Line("Programador, Designer e Artista:");
+    print_Line("Caio Cesar Moraes Costa");
+    print_Line(" ");
+    print_Line("Apoiadores [<3]:");
+    print_Line("Bongo, Alvinho, Prates, Arthur Marceneiro");
+    print_Line(" ");
+    print_Line("Musica padrao: ");
+    print_Line("Civilization 2 - Theme");
+    print_Line("Age Of Empires I - Siege(Wally)");
+    print_Line(" ");
+    print_LineOffset("Aperte ENTER para continuar", 5, true);
+    print_Line(NULL);
+    while(get_KeyPress(false) != KEY_ENTER);
+    { /* Nothing */ }
+    return;
+}
+
 int screen_Scenery()
 {
     int key = 0, nScen = 0;
@@ -652,7 +692,7 @@ int screen_Scenery()
     nScen = listScen();
     do 
     {
-        pos.X = 3;
+        // pos.X = 3;
         SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
         printf(">");
         key = get_KeyPress(false);
@@ -790,22 +830,61 @@ int screen_Menu(float version)
     printf("\n");
     pos.Y++;
     
-    for(int i = 0; i < sWidth / 2 - 12; i++)
+    for(int i = 0; i < sWidth / 2 - 4; i++)
         printf(" ");
-    printf("[ENTER] Iniciar um mapa");
+    printf("Jogar");
     printf("\n");
     
-    for(int i = 0; i < sWidth / 2 - 11; i++)
+    for(int i = 0; i < sWidth / 2 - 4; i++)
         printf(" ");
-    printf(" [S] Sobre o jogo");
+    printf("Tutorial");
     printf("\n");
 
-    for(int i = 0; i < sWidth / 2 - 11; i++)
+    for(int i = 0; i < sWidth / 2 - 4; i++)
         printf(" ");
-    printf("[ESC] Encerrar jogo");
+    printf("Creditos");
+    printf("\n");
+    
+    for(int i = 0; i < sWidth / 2 - 4; i++)
+        printf(" ");
+    printf("Configurar");
+    printf("\n");
+
+    for(int i = 0; i < sWidth / 2 - 4; i++)
+        printf(" ");
+    printf("Sair");
     printf("\n");
     ShowCursor(FALSE);
-    return get_KeyPress(true);
+
+    pos.X = (get_ScreenWidth() / 2 - 7), pos.Y = 6;
+    do 
+    {
+        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+        printf(">");
+        int key = get_KeyPress(false);
+        if(key == -32)
+        {
+            SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+            printf(" ");
+            switch ((int) getch())
+            {
+            case 72: // Up
+                pos.Y--;
+                if(pos.Y < 6)
+                    pos.Y = 10;
+                break;
+            case 80: // Down
+                pos.Y++;
+                if(pos.Y > 10)
+                    pos.Y = 6;
+                break;
+            default:
+                break;
+            }
+        }
+        else if(key == KEY_ENTER) break;
+    } while(1);
+    return (pos.Y - 6);
 }
 
 void screen_Victory(B_endStats winner, B_endStats looser)
