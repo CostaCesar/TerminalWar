@@ -26,10 +26,47 @@ typedef struct P_tileData
     int spawn;
 } B_tileData;
 
+bool jukebox(char *sound, bool doLoop, bool async)
+{
+    char rPath[STRING_NAME] = "sound/";
+    int args = SND_FILENAME, aLen = strlen(sound), bLen = 0, out = false;
+    WIN32_FIND_DATA fd;
+    HANDLE handle = FindFirstFile("sound/*.wav", &fd);
+    if(handle == INVALID_HANDLE_VALUE)
+        return false;
+    do
+    {
+        if((fd.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY))
+        {
+            bLen = strlen(fd.cFileName);
+            if(aLen != bLen) 
+                continue;
+            for(int i = 0; i < aLen && i < bLen; i++)
+            {
+                if(sound[i] != fd.cFileName[i])
+                    continue;
+            }
+            out = true;
+        }  
+    } while (FindNextFile(handle, &fd));
+    FindClose(handle);
+
+    if(out == false) return false;
+    strcat(rPath, sound);
+    if(doLoop == true) args |= SND_LOOP;
+    if(async)
+        args |= SND_ASYNC;
+    else args |= SND_SYNC;
+    
+    out = PlaySound(rPath, NULL, args);
+    return out;
+}
+
 void reset_Cursor()
 {
     COORD pos = {0, 0};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    return;
 }
 
 int get_Digits(int num)

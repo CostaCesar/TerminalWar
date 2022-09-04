@@ -18,6 +18,7 @@ B_Side Side_A, Side_B;
 B_endStats Status_A = {0}, Status_B = {0};
 B_Unit *unit_Table = NULL;
 int unit_TableSize = 0;
+char nowPlaying[30] = {0};
 
 // File->Game functions
 B_Unit *getFile_Unit(char *path, int *size)
@@ -141,7 +142,6 @@ void update_Unit(B_Unit *unit, Map_Unit source)
     unit->position.Y = source.Y;
     return;
 }
-
 // Main functions (screens & logic)
 void show_gUnit(B_Unit *unit)
 {
@@ -296,8 +296,8 @@ int load_Scenery(int nScen, int playMap)
             output = FUNCTION_FAIL; break; 
         }
         strcpy(scen_Map, scen_Map+strBuff);
-        // Get Unit Table
-        strBuff = strlen("table: ");
+        // Try to get Music
+        strBuff = strlen("music: ");
         fgets(word, sizeof(word), scen);
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
@@ -305,8 +305,20 @@ int load_Scenery(int nScen, int playMap)
             print_Message("Can't load the units!", true);
             output = FUNCTION_FAIL; break; 
         }
+        if(word[4] == 'c' && word[0] == 'm')    // Music detected
+        {
+            strcpy(nowPlaying, word+7);
+            fgets(word, sizeof(word), scen);
+            word[strlen(word)-1] = '\0';
+            if(strlen(word) < strBuff)
+            {
+                print_Message("Can't load the units!", true);
+                output = FUNCTION_FAIL; break; 
+            }
+        }
+        // Get Unit Table
         unit_Table = getFile_Unit(word+strBuff, &unit_TableSize);
-        if(!unit_Table){ output = FUNCTION_FAIL; break; }
+        if(!unit_Table){ output = FUNCTION_FAIL; break; } 
         
         // Get side attacking
         strBuff = strlen("attacker: ");
@@ -786,7 +798,8 @@ startMenu:
 
     // Game Starts
     int mode = MODE_HEIGHT;
-    PlaySound("sound/Game1.wav", NULL, SND_ASYNC | SND_LOOP | SND_FILENAME);
+    if(jukebox("  ", true, true) == false)
+        jukebox("Game1.wav", true, true);
     system("cls");
     show_Map(&battleMap, mode, true);
     

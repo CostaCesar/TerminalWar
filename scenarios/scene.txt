@@ -1,6 +1,7 @@
 scenario: The Conquest Of The East
 map: Catalon.map
 mapTitle: At Arduino's Heart
+music: NU_Battle.wav
 table: new2.bin
 attacker: sideA
 sideA: Greeks
