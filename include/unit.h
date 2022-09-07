@@ -77,9 +77,11 @@ typedef struct S_Side
     B_Unit *units;
     char name[STRING_NAME];
     int size;
-    int cIndex;
-    B_Pos cCoords;
     int ID;
+    B_Pos cCoords;
+    bool canPlace;
+    bool isAI;
+    bool attacker;
 } B_Side;
 
 // Alloc & Dealloc of Units

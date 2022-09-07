@@ -12,6 +12,8 @@ typedef struct S_Result
     bool isDraw;
 } B_Result;
 
+short int A_Loss = 0, B_Loss = 0;
+
 float add_BonusDamage_ByVeget(int tileVeget)
 {
     return (tileVeget / 2.0f + 1);
@@ -189,7 +191,7 @@ int add_BonusDamage_ByClass(T_Class attacker_Type, T_Class defender_Type, bool f
 B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, short int *fortLevel)
 {
     B_Result result;
-    short int men_Buffer = 0;
+    short int A_Buffer = 0, D_Buffer = 0;
     result.isDraw = false;
 
     unit_Attacker.inCombat = true, unit_Defender.inCombat = true;
@@ -222,16 +224,18 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
     // Returnig winner or definig draw
     if(combat_Result > 0)
     {
-        unit_Attacker.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 10;
+        unit_Attacker.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
 
         // Remaining men is defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        men_Buffer = unit_Attacker.men;
+        A_Buffer = unit_Attacker.men;
         unit_Attacker.men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
         * (unit_Defender.men / unit_Attacker.morale);
+        A_Loss = A_Buffer - unit_Attacker.men;
 
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
-        unit_Defender.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 10;
+        D_Buffer = unit_Defender.men;
+        unit_Defender.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
         if(unit_Defender.morale <= 1 )
         {
             unit_Defender.men = (short int) ((1.0f / (float) OFFSET) * unit_Defender.men_Max);
@@ -242,7 +246,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         else 
         {
             unit_Defender.men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (men_Buffer / unit_Defender.morale) * OFFSET + OFFSET;
+            * (A_Buffer / unit_Defender.morale) * OFFSET + OFFSET;
             if(unit_Defender.men < 0)
             {
                 unit_Defender.men = (short int) ((1.0f / (float) OFFSET) * unit_Defender.men_Max);
@@ -250,23 +254,27 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
                 unit_Defender.isRetreating = true;
                 unit_Defender.inCombat = false;
             }
-        }    
+        }
+        B_Loss = D_Buffer - unit_Defender.men;
+
         result.winner = unit_Attacker;
         result.looser = unit_Defender;
     }
     else if (combat_Result < 0)
     {  
         combat_Result = (float) fabs((double) combat_Result);
-        unit_Defender.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 10;
+        unit_Defender.morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
 
         // Remaining men is Defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        men_Buffer = unit_Defender.men;
+        D_Buffer = unit_Defender.men;
         unit_Defender.men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
         * (unit_Attacker.men / unit_Defender.morale);
+        B_Loss = D_Buffer - unit_Defender.men;
         
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
-        unit_Attacker.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 10;
+        A_Buffer = unit_Attacker.men;
+        unit_Attacker.morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
         if(unit_Attacker.morale <= 1)
         {
             unit_Attacker.men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker.men_Max);
@@ -277,7 +285,7 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
         else 
         {
             unit_Attacker.men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (men_Buffer / unit_Attacker.morale) * OFFSET + OFFSET;
+            * (A_Buffer / unit_Attacker.morale) * OFFSET + OFFSET;
             if(unit_Attacker.men < 0)
             {
                 unit_Attacker.men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker.men_Max);
@@ -286,6 +294,8 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
                 unit_Attacker.inCombat = false;
             }
         }
+        A_Loss = A_Buffer - unit_Attacker.men;
+
         result.winner = unit_Defender;
         result.looser = unit_Attacker;
     }
@@ -358,10 +368,6 @@ bool show_Combat_Result(B_Result units)
         printf("%s was doomed today: A shamefull day for the %s! \n", units.looser.name, units.looser.faction);  
         out = true;   
     }
-
-    show_Unit(units.winner);
-    show_Unit(units.looser);
-    printf(">> Press ENTER to continue ");
     return out;
 }
 
@@ -384,7 +390,6 @@ void do_Combat(B_Unit* attacker, B_Unit* defender, int heigthDif, short int *for
 
     B_Result Result = combat_Unit(*attacker, *defender, heigthDif, fortLevel);
     bool LevelUP = show_Combat_Result(Result);
-    getchar();
     // Level up
     if(LevelUP == true)
         Result.winner.level++; 
@@ -401,12 +406,17 @@ void do_Combat(B_Unit* attacker, B_Unit* defender, int heigthDif, short int *for
         *defender = Result.winner;
         *attacker = Result.looser;               
     }
+    return;
 }
 
 int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vegetat, short int *fortLevel)
 {
     // Testing if in range of attack
-    if(defender->position.X > attacker->position.X + attacker->range || defender->position.Y > attacker->position.Y + attacker->range)
+    char msg[51];
+    if(defender->position.X > attacker->position.X + attacker->range
+    || defender->position.X < attacker->position.X - attacker->range
+    || defender->position.Y > attacker->position.Y + attacker->range
+    || defender->position.X < attacker->position.X - attacker->range)
     {
         /* printf("\n");
         printf("#============================================# \n");
@@ -438,18 +448,24 @@ int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vege
         return FUNCTION_FAIL;       
     }
 
-
     // If attaker != cavalary OR charriot, engage
     if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
         attacker->inCombat = true;
+    // Defender must be engaged
+    // defender->inCombat = true;
 
     // Signaling attack
-    printf("\n");
-    printf("#================================# \n");
-    printf("| %14s from %-10s | \n", attacker->name, attacker->faction);
-    printf("| Firing from %2hdX %2hdY at %2hdX %2hdY | \n",attacker->position.X, attacker->position.Y, defender->position.X, defender->position.Y);
-    printf("| %14s from %-10s | \n", defender->name, defender->faction);
-    printf("#================================# \n");
+    system("cls");
+    print_Line(NULL);
+    print_Line(" ");
+    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
+    print_Line(msg);
+    print_Line("Is firing a volley into");
+    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", defender->name, defender->faction, defender->position.X, defender->position.Y);
+    print_Line(msg);
+    print_Line(" ");
+    print_Line(NULL);
+    Sleep(TIME_STRATEGY);
 
     // Doing damage
     attacker->ammo--;

@@ -1,0 +1,46 @@
+scenario: The Conquest Of The East
+map: Catalon.map
+mapTitle: At Arduino's Heart
+music: NU_Battle.wav
+table: new2.bin
+attacker: sideA
+sideA: Greeks
+placement: chosen
+units: 5
+0
+4
+0
+4
+0
+sideB: Romans
+placement: forced
+units: 5
+1 5 15
+1 6 15
+1 7 15
+2 6 17
+2 6 18
+mapDesc: Not much to say
+I HAVE XD
+#plz subscribe;
+$
+map: Catalon.map
+mapTitle: At Arduino's Heart II
+table: new2.bin
+attacker: sideA
+sideA: Greeks
+placement: chosen
+units: 3
+0
+4
+0
+sideB: Romans
+placement: forced
+units: 3
+1 5 15
+1 6 15
+2 6 17
+mapDesc: Not much to say
+I HAVE XD
+#this is my 2nd map ;)
+$

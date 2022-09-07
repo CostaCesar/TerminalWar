@@ -1,9 +1,11 @@
+#pragma once
 // common
 #define STRING_NAME (50 + 1)
 #define STRING_FILE (20 + 1)
-// #define STRING_MSG (STRING_NAME * 3 - 2)
 #define FUNCTION_FAIL -2
-#define FUNCTION_SUCESS 0
+#define FUNCTION_SUCESS -1
+#define TIME_MAP 1000
+#define TIME_STRATEGY 2000
 
 // Keys
 #define KEY_ESCAPE 27
@@ -31,10 +33,30 @@
 #define BACKUP_MAP_ROWS 10
 #define HEIGHT_DIF 2
 #define MAX_FORT_LEVEL 10
+typedef enum E_Terrain
+{
+    Grass,
+    Sand,
+    Rock,
+    Mud,
+    Water,
+    Snow
+} T_Terrain;
+
+typedef enum E_Vegetation
+{
+    None,
+    Field,
+    Sparse,
+    Grove,
+    Forest,
+    Jungle
+} T_Veget;
 
 #define NO_UNIT -1
 #define OUT_COMBAT -3
 #define MODE_HEIGHT 0
 #define MODE_TERRAIN 1
 #define MODE_VEGETAT 2
-#define MODE_UNITS 3
+#define MODE_GRAPHIC 3
+#define MODE_UNITS 4

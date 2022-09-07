@@ -4,7 +4,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include "const.h"
-
 typedef enum E_Direction
 {
     North,
@@ -16,25 +15,6 @@ typedef enum E_Direction
     West,
     Northwest
 } T_Direc;
-
-typedef enum E_Terrain
-{
-    Grass,
-    Sand,
-    Rock,
-    Mud,
-    Water
-} T_Terrain;
-
-typedef enum E_Vegetation
-{
-    None,
-    Field,
-    Sparse,
-    Grove,
-    Forest,
-    Jungle
-} T_Veget;
 
 typedef enum E_Climate
 {
@@ -110,6 +90,42 @@ float calcDistance(B_Tile A, B_Tile B)
     return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
 }
 
+char *tTerrain_toStr(T_Terrain source)
+{
+    switch (source)
+    {
+    case Grass:
+        return "Grass";
+    case Sand:
+        return "Sand";
+    case Rock:
+        return "Rock";
+    case Mud:
+        return "Mud";
+    case Water:
+        return "Water";
+    }
+}
+
+char *tVeget_toStr(T_Veget source)
+{
+    switch(source)
+    {
+        case None:
+            return "No vegetation";
+        case Field:
+            return "Fields";
+        case Sparse:
+            return "Sparse Trees";
+        case Grove:
+            return "Groove";
+        case Forest:
+            return "Forest";
+        case Jungle:
+            return "Jungle";
+    }
+}
+
 int cmp(const void *a, const void *b)
 {
     const B_Tile *a_Float = *((B_Tile **) a);
@@ -182,100 +198,110 @@ int getDirection(B_Tile *current, B_Tile *next)
     return -1;
 }
 
-void show_Map(B_Map *source, int mode)
+char *get_MapSprite(B_Tile* tile, int mode)
 {
-    // Printing upper division line
-    printf("\n");
-    for(int i = 0; i < source->width * 2 + 4; i++)
+    static char mapStat[4] = {0};
+    int colorOut = 0;
+    B_tileData tileData;
+    if(tile->unit.ID != NO_UNIT)
     {
-        printf("I ");
+        strcpy(mapStat, tile->unit.name);
+        return mapStat;
     }
-    printf("\n   X ");
-    
-    // Printing X coordinates
-    for(int i = 0; i < source->width; i++)
+    switch (mode)
     {
-        printf("\\%2d/", i);
+    case MODE_HEIGHT:
+        snprintf(mapStat, sizeof(mapStat), "%3d", tile->elevation);
+        break;
+    case MODE_UNITS:
+        if(tile->isSpawnA)
+            snprintf(mapStat, sizeof(mapStat), "<A>");
+        else if(tile->isSpawnB)
+            snprintf(mapStat, sizeof(mapStat), "<B>");
+        else snprintf(mapStat, sizeof(mapStat), "   ");
+        break;
+    case MODE_VEGETAT:
+        snprintf(mapStat, sizeof(mapStat), "%3d", tile->vegetation);
+        break;
+    case MODE_TERRAIN:
+        snprintf(mapStat, sizeof(mapStat), "%3d", tile->terrain);
+        break;
+    case MODE_GRAPHIC:
+        tileData.height = &tile->elevation, tileData.veget = (int *) &tile->vegetation;
+        tileData.terrain = (int *) &tile->terrain, tileData.unit = tile->unit.name;
+        tileData.spawn = 0;
+        colorOut = get_MapSprite_Graphic(&tileData, mapStat);
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorOut);
+    default:
+        break;
     }
-    printf("\n  Y  ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf(" \\/ ");
-    }
-    printf("\n");
+    return mapStat;
+}
 
-    // Printing map & Y coordinates
+void show_Map(B_Map *source, int mode, bool skipBanner)
+{
+    B_tileData *tiles = (B_tileData*) malloc(source->height * source->width * sizeof(B_tileData));
+    char tileAux[4] = {0};
+    int cNames = 1;
+    
     for(int i = 0; i < source->height; i++)
     {
         for(int j = 0; j < source->width; j++)
         {
-            
-            if(j == 0) // Coordinates here
+            switch (mode)
             {
-                printf("%3d >", i);
-            }
-            if(source->tiles[i][j].unit.ID != NO_UNIT)
-            {
-                // Units here
-                printf("|%.2s|", source->tiles[i][j].unit.name);
-            }
-            else
-            {
-                if(mode == MODE_HEIGHT)
-                    printf("|%2d|", source->tiles[i][j].elevation);
-                else if(mode ==  MODE_TERRAIN)
-                    printf("|%-2d|", source->tiles[i][j].terrain);
-                else if(mode ==  MODE_VEGETAT)
-                    printf("|%02d|", source->tiles[i][j].vegetation);
-                else if(mode == MODE_UNITS)
+            case MODE_HEIGHT:
+                tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
+                tiles[i * source->width + j].veget = NULL;
+                tiles[i * source->width + j].terrain = NULL;
+                tiles[i * source->width + j].spawn = NO_UNIT;
+                break;
+            case MODE_UNITS:
+                if(source->tiles[i][j].isSpawnA == true)
+                    tiles[i * source->width + j].spawn = 1;
+                else if(source->tiles[i][j].isSpawnB == true)
+                    tiles[i * source->width + j].spawn = 2;
+                else tiles[i * source->width + j].spawn = 0;
+                break;
+            case MODE_TERRAIN:
+                tiles[i * source->width + j].terrain = (int *) &source->tiles[i][j].terrain;
+                tiles[i * source->width + j].spawn  = NO_UNIT;
+                tiles[i * source->width + j].veget = NULL;
+                tiles[i * source->width + j].height = NULL;
+                break;
+            case MODE_GRAPHIC:
+                if(source->tiles[i][j].unit.ID == NO_UNIT)
                 {
-                    if(source->tiles[i][j].node.isVisited == true)
-                        printf("|##|");
-                    // Printing spawns areas
-                    else if(source->tiles[i][j].isSpawnA == true)
-                        printf("|*1|");
-                    else if(source->tiles[i][j].isSpawnB == true)
-                        printf("|*2|");      
-                    else if(source->tiles[i][j].unit.ID == NO_UNIT)
-                        printf("|  |");
-                    else if(source->tiles[i][j].unit.ID >= 0)
-                        printf("|%.2s|", source->tiles[i][j].unit.name);
+                    tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
+                    tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
+                    tiles[i * source->width + j].terrain = (int *) &source->tiles[i][j].terrain;
+                    tiles[i * source->width + j].unit = NULL;
                 }
+                else
+                    tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
+                break;
+            case MODE_VEGETAT:
+                tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
+                tiles[i * source->width + j].terrain = NULL;
+                tiles[i * source->width + j].spawn = NO_UNIT;
+                tiles[i * source->width + j].height = NULL;
+                break;
             }
+            if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name 
+                tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
+            else tiles[i * source->width + j].unit = NULL;
         }
-        
-        // Creating horizontal lines
-        printf("\n");
-        if(i < source->height - 1)
-        {
-            for (int k = 0; k < source->width * 4 + 6; k++)
-            {
-            printf("-");
-            }
-            printf("\n");
-        }   
     }
-
-    // Printing X coordinates (again)
-    printf("  Y  ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf(" /\\ ");
-    }
-    printf("\n   X ");
-    for(int i = 0; i < source->width; i++)
-    {
-        printf("/%2d\\", i);
-        
-    }
-    printf("\n");
+    COORD pos = {0, 8};
+    if(skipBanner == true) SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     
-    // Printing bottom division line
-    for(int i = 0; i < source->width * 2 + 4; i++)
-    {
-        printf("I ");
-    }
-    printf("\n");
+    if(mode == MODE_GRAPHIC)
+        print_MapGraphic(source->height, source->width, tiles);
+    else print_MapStats(source->height, source->width, tiles);
+    free(tiles);
+    if(skipBanner == true)
+        reset_Cursor();
+    return;
 }
 
 int get_AbsHeigthDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)
@@ -320,10 +346,6 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     // Checking if coordiantes are valid
     if((unitPos->X < 0 || unitPos->X >= source_Map->width) || (unitPos->Y  < 0 || unitPos->Y  >= source_Map->height))
     {
-        // printf("\n");
-        // printf("#================================# \n");
-        // printf("| Coordinates out of boundaries! | \n");
-        // printf("#================================# \n");
         print_Message("Coordinates out of boundaries!", true);       
         return FUNCTION_FAIL;
     }
@@ -334,10 +356,6 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         char msg[24];
         snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unitPos->X, unitPos->Y);
         print_Message(msg, true);
-        // printf("\n");
-        // printf("#================================# \n");
-        // printf("| Nothing in %3dX %3dY        | \n", unit_Pos->X, unit_Pos->Y);
-        // printf("#================================# \n");
         return FUNCTION_FAIL;
     }
 
@@ -384,19 +402,11 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         // Checking for terrain-related movement
         if(source_Map->tiles[destPos.Y][destPos.X].elevation < -1 && source_Map->tiles[destPos.Y][destPos.X].terrain == Water)
         {
-            // printf("\n");
-            // printf("#================================# \n");
-            // printf("| The water is too deep to cross | \n");
-            // printf("#================================# \n");
             print_Message("The water is too deep to cross!", true);
             return FUNCTION_FAIL;           
         }
         if(abs(source_Map->tiles[unitPos->Y][unitPos->X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
-            // printf("\n");
-            // printf("#================================# \n");
-            // printf("| The terrain is too step to go! | \n");
-            // printf("#================================# \n");
             print_Message("The terrain is too step to go!", true);
             return FUNCTION_FAIL;
         }
@@ -404,24 +414,11 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
         // Cheking for units (if friend, then if foe)
         if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) == (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
         {
-            //printf("\n");
-            //printf("#================================# \n");
-            //printf("| Units can't go over eachother! | \n");
-            //printf("#================================# \n");
             print_Message("Units can't go over eachother!", true);
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) != (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
-        {
-            // printf("\n");
-            // printf("#=================================# \n");
-            // printf("| Trying engagement at %3dX %3dY  | \n", destPos.X, destPos.Y);
-            // printf("#=================================# \n");
-            char msg[31];   
-            snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", destPos.X, destPos.Y);
-            print_Message(msg, true);
             return OUT_COMBAT;
-        }
         
         short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
@@ -435,7 +432,7 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     return FUNCTION_FAIL;
 }
 
-int put_Unit_OnMap(B_Map *map, Map_Unit *unit)
+int put_Unit_OnMap(B_Map *map, Map_Unit *unit, int ignoreSpawn)
 {
     short int X = unit->X;
     short int Y = unit->Y;
@@ -448,7 +445,7 @@ int put_Unit_OnMap(B_Map *map, Map_Unit *unit)
     }
 
     // Cheking if it's spawn tiles
-    if((!map->tiles[Y][X].isSpawnA && unit->ID % 2 == 0) || (!map->tiles[Y][X].isSpawnB && unit->ID % 2 == 1))
+    if(((!map->tiles[Y][X].isSpawnA && unit->ID % 2 == 0) || (!map->tiles[Y][X].isSpawnB && unit->ID % 2 == 1)) && ignoreSpawn == 0)
     {
         fprintf(stderr, "Not in spawn coordinates!");
         return FUNCTION_FAIL;    
@@ -465,7 +462,7 @@ int put_Unit_OnMap(B_Map *map, Map_Unit *unit)
     return FUNCTION_SUCESS;
 }
 
-void inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
+int inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
 {
     map->tiles[pos.Y][pos.X].fortLevel += amount;
     if(map->tiles[pos.Y][pos.X].fortLevel > MAX_FORT_LEVEL)
@@ -474,12 +471,14 @@ void inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
         char msg[28];
         snprintf(msg, sizeof(msg), "Max Fort Level Reached [%2d]", MAX_FORT_LEVEL);
         print_Message(msg, true);
+        return FUNCTION_FAIL;
     }
     else
     {
         char msg[29];
         snprintf(msg, sizeof(msg), "Fort Upgraded from %2d to %2d!", map->tiles[pos.Y][pos.X].fortLevel - amount, map->tiles[pos.Y][pos.X].fortLevel);
         print_Message(msg, true);       
+        return FUNCTION_SUCESS;
     }
 }
 
@@ -540,37 +539,37 @@ B_Tile* get_AdjTile(B_Map* map, Map_Unit unit, T_Direc direction, bool isAI)
 
 bool unit_Retreat(Map_Unit* unit, B_Map* map)
 {
-    bool hasMoved = true;
+    int hasMoved = false;
     T_Direc direction;
 
     // What direction it should move
-    if (unit->X > 0 && unit->X < (BACKUP_MAP_COLUMNS / 2))
-    {
-        // West-ish 
-        direction = Southwest + (rand() % 3);
-    }
-    else if(unit->X > BACKUP_MAP_COLUMNS / 2)
-    {
-        // East-ish
-        direction = Northeast + (rand() % 3);
-    }
+    if (unit->X < (map->width / 2))
+        direction = West;
+    else if(unit->X > map->width / 2)
+        direction = East;
+    else if(unit->Y < map->height / 2)
+        direction = North;
+    else if(unit->Y > map->height / 2)
+        direction = South;
     else
-    {
         direction = rand() % Northwest; // Random direction
-    }
 
     // Trying to move foward, then diagonals
-    hasMoved = move_Unit(map, unit, direction);
-    if (hasMoved == false)
+    B_Tile* adj = get_AdjTile(map, *unit, direction, true);
+    if((adj) && adj->unit.ID == NO_UNIT)
+        hasMoved = move_Unit(map, unit, direction);
+    if (hasMoved == FUNCTION_FAIL)
     {
-        hasMoved = move_Unit(map, unit, direction -1);
-        if (hasMoved == false)
+        adj = get_AdjTile(map, *unit, direction -1, true);
+        if((adj) && adj->unit.ID == NO_UNIT)
+            hasMoved = move_Unit(map, unit, direction -1);
+        if (hasMoved == FUNCTION_FAIL)
         {
-            hasMoved = move_Unit(map, unit, direction +1);
-            if (hasMoved == false)
-            {
+            adj = get_AdjTile(map, *unit, direction +1, true);
+            if((adj) && adj->unit.ID == NO_UNIT)
+                hasMoved = move_Unit(map, unit, direction +1);
+            if (hasMoved == FUNCTION_FAIL)
                 return false;
-            }
         }
     }
     return true;
