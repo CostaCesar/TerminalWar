@@ -1,8 +1,9 @@
 // #include <stdbool.h>
 // #include <stdio.h>
-#include "UI.h"
 #include <math.h>
 #include <stdlib.h>
+#include "UI.h"
+#include "unit.h"
 #include "const.h"
 typedef enum E_Direction
 {
@@ -49,10 +50,8 @@ typedef struct sMap_Node
 
 typedef struct sMap_Area
 {
-    short int aPosX;
-    short int aPosY;
-    short int bPosX;
-    short int bPosY;
+    B_Pos pointA;
+    B_Pos pointB;
 } Map_Area;
 
 typedef struct sMap_Unit
@@ -67,9 +66,8 @@ typedef struct S_Tile
 {
     short int elevation;
     short int fortLevel;
-    bool isSpawnA;
-    bool isSpawnB;
-    Map_Unit unit;
+    short int spawn;
+    B_Unit *unit;
     T_Terrain terrain;
     T_Veget vegetation;
     Map_Node node;
@@ -85,9 +83,9 @@ typedef struct S_Map
     B_Tile **tiles;
 } B_Map;
 
-float calcDistance(B_Tile A, B_Tile B)
+float calcDistance(B_Pos A, B_Pos B)
 {
-    return sqrtf((A.unit.X - B.unit.X) * (A.unit.X - B.unit.X) + (A.unit.Y - B.unit.Y) * (A.unit.Y - B.unit.Y));
+    return sqrtf((A.X - B.X) * (A.X - B.X) + (A.Y - B.Y) * (A.Y - B.Y));
 }
 
 char *tTerrain_toStr(T_Terrain source)
@@ -173,10 +171,10 @@ void tNum_ToDirec(char* key)
     *key = num;
 }
 
-int getDirection(B_Tile *current, B_Tile *next)
+int getDirection(B_Pos current, B_Pos next)
 {
-    int xDif = current->unit.X - next->unit.X;
-    int yDif = current->unit.Y - next->unit.Y;
+    int xDif = current.X - next.X;
+    int yDif = current.Y - next.Y;
 
     if(xDif == 0 && yDif > 0)
         return North;
@@ -203,9 +201,9 @@ char *get_MapSprite(B_Tile* tile, int mode)
     static char mapStat[4] = {0};
     int colorOut = 0;
     B_tileData tileData;
-    if(tile->unit.ID != NO_UNIT)
+    if(tile->unit != NULL)
     {
-        strcpy(mapStat, tile->unit.name);
+        strcpy(mapStat, tile->unit->name);
         return mapStat;
     }
     switch (mode)
@@ -214,9 +212,9 @@ char *get_MapSprite(B_Tile* tile, int mode)
         snprintf(mapStat, sizeof(mapStat), "%3d", tile->elevation);
         break;
     case MODE_UNITS:
-        if(tile->isSpawnA)
+        if(tile->spawn > 0)
             snprintf(mapStat, sizeof(mapStat), "<A>");
-        else if(tile->isSpawnB)
+        else if(tile->spawn < 0)
             snprintf(mapStat, sizeof(mapStat), "<B>");
         else snprintf(mapStat, sizeof(mapStat), "   ");
         break;
@@ -228,7 +226,7 @@ char *get_MapSprite(B_Tile* tile, int mode)
         break;
     case MODE_GRAPHIC:
         tileData.height = &tile->elevation, tileData.veget = (int *) &tile->vegetation;
-        tileData.terrain = (int *) &tile->terrain, tileData.unit = tile->unit.name;
+        tileData.terrain = (int *) &tile->terrain, tileData.unit = tile->unit->name;
         tileData.spawn = 0;
         colorOut = get_MapSprite_Graphic(&tileData, mapStat);
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorOut);
@@ -257,9 +255,9 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                 tiles[i * source->width + j].spawn = NO_UNIT;
                 break;
             case MODE_UNITS:
-                if(source->tiles[i][j].isSpawnA == true)
+                if(source->tiles[i][j].spawn > 0)
                     tiles[i * source->width + j].spawn = 1;
-                else if(source->tiles[i][j].isSpawnB == true)
+                else if(source->tiles[i][j].spawn < 0)
                     tiles[i * source->width + j].spawn = 2;
                 else tiles[i * source->width + j].spawn = 0;
                 break;
@@ -270,7 +268,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                 tiles[i * source->width + j].height = NULL;
                 break;
             case MODE_GRAPHIC:
-                if(source->tiles[i][j].unit.ID == NO_UNIT)
+                if(source->tiles[i][j].unit == NULL)
                 {
                     tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
                     tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
@@ -278,7 +276,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                     tiles[i * source->width + j].unit = NULL;
                 }
                 else
-                    tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
+                    tiles[i * source->width + j].unit = source->tiles[i][j].unit->name;
                 break;
             case MODE_VEGETAT:
                 tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
@@ -287,8 +285,8 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                 tiles[i * source->width + j].height = NULL;
                 break;
             }
-            if(source->tiles[i][j].unit.ID != NO_UNIT) // Override tile with unit name 
-                tiles[i * source->width + j].unit = source->tiles[i][j].unit.name;
+            if(source->tiles[i][j].unit != NULL) // Override tile with unit name 
+                tiles[i * source->width + j].unit = source->tiles[i][j].unit->name;
             else tiles[i * source->width + j].unit = NULL;
         }
     }
@@ -304,7 +302,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
     return;
 }
 
-int get_AbsHeigthDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)
+int get_AbsHeigthDif(B_Map* map, B_Pos aPoint , B_Pos bPoint)
 {
     int height_A = map->tiles[aPoint.Y][aPoint.X].elevation;
     int height_B = map->tiles[bPoint.Y][bPoint.X].elevation;
@@ -319,42 +317,39 @@ int get_AbsHeigthDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)
     }
 }
 
-int get_HeightDif(B_Map* map, Map_Unit aPoint, Map_Unit bPoint)
+int get_HeightDif(B_Map* map, B_Pos aPoint, B_Pos bPoint)
 {
     int height_A = map->tiles[aPoint.Y][aPoint.Y].elevation;
     int height_B = map->tiles[bPoint.Y][bPoint.X].elevation;
     return (height_A - height_B);
 }
 
-int getTile_Vegetat(B_Map* map, Map_Unit unit)
+int getTile_Vegetat(B_Map* map, B_Pos pos)
 {
-    int X = unit.X;
-    int Y = unit.Y;
-    return map->tiles[Y][X].vegetation;
+    return map->tiles[pos.Y][pos.X].vegetation;
 }
 
-int getTile_Terrain(B_Map* map, Map_Unit* unit)
+int getTile_Terrain(B_Map* map, B_Pos pos)
 {
-    int X = unit->X;
-    int Y = unit->Y;
-    return map->tiles[Y][X].terrain;
+    return map->tiles[pos.Y][pos.X].terrain;
 }
 
-int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
+int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
 {
-    Map_Unit destPos = {0, 0, unitPos->ID, unitPos->name};
+    B_Pos destPos = {0, 0};
+    // Map_Unit destPos = {0, 0, unit->ID, unit->name};
     // Checking if coordiantes are valid
-    if((unitPos->X < 0 || unitPos->X >= source_Map->width) || (unitPos->Y  < 0 || unitPos->Y  >= source_Map->height))
+    if((unit->position.X < 0 || unit->position.X >= source_Map->width) || (unit->position.Y  < 0 || unit->position.Y  >= source_Map->height))
     {
         print_Message("Coordinates out of boundaries!", true);       
         return FUNCTION_FAIL;
     }
     
     // Checking if coordinates represent a real unit
-    if(source_Map->tiles[unitPos->Y][unitPos->X].unit.ID == NO_UNIT)
+    if(source_Map->tiles[unit->position.Y][unit->position.X].unit == NULL)
     {
         char msg[24];
-        snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unitPos->X, unitPos->Y);
+        snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unit->position.X, unit->position.Y);
         print_Message(msg, true);
         return FUNCTION_FAIL;
     }
@@ -363,36 +358,36 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     switch (direction)
     {
     case North:
-        destPos.X = unitPos->X;
-        destPos.Y = unitPos->Y - 1;
+        destPos.X = unit->position.X;
+        destPos.Y = unit->position.Y - 1;
         break;
     case Northeast:
-        destPos.X = unitPos->X + 1;
-        destPos.Y = unitPos->Y - 1;
+        destPos.X = unit->position.X + 1;
+        destPos.Y = unit->position.Y - 1;
         break;
     case East:
-        destPos.X = unitPos->X + 1;
-        destPos.Y = unitPos->Y;
+        destPos.X = unit->position.X + 1;
+        destPos.Y = unit->position.Y;
         break;
     case Southeast:
-        destPos.X = unitPos->X + 1;
-        destPos.Y = unitPos->Y + 1;
+        destPos.X = unit->position.X + 1;
+        destPos.Y = unit->position.Y + 1;
         break;
     case South:
-        destPos.X = unitPos->X;
-        destPos.Y = unitPos->Y + 1;
+        destPos.X = unit->position.X;
+        destPos.Y = unit->position.Y + 1;
         break;
     case Southwest:
-        destPos.X = unitPos->X - 1;
-        destPos.Y = unitPos->Y + 1;
+        destPos.X = unit->position.X - 1;
+        destPos.Y = unit->position.Y + 1;
         break;
     case West:
-        destPos.X = unitPos->X - 1;
-        destPos.Y = unitPos->Y;
+        destPos.X = unit->position.X - 1;
+        destPos.Y = unit->position.Y;
         break;
     case Northwest:
-        destPos.X = unitPos->X - 1;
-        destPos.Y = unitPos->Y - 1;
+        destPos.X = unit->position.X - 1;
+        destPos.Y = unit->position.Y - 1;
         break;
     }
     
@@ -405,26 +400,26 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
             print_Message("The water is too deep to cross!", true);
             return FUNCTION_FAIL;           
         }
-        if(abs(source_Map->tiles[unitPos->Y][unitPos->X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
+        if(abs(source_Map->tiles[unit->position.Y][unit->position.X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
             print_Message("The terrain is too step to go!", true);
             return FUNCTION_FAIL;
         }
 
         // Cheking for units (if friend, then if foe)
-        if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) == (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
+        if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->ID % 2))
         {
             print_Message("Units can't go over eachother!", true);
             return FUNCTION_FAIL;             
         }
-        else if (source_Map->tiles[destPos.Y][destPos.X].unit.ID != NO_UNIT && (source_Map->tiles[destPos.Y][destPos.X].unit.ID % 2) != (source_Map->tiles[unitPos->Y][unitPos->X].unit.ID % 2))
+        else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->ID % 2))
             return OUT_COMBAT;
         
         short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
-        source_Map->tiles[destPos.Y][destPos.X].unit = destPos;
-        source_Map->tiles[unitPos->Y][unitPos->X].unit.ID = NO_UNIT;
-        *unitPos = destPos;
+        source_Map->tiles[destPos.Y][destPos.X].unit = unit;
+        source_Map->tiles[unit->position.Y][unit->position.X].unit = NULL;
+        unit->position.X = destPos.X, unit->position.Y = destPos.Y;
 
         return mCost;
     }
@@ -432,37 +427,36 @@ int move_Unit(B_Map *source_Map, Map_Unit *unitPos, T_Direc direction)
     return FUNCTION_FAIL;
 }
 
-int put_Unit_OnMap(B_Map *map, Map_Unit *unit, int ignoreSpawn)
+int put_Unit_OnMap(B_Map *map, B_Unit *unit, int ignoreSpawn)
 {
-    short int X = unit->X;
-    short int Y = unit->Y;
+    B_Pos pos = {unit->position.X, unit->position.Y};
     
     // Checking if coordinates are valid
-    if((X < 0 || X >= map->width) || (Y < 0 || Y >= map->height))
+    if((pos.X < 0 || pos.X >= map->width) || (pos.Y < 0 || pos.Y >= map->height))
     {
         fprintf(stderr, "Unit outside of map!");
         return FUNCTION_FAIL;
     }
 
     // Cheking if it's spawn tiles
-    if(((!map->tiles[Y][X].isSpawnA && unit->ID % 2 == 0) || (!map->tiles[Y][X].isSpawnB && unit->ID % 2 == 1)) && ignoreSpawn == 0)
+    if(((!map->tiles[pos.Y][pos.X].spawn > 0 && unit->ID % 2 == 0) || (!map->tiles[pos.Y][pos.X].spawn < 0 && unit->ID % 2 == 1)) && ignoreSpawn == 0)
     {
         fprintf(stderr, "Not in spawn coordinates!");
         return FUNCTION_FAIL;    
     }
 
     // Cheking if tile is free
-    if(map->tiles[Y][X].unit.ID != NO_UNIT)
+    if(map->tiles[pos.Y][pos.X].unit != NULL)
     {
-        fprintf(stderr, "Tile already used!");
+        fprintf(stderr, "Tile alread used!");
         return FUNCTION_FAIL;    
     }
     
-    map->tiles[Y][X].unit = *unit;
+    map->tiles[pos.Y][pos.X].unit = unit;
     return FUNCTION_SUCESS;
 }
 
-int inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
+int inc_FortLevel(B_Map *map, short int amount, B_Pos pos)
 {
     map->tiles[pos.Y][pos.X].fortLevel += amount;
     if(map->tiles[pos.Y][pos.X].fortLevel > MAX_FORT_LEVEL)
@@ -482,49 +476,103 @@ int inc_FortLevel(B_Map *map, short int amount, Map_Unit pos)
     }
 }
 
-B_Tile* get_AdjTile(B_Map* map, Map_Unit unit, T_Direc direction, bool isAI)
+B_Pos get_AdjTile_Pos(B_Map* map, B_Pos pos, T_Direc direction)
 {
-    Map_Unit destPos = {0, 0, unit.ID, unit.name};
+    B_Pos destPos = {0, 0};
     
     // Testing for valid unit
-    if(unit.ID == NO_UNIT && isAI == false)
-    {
-        printf("ERROR: getRLTV_UnitId >> 1!");
-    }
+    // if(pos.ID == NO_UNIT && isAI == false)
+    // {
+    //     printf("ERROR: getRLTV_UnitId >> 1!");
+    // }
 
     switch (direction)
     {
     case North:
-        destPos.X = unit.X;
-        destPos.Y = unit.Y - 1;
+        destPos.X = pos.X;
+        destPos.Y = pos.Y - 1;
         break;
     case Northeast:
-        destPos.X = unit.X + 1;
-        destPos.Y = unit.Y - 1;
+        destPos.X = pos.X + 1;
+        destPos.Y = pos.Y - 1;
         break;
     case East:
-        destPos.X = unit.X + 1;
-        destPos.Y = unit.Y;
+        destPos.X = pos.X + 1;
+        destPos.Y = pos.Y;
         break;
     case Southeast:
-        destPos.X = unit.X + 1;
-        destPos.Y = unit.Y + 1;
+        destPos.X = pos.X + 1;
+        destPos.Y = pos.Y + 1;
         break;
     case South:
-        destPos.X = unit.X;
-        destPos.Y = unit.Y + 1;
+        destPos.X = pos.X;
+        destPos.Y = pos.Y + 1;
         break;
     case Southwest:
-        destPos.X = unit.X - 1;
-        destPos.Y = unit.Y + 1;
+        destPos.X = pos.X - 1;
+        destPos.Y = pos.Y + 1;
         break;
     case West:
-        destPos.X = unit.X - 1;
-        destPos.Y = unit.Y;
+        destPos.X = pos.X - 1;
+        destPos.Y = pos.Y;
         break;
     case Northwest:
-        destPos.X = unit.X - 1;
-        destPos.Y = unit.Y - 1;
+        destPos.X = pos.X - 1;
+        destPos.Y = pos.Y - 1;
+        break;
+    }
+
+    if((destPos.X < 0 || destPos.X >= map->width) || (destPos.Y < 0 || destPos.Y >= map->height))
+    {
+        printf("ERROR: getRLTV_UnitId >> 2!");
+        destPos.X = -1, destPos.Y = -1;
+    }
+    return destPos;
+}
+
+B_Tile* get_AdjTile(B_Map* map, B_Pos pos, T_Direc direction)
+{
+    B_Pos destPos = {0, 0};
+    
+    // Testing for valid unit
+    // if(pos.ID == NO_UNIT && isAI == false)
+    // {
+    //     printf("ERROR: getRLTV_UnitId >> 1!");
+    // }
+
+    switch (direction)
+    {
+    case North:
+        destPos.X = pos.X;
+        destPos.Y = pos.Y - 1;
+        break;
+    case Northeast:
+        destPos.X = pos.X + 1;
+        destPos.Y = pos.Y - 1;
+        break;
+    case East:
+        destPos.X = pos.X + 1;
+        destPos.Y = pos.Y;
+        break;
+    case Southeast:
+        destPos.X = pos.X + 1;
+        destPos.Y = pos.Y + 1;
+        break;
+    case South:
+        destPos.X = pos.X;
+        destPos.Y = pos.Y + 1;
+        break;
+    case Southwest:
+        destPos.X = pos.X - 1;
+        destPos.Y = pos.Y + 1;
+        break;
+    case West:
+        destPos.X = pos.X - 1;
+        destPos.Y = pos.Y;
+        break;
+    case Northwest:
+        destPos.X = pos.X - 1;
+        destPos.Y = pos.Y - 1;
         break;
     }
 
@@ -537,36 +585,36 @@ B_Tile* get_AdjTile(B_Map* map, Map_Unit unit, T_Direc direction, bool isAI)
     }
 }
 
-bool unit_Retreat(Map_Unit* unit, B_Map* map)
+bool unit_Retreat(B_Unit* unit, B_Map* map)
 {
     int hasMoved = false;
     T_Direc direction;
 
     // What direction it should move
-    if (unit->X < (map->width / 2))
+    if (unit->position.X < (map->width / 2))
         direction = West;
-    else if(unit->X > map->width / 2)
+    else if(unit->position.X > map->width / 2)
         direction = East;
-    else if(unit->Y < map->height / 2)
+    else if(unit->position.Y < map->height / 2)
         direction = North;
-    else if(unit->Y > map->height / 2)
+    else if(unit->position.Y > map->height / 2)
         direction = South;
     else
         direction = rand() % Northwest; // Random direction
 
     // Trying to move foward, then diagonals
-    B_Tile* adj = get_AdjTile(map, *unit, direction, true);
-    if((adj) && adj->unit.ID == NO_UNIT)
+    B_Tile* adj = get_AdjTile(map, unit->position, direction);
+    if((adj) && adj->unit == NULL)
         hasMoved = move_Unit(map, unit, direction);
     if (hasMoved == FUNCTION_FAIL)
     {
-        adj = get_AdjTile(map, *unit, direction -1, true);
-        if((adj) && adj->unit.ID == NO_UNIT)
+        adj = get_AdjTile(map, unit->position, direction -1);
+        if((adj) && adj->unit == NULL)
             hasMoved = move_Unit(map, unit, direction -1);
         if (hasMoved == FUNCTION_FAIL)
         {
-            adj = get_AdjTile(map, *unit, direction +1, true);
-            if((adj) && adj->unit.ID == NO_UNIT)
+            adj = get_AdjTile(map, unit->position, direction +1);
+            if((adj) && adj->unit == NULL)
                 hasMoved = move_Unit(map, unit, direction +1);
             if (hasMoved == FUNCTION_FAIL)
                 return false;
@@ -618,9 +666,9 @@ B_Map create_Map(T_Clime climate, T_Time time)
             }
             
             creation.tiles[i][j].fortLevel = 0;
-            creation.tiles[i][j].unit.ID = NO_UNIT;
-            creation.tiles[i][j].unit.X = j;
-            creation.tiles[i][j].unit.Y = i;
+            creation.tiles[i][j].unit = NULL;
+            creation.tiles[i][j].unit->position.X = j;
+            creation.tiles[i][j].unit->position.Y = i;
         }
     }
 
@@ -636,8 +684,8 @@ B_Map create_Map(T_Clime climate, T_Time time)
                 ||  (k > South && j < 1) || ((k > North && k < South) && j >= BACKUP_MAP_COLUMNS - 1))
                     continue;
 
-                B_Tile *temp = get_AdjTile(&creation, creation.tiles[i][j].unit, k, true);
-                if((get_AbsHeigthDif(&creation, creation.tiles[i][j].unit, temp->unit) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
+                B_Tile *temp = get_AdjTile(&creation, creation.tiles[i][j].unit->position, k);
+                if((get_AbsHeigthDif(&creation, creation.tiles[i][j].unit->position, temp->unit->position) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
                 {
                     creation.tiles[i][j].node.conectP[k] = false;
                     creation.tiles[i][j].node.conectS[k] = -1;
@@ -659,6 +707,7 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
     int toTest_Size = 1, path_Size = 1;
     T_Direc *path = (T_Direc *) calloc(path_Size, sizeof(T_Direc));
     B_Tile **toTest = (B_Tile **) calloc(toTest_Size, sizeof(B_Tile *));
+    B_Pos pos_B = {0};
     
     for(int i = 0; i < map->height; i++)
     {
@@ -672,9 +721,13 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         }
     }
     
+    B_Pos pos_A = { (startNode - *map->tiles) % map->width,
+                    (startNode - *map->tiles) / map->width};
+    B_Pos pos_End = {(endNode - *map->tiles) % map->width,
+                     (endNode - *map->tiles) / map->width};
     B_Tile *cTile = startNode;
     startNode->node.lGoal = 0.0f;
-    startNode->node.gGoal = calcDistance(*startNode, *endNode);
+    startNode->node.gGoal = calcDistance(pos_A, pos_End);
     toTest[toTest_Size - 1] = startNode;
 
     while(toTest_Size > 0 && cTile != endNode)
@@ -704,22 +757,25 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         cTile = toTest[0];
         cTile->node.isVisited = true;
 
+        pos_A.X = (cTile - *map->tiles)  % map->width, pos_A.Y = (cTile - *map->tiles) / map->width;
         for(int i = 0; i <= Northwest; i++)
         {
-            B_Tile *nTile = get_AdjTile(map, cTile->unit, i, true);
-            if(cTile->node.conectP[i] == true && nTile->node.isVisited == false && (nTile->unit.ID == NO_UNIT || nTile->unit.ID == endNode->unit.ID))
+            B_Tile *nTile = get_AdjTile(map, pos_A, i);
+            pos_B = get_AdjTile_Pos(map, pos_A, i);
+            pos_A = get_AdjTile_Pos(map, pos_B, ((i+4) % 8));
+            if(cTile->node.conectP[i] == true && nTile->node.isVisited == false && (nTile->unit == NULL || nTile->unit == endNode->unit))
             {
                 toTest_Size++;
                 toTest = (B_Tile **) realloc(toTest, toTest_Size * sizeof(B_Tile *));
                 toTest[toTest_Size - 1] = nTile;
 
-                float pLowerGoal = cTile->node.lGoal + calcDistance(*cTile, *nTile) + cTile->node.conectS[i];
+                float pLowerGoal = cTile->node.lGoal + calcDistance(pos_A, pos_B) + cTile->node.conectS[i];
                 if(pLowerGoal < nTile->node.lGoal)
                 {
-                    nTile->node.parent_XY[0] = cTile->unit.X;
-                    nTile->node.parent_XY[1] = cTile->unit.Y;
+                    nTile->node.parent_XY[0] = pos_A.X;
+                    nTile->node.parent_XY[1] = pos_A.Y;
                     nTile->node.lGoal = pLowerGoal;
-                    nTile->node.gGoal = nTile->node.lGoal + calcDistance(*nTile, *endNode);
+                    nTile->node.gGoal = nTile->node.lGoal + calcDistance(pos_B, pos_End);
                 }
             }
         }
@@ -732,8 +788,10 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         int parentY = cTile->node.parent_XY[1];
         int prePath = -1;
         B_Tile *nTile = &map->tiles[parentY][parentX];
+        pos_A.X = (cTile - *map->tiles)  % map->width, pos_A.Y = (cTile - *map->tiles) / map->width;
+        pos_B.X = parentX, pos_B.Y = parentY;
 
-        prePath = getDirection(cTile, nTile);
+        prePath = getDirection(pos_A, pos_B);
         if(prePath > -1)
         {
             path = (T_Direc *) realloc(path, path_Size * sizeof(T_Direc));
@@ -764,7 +822,7 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         // printf("| Path to %3dX %3dY could not be found  | \n");
         // printf("#=======================================# \n");
         char msg[38];
-        snprintf(msg, sizeof(msg), "Path to %3dX %3dY could not be found!", endNode->unit.X, endNode->unit.Y);
+        snprintf(msg, sizeof(msg), "Path to %3dX %3dY could not be found!", endNode->unit->position.X, endNode->unit->position.Y);
         print_Message(msg, true);
         
         getchar();

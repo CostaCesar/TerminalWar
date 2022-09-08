@@ -95,8 +95,10 @@ void map_Connections(B_Map* map)
                 ||  (k > South && j < 1) || ((k > North && k < South) && j >= map->width - 1))
                     continue;
 
-                B_Tile *temp = get_AdjTile(map, map->tiles[i][j].unit, k, true);
-                if((get_AbsHeigthDif(map, map->tiles[i][j].unit, temp->unit) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
+                B_Pos pos_Current = {j, i};
+                B_Tile *temp = get_AdjTile(map, pos_Current, k);
+                B_Pos pos_Adj = get_AdjTile_Pos(map, pos_Current, k);
+                if((get_AbsHeigthDif(map, pos_Current, pos_Adj) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
                 {
                     map->tiles[i][j].node.conectP[k] = false;
                     map->tiles[i][j].node.conectS[k] = -1;
@@ -137,13 +139,9 @@ int map_Defaults(B_Map* map)
             }
             
             // Starting tiles
-            map->tiles[i][j].isSpawnA = false;
-            map->tiles[i][j].isSpawnA = false;
+            map->tiles[i][j].spawn = 0;
             map->tiles[i][j].fortLevel = 0;
-            map->tiles[i][j].unit.name = NULL;
-            map->tiles[i][j].unit.ID = NO_UNIT;
-            map->tiles[i][j].unit.X = j;
-            map->tiles[i][j].unit.Y = i;
+            map->tiles[i][j].unit = NULL;
         }
     }
     return SUCESS;
@@ -156,9 +154,7 @@ int map_Edit(B_Map* map)
     int fAux = 0, fMode = MODE_HEIGHT;
     bool keepVegetation = false, keepTerrain = false;
 
-    B_Tile fTile;
-    fTile.unit.ID = NO_UNIT;
-    fTile.unit.name = NULL;
+    B_Tile fTile = {0};
 
     do
     {   
@@ -167,8 +163,8 @@ int map_Edit(B_Map* map)
         show_Map(map, fMode, false);
         printf(">> %s << \n", map->name);
         printf("<Area> \n");
-        printf("Ponto 1: %dX - %dY \n", fArea.aPosX, fArea.aPosY);
-        printf("Ponto 2: %dX - %dY \n", fArea.bPosX, fArea.bPosY);
+        printf("Ponto 1: %dX - %dY \n", fArea.pointA.X, fArea.pointA.Y);
+        printf("Ponto 2: %dX - %dY \n", fArea.pointB.X, fArea.pointB.Y);
 
         switch (fMode)
         {
@@ -201,34 +197,34 @@ int map_Edit(B_Map* map)
         {
         case 'm':
             printf("Digite as coordenadas do primeiro ponto <X Y>: ");
-            scanf("%d %d", &fArea.aPosX, &fArea.aPosY);
+            scanf("%d %d", &fArea.pointA.X, &fArea.pointA.Y);
             printf("Digite as coordenadas do segundo ponto <X Y>: ");
-            scanf("%d %d", &fArea.bPosX, &fArea.bPosY);
+            scanf("%d %d", &fArea.pointB.X, &fArea.pointB.Y);
 
-            if(fArea.aPosX < 0 || fArea.aPosX > map->width || fArea.aPosY < 0 || fArea.aPosY > map->height
-            || fArea.bPosX < 0 || fArea.bPosX > map->width || fArea.bPosY < 0 || fArea.bPosY > map->height)
+            if(fArea.pointA.X < 0 || fArea.pointA.X > map->width || fArea.pointA.Y < 0 || fArea.pointA.Y > map->height
+            || fArea.pointB.X < 0 || fArea.pointB.X > map->width || fArea.pointB.Y < 0 || fArea.pointB.Y > map->height)
             {
-                fArea.aPosX = 0;
-                fArea.aPosY = 0;
-                fArea.bPosX = (map->width - 1);
-                fArea.bPosY = (map->height - 1); 
+                fArea.pointA.X = 0;
+                fArea.pointA.Y = 0;
+                fArea.pointB.X = (map->width - 1);
+                fArea.pointB.Y = (map->height - 1); 
                 
                 printf(">> Valor dos pontos fora de limites! <<\n");
                 printf(">> Marcando mapa inteiro... << \n");
             }
            
-            // Sorting so fArea.aPosX && fArea.aPosY are the lowest values
-            if(fArea.aPosX > fArea.bPosX)
+            // Sorting so fArea.pointA.X && fArea.pointA.Y are the lowest values
+            if(fArea.pointA.X > fArea.pointB.X)
             {
-                fAux = fArea.aPosX;
-                fArea.aPosX = fArea.bPosX;
-                fArea.bPosX = fAux;
+                fAux = fArea.pointA.X;
+                fArea.pointA.X = fArea.pointB.X;
+                fArea.pointB.X = fAux;
             }
-            if(fArea.aPosY > fArea.bPosY)
+            if(fArea.pointA.Y > fArea.pointB.Y)
             {
-                fAux = fArea.aPosY;
-                fArea.aPosY = fArea.bPosY;
-                fArea.bPosY = fAux;
+                fAux = fArea.pointA.Y;
+                fArea.pointA.Y = fArea.pointB.Y;
+                fArea.pointB.Y = fAux;
             }
             printf(">> Area selecionada! <<\n");
             printf("Aperte ENTER \n");
@@ -238,7 +234,7 @@ int map_Edit(B_Map* map)
 
         case 'l':
             // Failsafe
-            if(fArea.aPosX < 0 || fArea.aPosY < 0 || fArea.bPosX < 0 || fArea.bPosY < 0)
+            if(fArea.pointA.X < 0 || fArea.pointA.Y < 0 || fArea.pointB.X < 0 || fArea.pointB.Y < 0)
             {
                 printf(">> Area invalida! <<\n");
                 printf("Aperte ENTER \n");
@@ -282,9 +278,9 @@ int map_Edit(B_Map* map)
             else fTile.vegetation = fAux;
             
             // Editing map
-            for(int i = fArea.aPosY; i <= fArea.bPosY; i++)
+            for(int i = fArea.pointA.Y; i <= fArea.pointB.Y; i++)
             {
-                for(int j = fArea.aPosX; j <= fArea.bPosX; j++)
+                for(int j = fArea.pointA.X; j <= fArea.pointB.X; j++)
                 {
                     // Elevation
                     if(mElevat == 'q')
@@ -320,7 +316,7 @@ int map_Edit(B_Map* map)
             break;
         case 'p':
             // Failsafe
-            if(fArea.aPosX < 0 || fArea.aPosY < 0 || fArea.bPosX < 0 || fArea.bPosY < 0)
+            if(fArea.pointA.X < 0 || fArea.pointA.Y < 0 || fArea.pointB.X < 0 || fArea.pointB.Y < 0)
             {
                 printf(">> Area invalida! <<\n");
                 printf("Aperte ENTER \n");
@@ -342,34 +338,38 @@ int map_Edit(B_Map* map)
             switch (fAux)
             {
             case 1:
-                for(int i = fArea.aPosY; i <= fArea.bPosY; i++)
-                    for(int j = fArea.aPosX; j <= fArea.bPosX; j++)
-                        map->tiles[i][j].isSpawnA = true;
+                for(int i = fArea.pointA.Y; i <= fArea.pointB.Y; i++)
+                    for(int j = fArea.pointA.X; j <= fArea.pointB.X; j++)
+                        map->tiles[i][j].spawn = 1;
                 break;
             case 2:
-                for(int i = fArea.aPosY; i <= fArea.bPosY; i++)
-                    for(int j = fArea.aPosX; j <= fArea.bPosX; j++)
-                        map->tiles[i][j].isSpawnB = true;
+                for(int i = fArea.pointA.Y; i <= fArea.pointB.Y; i++)
+                    for(int j = fArea.pointA.X; j <= fArea.pointB.X; j++)
+                        map->tiles[i][j].spawn= -1;
                 break;
             case 3:
-                for(int i = fArea.aPosY; i <= fArea.bPosY; i++)
-                    for(int j = fArea.aPosX; j <= fArea.bPosX; j++)
-                        map->tiles[i][j].isSpawnA = false;
-                break;
+                for(int i = fArea.pointA.Y; i <= fArea.pointB.Y; i++)
+                    for(int j = fArea.pointA.X; j <= fArea.pointB.X; j++)
+                        if(map->tiles[i][j].spawn > 0)
+                            map->tiles[i][j].spawn = 0;
             case 4:
-                for(int i = fArea.aPosY; i <= fArea.bPosY; i++)
-                    for(int j = fArea.aPosX; j <= fArea.bPosX; j++)
-                        map->tiles[i][j].isSpawnB = false;
+                break;
+                for(int i = fArea.pointA.Y; i <= fArea.pointB.Y; i++)
+                    for(int j = fArea.pointA.X; j <= fArea.pointB.X; j++)
+                        if(map->tiles[i][j].spawn < 0)
+                        map->tiles[i][j].spawn = 0;
                 break;
             case 5:
                 for(int i = 0; i < map->height; i++)
                     for(int j = 0; j < map->width; j++)
-                        map->tiles[i][j].isSpawnA = false;
+                        if(map->tiles[i][j].spawn > 0)
+                            map->tiles[i][j].spawn = 0;
                 break;
             case 6:
                 for(int i = 0; i < map->height; i++)
                     for(int j = 0; j < map->width; j++)
-                        map->tiles[i][j].isSpawnB = false;     
+                        if(map->tiles[i][j].spawn < 0)
+                        map->tiles[i][j].spawn = 0;     
                 break;         
             case 0:
                 printf(">> Acao abortada! << \n");
