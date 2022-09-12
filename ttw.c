@@ -10,7 +10,7 @@
 
 #define MAP_DELAY (2 * 1000)
 #define TURNS 30
-#define VERSION 1.0f
+#define VERSION 1.5f
 
 // Game Variables
 B_Map battleMap;
@@ -123,73 +123,6 @@ int get_UnitIndex(B_Side *side, int ID)
 }
 
 // Main functions (screens & logic)
-void show_gUnit(B_Unit *unit)
-{
-    char msg[70];
-    char buff[25];
-
-    print_Line(NULL);
-    print_Line(" ");
-    snprintf(msg, sizeof(msg), "Unit %d", unit->ID);
-    print_Line(msg);
-    snprintf(msg, sizeof(msg), "%s [%s]", unit->name, unit->faction);
-    print_Line(msg);
-    snprintf(msg, sizeof(msg), "Level %d", unit->level);
-    print_Line(msg);
-    snprintf(msg, sizeof(msg), "Men: %d | %d", unit->men, unit->men_Max);
-    print_Line(msg);
-    snprintf(msg, sizeof(msg), "Morale: %.2f", unit->morale);
-    print_Line(msg);
-    print_Line("Melee Stats");
-    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", unit->attack_MeleeP, unit->defend_MeleeP);
-    print_Line(msg);
-    print_Line("Ranged Stats");
-    snprintf(msg, sizeof(msg), "%d OFS X %d DFS", unit->attack_RangeP, unit->defend_RangeP);
-    print_Line(msg);
-    snprintf(msg, sizeof(msg), "Level %d", unit->level);
-    print_Line(msg);
-    snprintf(msg, sizeof(msg), "Build Power: %d", unit->build_Cap);
-    print_Line(msg);
-
-    if (unit->range > 0)
-    {
-        snprintf(msg, sizeof(msg), "Range: %d tiles | Ammo: %d left", unit->range, unit->ammo);
-        print_Line(msg);
-    }
-    print_Line(" ");
-    
-    msg[0] = '\0';
-    for (int i = 0; i < unit->buffs_S; i++)
-    {
-        snprintf(buff, sizeof(buff), "[+] %s ", get_UnitBuff(unit->buffs[i]));
-        strcat(msg, buff);
-        if (i > 5)
-        {
-            print_Line(msg);
-            msg[0] = '\0';
-        }
-    }
-    if (msg[0] != '\0')print_Line(msg);
-
-    if(unit->chaseID != NULL)
-    {
-        snprintf(buff, sizeof(buff), "Chasing unit %d", *(unit->chaseID));
-        print_Line(buff);
-    }
-    if(unit->goal.X != NO_UNIT && unit->goal.Y != NO_UNIT)
-    {
-        snprintf(buff, sizeof(buff), "Going to %dX %dY", unit->goal.X, unit->goal.Y);
-        print_Line(buff);
-    }
-
-    print_Line(" ");
-    if (unit->inCombat == true)
-        print_Line("<!> Engaged In Combat");
-    if (unit->isRetreating == true)
-        print_Line("<!> Retreating");
-    print_Line(NULL);
-}
-
 int deallocAll()
 {
     for (int i = 0; i < battleMap.height; i++)

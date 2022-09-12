@@ -260,6 +260,12 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
     bool mapEdge = false, edge = false;
     int words_I = 0, color = 0;
     char msg[4] = {0};
+    printf("     |");
+    for(int i = 0; i < mWidth; i++)
+    {
+        printf("%3d|", i);
+    }
+    printf("\n     ");
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
     {
@@ -275,6 +281,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
     for(short int i = 0; i < mHeight; i++)
     {
         edge = false;
+        printf("[%3d]", i);
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
@@ -289,6 +296,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
             putchar(179);
         }
         putchar('\n');
+        printf("     ");
         if(mapEdge == false)
         {
             putchar(195);
@@ -325,6 +333,12 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
     // Top Line
     bool mapEdge = false, edge = false;
     int words_I = 0, tile = 0;
+    printf("     |");
+    for(int i = 0; i < mWidth; i++)
+    {
+        printf("%3d|", i);
+    }
+    printf("\n     ");
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
     {
@@ -340,6 +354,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
     for(short int i = 0; i < mHeight; i++)
     {
         edge = false;
+        printf("[%3d]", i);
         putchar(179);
         for(short int j = 0; j < mWidth; j++)
         {
@@ -377,6 +392,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
             putchar(179);
         }
         putchar('\n');
+        printf("     ");
         if(mapEdge == false)
         {
             putchar(195);

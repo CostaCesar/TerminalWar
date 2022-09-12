@@ -264,6 +264,7 @@ int map_Edit(B_Map* map)
             printf("[02] Rock   > Pedra \n");
             printf("[03] Mud    > Lama \n");
             printf("[04] Water  > Agua \n");
+            printf("[05] Snow   > Neve \n");
             printf("Novo terreno para a area selecionada <negativo para manter>: ");
             scanf("%d", &fAux);
             if(fAux < 0)
