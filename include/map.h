@@ -777,11 +777,9 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
     cTile = endNode;
     while(cTile->node.parentPos.X > -1 && cTile->node.parentPos.Y > -1)
     {
-        B_Pos parent = {cTile->node.parentPos.X, cTile->node.parentPos.Y};
         int prePath = -1;
-        B_Tile *nTile = &map->tiles[parent.Y][parent.X];
 
-        prePath = getDirection(nTile, pos_B);
+        prePath = getDirection(cTile->pos, cTile->node.parentPos);
         if(prePath > -1)
         {
             path = (T_Direc *) realloc(path, path_Size * sizeof(T_Direc));
@@ -790,7 +788,7 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
             else prePath -= 4;
             
             path[path_Size - 1] = (T_Direc) prePath;
-            cTile = nTile;
+            cTile = &map->tiles[cTile->node.parentPos.Y][cTile->node.parentPos.X];
             path_Size++;
         }
         else break;

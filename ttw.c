@@ -122,12 +122,6 @@ int get_UnitIndex(B_Side *side, int ID)
     return FUNCTION_FAIL;
 }
 
-void update_Unit(B_Unit *unit, Map_Unit source)
-{
-    unit->position.X = source.X;
-    unit->position.Y = source.Y;
-    return;
-}
 // Main functions (screens & logic)
 void show_gUnit(B_Unit *unit)
 {
@@ -963,8 +957,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             }
                             FRes = move_Unit(battleMap, &player->units[unitA_I], player->units[unitA_I].path[steps]);
                             pos_A = player->units[unitA_I].position;
-                            pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
                             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
+                            pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
                             if (FRes == OUT_COMBAT)
                             {
                                 // Show
@@ -1171,7 +1165,7 @@ startMenu:
     {
         for (int i = 0; i < Side_B.size; i++)
         {
-            def_Unit(&Side_B.units[i], &battleMap, false);
+            def_Unit(&Side_B.units[i], &battleMap, true);
             put_Unit_OnMap(&battleMap, &Side_B.units[i], !Side_B.canPlace);
         }
     }

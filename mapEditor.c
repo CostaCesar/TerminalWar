@@ -93,7 +93,11 @@ void map_Connections(B_Map* map)
             {
                 if(((k > West || k < East) && i < 1) || ((k < West && k > East) && i >= map->height - 1)
                 ||  (k > South && j < 1) || ((k > North && k < South) && j >= map->width - 1))
+                {
+                    map->tiles[i][j].node.conectP[k] = false;
+                    map->tiles[i][j].node.conectS[k] = -1;
                     continue;
+                }
 
                 B_Pos pos_Current = {j, i};
                 B_Tile *temp = get_AdjTile(map, pos_Current, k);
@@ -142,6 +146,7 @@ int map_Defaults(B_Map* map)
             map->tiles[i][j].spawn = 0;
             map->tiles[i][j].fortLevel = 0;
             map->tiles[i][j].unit = NULL;
+            map->tiles[i][j].pos.X = j, map->tiles[i][j].pos.Y = i; 
         }
     }
     return SUCESS;
