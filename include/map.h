@@ -44,7 +44,7 @@ typedef struct sMap_Node
     bool isVisited;
     bool conectP[Northwest + 1];
     short int conectS[Northwest + 1];
-    int parent_XY[2];
+    B_Pos parentPos;
 
 } Map_Node;
 
@@ -71,6 +71,7 @@ typedef struct S_Tile
     T_Terrain terrain;
     T_Veget vegetation;
     Map_Node node;
+    B_Pos pos;
 } B_Tile;
 
 typedef struct S_Map
@@ -707,7 +708,6 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
     int toTest_Size = 1, path_Size = 1;
     T_Direc *path = (T_Direc *) calloc(path_Size, sizeof(T_Direc));
     B_Tile **toTest = (B_Tile **) calloc(toTest_Size, sizeof(B_Tile *));
-    B_Pos pos_B = {0};
     
     for(int i = 0; i < map->height; i++)
     {
@@ -716,18 +716,14 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
             map->tiles[i][j].node.isVisited = false;
             map->tiles[i][j].node.lGoal = INFINITY;
             map->tiles[i][j].node.gGoal = INFINITY;
-            map->tiles[i][j].node.parent_XY[0] = -1;
-            map->tiles[i][j].node.parent_XY[1] = -1;
+            map->tiles[i][j].node.parentPos.X = -1;
+            map->tiles[i][j].node.parentPos.Y = -1;
         }
     }
     
-    B_Pos pos_A = { (startNode - *map->tiles) % map->width,
-                    (startNode - *map->tiles) / map->width};
-    B_Pos pos_End = {(endNode - *map->tiles) % map->width,
-                     (endNode - *map->tiles) / map->width};
     B_Tile *cTile = startNode;
     startNode->node.lGoal = 0.0f;
-    startNode->node.gGoal = calcDistance(pos_A, pos_End);
+    startNode->node.gGoal = calcDistance(startNode->pos, endNode->pos);
     toTest[toTest_Size - 1] = startNode;
 
     while(toTest_Size > 0 && cTile != endNode)
@@ -757,41 +753,35 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         cTile = toTest[0];
         cTile->node.isVisited = true;
 
-        pos_A.X = (cTile - *map->tiles)  % map->width, pos_A.Y = (cTile - *map->tiles) / map->width;
         for(int i = 0; i <= Northwest; i++)
         {
-            B_Tile *nTile = get_AdjTile(map, pos_A, i);
-            pos_B = get_AdjTile_Pos(map, pos_A, i);
-            pos_A = get_AdjTile_Pos(map, pos_B, ((i+4) % 8));
+            B_Tile *nTile = get_AdjTile(map, cTile->pos, i);
             if(cTile->node.conectP[i] == true && nTile->node.isVisited == false && (nTile->unit == NULL || nTile->unit == endNode->unit))
             {
                 toTest_Size++;
                 toTest = (B_Tile **) realloc(toTest, toTest_Size * sizeof(B_Tile *));
                 toTest[toTest_Size - 1] = nTile;
 
-                float pLowerGoal = cTile->node.lGoal + calcDistance(pos_A, pos_B) + cTile->node.conectS[i];
+                float pLowerGoal = cTile->node.lGoal + calcDistance(cTile->pos, nTile->pos) + cTile->node.conectS[i];
                 if(pLowerGoal < nTile->node.lGoal)
                 {
-                    nTile->node.parent_XY[0] = pos_A.X;
-                    nTile->node.parent_XY[1] = pos_A.Y;
+                    nTile->node.parentPos.X = cTile->pos.X;
+                    nTile->node.parentPos.Y = cTile->pos.Y;
                     nTile->node.lGoal = pLowerGoal;
-                    nTile->node.gGoal = nTile->node.lGoal + calcDistance(pos_B, pos_End);
+                    nTile->node.gGoal = nTile->node.lGoal + calcDistance(nTile->pos, endNode->pos);
                 }
             }
         }
     }
 
     cTile = endNode;
-    while(cTile->node.parent_XY[0] > -1 && cTile->node.parent_XY[1] > -1)
+    while(cTile->node.parentPos.X > -1 && cTile->node.parentPos.Y > -1)
     {
-        int parentX = cTile->node.parent_XY[0];
-        int parentY = cTile->node.parent_XY[1];
+        B_Pos parent = {cTile->node.parentPos.X, cTile->node.parentPos.Y};
         int prePath = -1;
-        B_Tile *nTile = &map->tiles[parentY][parentX];
-        pos_A.X = (cTile - *map->tiles)  % map->width, pos_A.Y = (cTile - *map->tiles) / map->width;
-        pos_B.X = parentX, pos_B.Y = parentY;
+        B_Tile *nTile = &map->tiles[parent.Y][parent.X];
 
-        prePath = getDirection(pos_A, pos_B);
+        prePath = getDirection(nTile, pos_B);
         if(prePath > -1)
         {
             path = (T_Direc *) realloc(path, path_Size * sizeof(T_Direc));
