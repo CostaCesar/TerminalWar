@@ -133,6 +133,7 @@ int deallocAll()
     if(battleMap.tiles) free(battleMap.tiles);
     if(Side_A.units) free(Side_A.units);
     if(Side_B.units) free(Side_B.units);
+    Side_A.size = 0, Side_B.size = 0, Side_A.isAI = false, Side_B.isAI = true;
     return FUNCTION_SUCESS;
 }
 
@@ -807,6 +808,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     {
                         if (inc_FortLevel(battleMap, player->units[unitA_I].build_Cap, pos_A) == FUNCTION_FAIL)
                             moves--;
+                        else moves = player->units[unitA_I].moves;
                     }
                     else
                     {
@@ -1098,7 +1100,7 @@ startMenu:
     {
         for (int i = 0; i < Side_B.size; i++)
         {
-            def_Unit(&Side_B.units[i], &battleMap, true);
+            def_Unit(&Side_B.units[i], &battleMap, false);
             put_Unit_OnMap(&battleMap, &Side_B.units[i], !Side_B.canPlace);
         }
     }
