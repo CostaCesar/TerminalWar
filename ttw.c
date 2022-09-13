@@ -657,7 +657,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
                     Sleep(500);
                 }
-                COORD pos_Screen = {0, 9+battleMap->height*2};
+                COORD pos_Screen = {0, MAP_OFFSET_Y+battleMap->height*2};
                 if (action >= '0' && action <= '9') // Move to a adjacent tile
                 {
                     tNum_ToDirec(&action);
@@ -966,7 +966,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             info_Upper(battleMap->name, turn, player->name, false, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, NO_UNIT);
             update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
             Sleep(TIME_STRATEGY);
-            COORD pos_Screen = {0, 9+battleMap->height*2};
+            COORD pos_Screen = {0, MAP_OFFSET_Y+battleMap->height*2};
 
             if (moves < player->units[unitA_I].moves && player->units[unitA_I].isRetreating == false && player->units[unitA_I].inCombat == false)
             {

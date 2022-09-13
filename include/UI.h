@@ -65,7 +65,7 @@ void toggle_Cursor(bool cursor)
 void clear_afterMap(short int mHeight)
 {
     int screenWidth = get_ScreenWidth();
-    COORD pos = {0, 9+mHeight*2};
+    COORD pos = {5, MAP_OFFSET_Y+mHeight*2};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     printf("                                                                                                                                                                        ");
     printf("                                                                                                                                                                        ");
@@ -427,7 +427,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
 void set_MapCursor(short int xUpdate, short int yUpdate)
 {
     HANDLE consoleInfo = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD pos = {1+xUpdate*4, 9+yUpdate*2};
+    COORD pos = {MAP_OFFSET_X+xUpdate*4, MAP_OFFSET_Y+yUpdate*2};
     int hScreen = get_ScreenHeight();
     SetConsoleCursorPosition(consoleInfo, pos);
     return;
@@ -438,7 +438,7 @@ void update_Map(short int xUpdate, short int yUpdate, char *data)
     if(!data)
         return;
     HANDLE consoleInfo = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD pos = {1+xUpdate*4, 9+yUpdate*2};
+    COORD pos = {MAP_OFFSET_X+xUpdate*4, MAP_OFFSET_Y+yUpdate*2};
     int hScreen = get_ScreenHeight();
     SetConsoleCursorPosition(consoleInfo, pos);
     printf("%.3s", data);

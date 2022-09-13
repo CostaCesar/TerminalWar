@@ -28,6 +28,10 @@
 #define UNIT_MAX_LEVEL 5
 #define UNIT_MAX_MORALE 120.0f
 
+// UI.h
+#define MAP_OFFSET_X 6
+#define MAP_OFFSET_Y 10
+
 // map.h
 #define BACKUP_MAP_COLUMNS 10
 #define BACKUP_MAP_ROWS 10
