@@ -17,16 +17,21 @@ int get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
         if(foes[i].position.X < 0 || foes[i].position.Y < 0)
             continue;
 
+        if(autoMove(map, 
+            &map->tiles[unit->position.Y][unit->position.X],
+            &map->tiles[foes[i].position.Y][foes[i].position.X]) == NULL)
+            continue;
+
         if(unit->ammo > 0 && unit->range > 0)
         {
             posibAdvtg = get_BonusByClass(unit->type, foes[i].type, true)
-            + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
-            map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
+            // + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
+            // map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
             + get_BonusByVeget(map->tiles[unit->position.Y][unit->position.X].vegetation);
         }
-        posibAdvtg = get_BonusByClass(unit->type, foes[i].type, false)
-        + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
-        map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
+        posibAdvtg = get_BonusByClass(unit->type, foes[i].type, false);
+        // + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
+        // map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
 
 
         if(posibAdvtg > bestAdvtg)
