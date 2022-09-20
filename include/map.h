@@ -1,5 +1,7 @@
 // #include <stdbool.h>
 // #include <stdio.h>
+#pragma once
+
 #include <math.h>
 #include <stdlib.h>
 #include "UI.h"

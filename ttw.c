@@ -7,6 +7,7 @@
 #include "include/map.h"
 #include "include/combat.h"
 #include "include/UI.h"
+#include "include/AI.h"
 
 #define MAP_DELAY (2 * 1000)
 #define TURNS 30
@@ -972,6 +973,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
 
             if (moves < player->units[unitA_I].moves && player->units[unitA_I].isRetreating == false && player->units[unitA_I].inCombat == false)
             {
+                FRes = get_BestMatchup(&player->units[unitA_I], opponent->units, opponent->size, battleMap);
                 if (pos_A.Y > 10)
                 {
                     pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
