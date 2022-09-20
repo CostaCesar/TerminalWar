@@ -14,12 +14,12 @@ typedef struct S_Result
 
 short int A_Loss = 0, B_Loss = 0;
 
-float add_BonusDamage_ByVeget(int tileVeget)
+float get_BonusByVeget(int tileVeget)
 {
     return (tileVeget / 2.0f + 1);
 }
 
-int add_BonusDamage_ByHeightDif(double height)
+int get_BonusByHeight(double height)
 {
     if(height == 0)
         return 0;   
@@ -28,7 +28,7 @@ int add_BonusDamage_ByHeightDif(double height)
     else return (int) pow(2, height);
 }
 
-int add_BonusDamage_ByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRange)
+int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRange)
 {
     int output = 0;
     // Bonus againts siege (if not siege itself, excluding Medium Siege)
@@ -204,8 +204,8 @@ B_Result combat_Unit(B_Unit unit_Attacker, B_Unit unit_Defender, int heightDif, 
     if(defender_Power < 0)
         defender_Power = 0;
     
-    float combat_Result = attacker_Power - defender_Power + add_BonusDamage_ByHeightDif(heightDif) - ((float) *fortLevel / 2)
-        + add_BonusDamage_ByClass(unit_Attacker.type, unit_Defender.type, false);
+    float combat_Result = attacker_Power - defender_Power + get_BonusByHeight(heightDif) - ((float) *fortLevel / 2)
+        + get_BonusByClass(unit_Attacker.type, unit_Defender.type, false);
 
     if(combat_Result > *fortLevel && *fortLevel >= 1)
     {
@@ -471,8 +471,8 @@ int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vege
     attacker->ammo--;
     float volley = attacker->attack_RangeP * (attacker->morale / 100) + (rand() % 10);
     float protec = defender->defend_RangeP * (defender->morale / 100) + (rand() % 10);
-    float damage = volley - protec + add_BonusDamage_ByHeightDif(heightDif) - add_BonusDamage_ByVeget(vegetat) - ((float) *fortLevel / 2)
-        + add_BonusDamage_ByClass(attacker->type, defender->type, true);
+    float damage = volley - protec + get_BonusByHeight(heightDif) - get_BonusByVeget(vegetat) - ((float) *fortLevel / 2)
+        + get_BonusByClass(attacker->type, defender->type, true);
     if(damage < 0)
         damage = 1.0f;
     else if(damage > RESULT_CAP)

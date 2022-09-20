@@ -3,3 +3,31 @@
 #include "map.h"
 #include "combat.h"
 
+int get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
+{
+    int bestAdvtg = -100, posibAdvtg = -100, index = NO_UNIT;
+    B_Pos foe_Pos;
+    bool ranged = false;
+    // Checking if units exists
+    if((unit && nFoes < 1) || (unit->position.X < 0 || unit->position.Y < 0))
+        return FUNCTION_FAIL;
+
+    for(int i = 0; i < nFoes; i++)
+    {
+        if(foes[i].position.X < 0 || foes[i].position.Y < 0)
+            continue;
+
+            posibAdvtg = get_BonusByClass(unit->type, foes[i].type, true)
+            + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
+            map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
+        if(unit->ammo > 0 && unit->range > 0)
+            posibAdvtg += get_BonusByVeget(map->tiles[foes[i].position.Y][foes[i].position.X].vegetation);
+
+        if(posibAdvtg > bestAdvtg)
+        {
+            index = foes[i].ID;
+            if(unit->ammo > 0 && unit->range > 0) ranged = true;
+        }
+    }
+    return index;
+}
