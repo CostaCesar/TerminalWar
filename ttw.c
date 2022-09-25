@@ -731,7 +731,14 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         print_Message("Moving to intercept the unit!", true);
                     }
                 }
-                else if (action == 'f') // Fire at unit
+                else if (action == 'p') // Fire at unit
+                {
+                    int nTargets;
+                    B_Unit **targets = get_UnitsInRange(&player->units[unitA_I], battleMap, &nTargets, player->units[unitA_I].range);
+                    if(nTargets > 0)
+                        free(targets);
+                }
+                else if(action == 'f')
                 {
                     if (player->units[unitA_I].range < 1)
                     {

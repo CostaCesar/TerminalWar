@@ -127,7 +127,7 @@ char *tVeget_toStr(T_Veget source)
     }
 }
 
-int cmp(const void *a, const void *b)
+int cmp_Tiles(const void *a, const void *b)
 {
     const B_Tile *a_Float = *((B_Tile **) a);
     const B_Tile *b_Float = *((B_Tile **) b);
@@ -736,7 +736,7 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         show_Map(map, UNITS);
         Sleep(250); */
 
-        qsort(toTest, toTest_Size, sizeof(B_Tile *), cmp);
+        qsort(toTest, toTest_Size, sizeof(B_Tile *), cmp_Tiles);
 
         while(toTest_Size > 0 && toTest[0]->node.isVisited == true)
         {
