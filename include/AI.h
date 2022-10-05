@@ -3,6 +3,28 @@
 #include "map.h"
 #include "combat.h"
 
+bool ranged = false;
+
+typedef enum E_Response
+{
+    AI_Wait = 0,
+    AI_GoTo = 1,
+    AI_Engage = 2,
+    AI_Fire = 3,
+    AI_Chase = 4,
+    AI_Retreat = 5,
+    AI_Fortify = 6
+};
+
+typedef enum E_Level
+{
+    AI_Easy = 1,
+    AI_Medium = 2,
+    AI_Hard = 3,
+    AI_Passive = 0
+};
+
+
 B_Unit **get_UnitsInRange(B_Unit *unit, B_Map* map, int* nFoes, int distance)
 {
     B_Pos minCoord, maxCoord;
@@ -59,23 +81,34 @@ int get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
             &map->tiles[foes[i].position.Y][foes[i].position.X]) == NULL)
             continue;
 
-        if(unit->ammo > 0 && unit->range > 0)
-        {
-            posibAdvtg = get_BonusByClass(unit->type, foes[i].type, true)
-            // + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
-            // map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
-            + get_BonusByVeget(map->tiles[unit->position.Y][unit->position.X].vegetation);
-        }
         posibAdvtg = get_BonusByClass(unit->type, foes[i].type, false);
         // + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
-        // map->tiles[foes[i].position.Y][foes[i].position.X].elevation);
-
-
+        // map->tiles[foes[i].position.Y][foes[i].position.X].elevation)
+        // + get_BonusByVeget(map->tiles[unit->position.Y][unit->position.X].vegetation);
         if(posibAdvtg > bestAdvtg)
         {
             index = foes[i].ID, bestAdvtg = posibAdvtg;
-            if(unit->ammo > 0 && unit->range > 0) ranged = true;
+            if (unit->ammo > 0 && unit->range > 0 && unit->attack_RangeP > foes[i].defend_RangeP)
+                ranged = true;
+            else ranged = false;
         }
     }
     return index;
+}
+
+float get_ClosestEnemy(B_Side *enemies, B_Pos from)
+{
+    float closest = 99.9f;
+    for(int i = 0; i < enemies->size; i++)
+    {
+        B_Pos test = enemies->units[i].position;
+        if(calcDistance(from, test) < closest)
+            closest = calcDistance(from, test);
+    }
+    return closest;
+}
+
+E_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, E_Level lvl)
+{
+    if(get_ClosestEnemy(they, current->position) < unit.moves)
 }
