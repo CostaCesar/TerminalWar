@@ -3,8 +3,6 @@
 #include "map.h"
 #include "combat.h"
 
-bool ranged = false;
-
 typedef enum E_Response
 {
     AI_Wait = 0,
@@ -14,7 +12,7 @@ typedef enum E_Response
     AI_Chase = 4,
     AI_Retreat = 5,
     AI_Fortify = 6
-};
+} T_Response;
 
 typedef enum E_Level
 {
@@ -22,8 +20,7 @@ typedef enum E_Level
     AI_Medium = 2,
     AI_Hard = 3,
     AI_Passive = 0
-};
-
+} T_Level;
 
 B_Unit **get_UnitsInRange(B_Unit *unit, B_Map* map, int* nFoes, int distance)
 {
@@ -96,19 +93,45 @@ int get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
     return index;
 }
 
-float get_ClosestEnemy(B_Side *enemies, B_Pos from)
+int get_ClosestEnemyMove(B_Side *enemies, B_Pos from)
 {
-    float closest = 99.9f;
+    int closest = __INT_MAX__, test = 0;;
     for(int i = 0; i < enemies->size; i++)
     {
-        B_Pos test = enemies->units[i].position;
-        if(calcDistance(from, test) < closest)
-            closest = calcDistance(from, test);
+        test = (enemies->units[i].position.X > enemies->units[i].position.Y) ?
+                enemies->units[i].position.X : enemies->units[i].position.Y;
+        if(test < closest)
+            closest = test;
     }
     return closest;
 }
 
-E_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, E_Level lvl)
+int get_ClosestEnemyID(B_Side *enemies, B_Pos from)
 {
-    if(get_ClosestEnemy(they, current->position) < unit.moves)
+    int closest = 0, test = 0, buffer = __INT_MAX__;
+    for(int i = 0; i < enemies->size; i++)
+    {
+        test = (enemies->units[i].position.X > enemies->units[i].position.Y) ?
+                enemies->units[i].position.X : enemies->units[i].position.Y;
+        if(test < buffer)
+            buffer = test, closest = i;
+    }
+    return closest;
+}
+
+T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
+{
+    if(get_ClosestEnemyMove(they, current->position) < current->moves);
+        return AI_Retreat;
+
+    if(current->range > 0 && current->ammo > 0)
+    {
+        B_Unit **inRange = get_UnitsInRange(current, map, they->size, current->range);
+        if(inRange != NULL)
+        {
+            int rangeID = get_ClosestEnemyID(*inRange, current->position);
+            free(inRange);
+        }
+    }
+    return AI_Wait;
 }
