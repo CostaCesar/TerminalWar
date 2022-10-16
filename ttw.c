@@ -89,7 +89,6 @@ void set_fUnitTable(B_Unit *table, int index, B_Side *side)
 }
 
 // Map<->Unit functions
-
 void def_Unit(B_Unit *unit, B_Map *map, bool ignoreSpawn)
 {
     if(ignoreSpawn == true && unit->position.X > NO_UNIT && unit->position.Y > NO_UNIT)
@@ -108,19 +107,6 @@ void def_Unit(B_Unit *unit, B_Map *map, bool ignoreSpawn)
             }
         }
     return;
-}
-
-int get_UnitIndex(B_Side *side, int ID)
-{
-    for (int i = 0; i < side->size; i++)
-    {
-        if (side->units[i].ID == ID)
-        {
-            return i;
-        }
-    }
-    printf("ERROR: get_UnitIndex >> 1");
-    return FUNCTION_FAIL;
 }
 
 // Main functions (screens & logic)
@@ -731,14 +717,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         print_Message("Moving to intercept the unit!", true);
                     }
                 }
-                else if (action == 'p') // Fire at unit
-                {
-                    int nTargets;
-                    B_Unit **targets = get_UnitsInRange(&player->units[unitA_I], battleMap, &nTargets, player->units[unitA_I].range);
-                    if(nTargets > 0)
-                        free(targets);
-                }
-                else if(action == 'f')
+                else if(action == 'f') // Fire at unit
                 {
                     if (player->units[unitA_I].range < 1)
                     {
@@ -956,10 +935,17 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 }
                 toggle_Cursor(false);
             }
+            else if (player->units[unitA_I].isRetreating == true)
+            {
+                Sleep(TIME_STRATEGY);
+                // Algo gráfico pra representar o retreat
+                // IMPLEMENTAR
+                break;
+            }
             else
             {
                 clear_afterMap(battleMap->height);
-                player->units[unitA_I].inCombat = false;
+                player->units[unitA_I].inCombat = false, moves++;
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
             }
@@ -1008,9 +994,21 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             show_Map(battleMap, *mode, true);
                             moves = Side_A.units[unitA_I].moves;
                         }
-                        // else moves--;
                         update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
                         update_Map(pos_B.X, pos_B.Y, opponent->units[target_I].name);
+                        break;
+                    case AI_GoTo:
+                        pos_A.X = player->units[unitA_I].position.X, pos_A.Y = player->units[unitA_I].position.Y;
+                        pos_B.X = player->units[unitA_I].goal.X, pos_B.Y = player->units[unitA_I].goal.Y;
+                        player->units[unitA_I].path = (int *)autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[pos_B.Y][pos_B.X]);
+                        if (player->units[unitA_I].path != NULL)
+                        {
+                            FRes = move_Unit(battleMap, &player->units[unitA_I], player->units[unitA_I].path[0]);
+                            pos_A = player->units[unitA_I].position;
+                            update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
+                            pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
+                            free(player->units[unitA_I].path);
+                        }
                         break;
                     default:
                         FRes = move_Unit(battleMap, &player->units[unitA_I], Northeast);
@@ -1031,10 +1029,10 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
             }
-            info_Upper(battleMap->name, turn, Side_B.name, false, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, NO_UNIT);
-            update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
-            Sleep(TIME_STRATEGY);
         }
+        info_Upper(battleMap->name, turn, Side_B.name, false, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, NO_UNIT);
+        update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
+        Sleep(TIME_STRATEGY);
     }
     return FUNCTION_SUCESS;
 }
@@ -1063,7 +1061,7 @@ startMenu:
     // Side_B
     Side_B.size = 0, Side_B.ID = 1, Side_B.isAI = true;
     // Menu 
-    cMap = 0;
+    cMap = 0, mode = 0;
     do
     {
         switch (screen_Menu(VERSION))
@@ -1173,12 +1171,10 @@ startMenu:
             bool retreated = true;
             char *msg;
             if (Side_A.units[j].isRetreating == true)
-            {
-                msg = get_MapSprite(&battleMap.tiles[Side_A.units[j].position.Y][Side_A.units[j].position.X], mode);
-                update_Map(Side_A.units[j].position.X, Side_A.units[j].position.Y, msg);
+            { 
                 for (int moves = 0; moves < Side_A.units[j].moves; moves++)
                 {
-                    retreated = unit_Retreat(&Side_A.units[j], &battleMap);
+                    retreated = unit_Retreat(&Side_A.units[j], &battleMap, mode);
                     if (retreated == false)
                     {
                         battleMap.tiles[Side_A.units[j].position.Y][Side_A.units[j].position.X].unit = NULL;
@@ -1190,12 +1186,10 @@ startMenu:
             }
             if (Side_B.units[j].isRetreating == true)
             {
-                snprintf(msg, sizeof(msg), "%3d", battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X].elevation);
-                update_Map(Side_B.units[j].position.X, Side_B.units[j].position.Y, msg);
+                msg = get_MapSprite(&battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X], mode);
                 for (int moves = 0; moves < Side_B.units[j].moves; moves++)
                 {
-                    clear_afterMap(battleMap.height);
-                    retreated = unit_Retreat(&Side_B.units[j], &battleMap);
+                    retreated = unit_Retreat(&Side_B.units[j], &battleMap, mode);
                     if (retreated == false)
                     {
                         battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X].unit = NULL;
@@ -1207,6 +1201,9 @@ startMenu:
             }
         }
         // Checking for victory
+        // Use fielded troops to get victory
+        // IMPLEMENT
+        fflush(stdin);
         if (Side_A.size == 0)
         {
             screen_Victory(Status_B, Status_A);

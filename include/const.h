@@ -4,7 +4,7 @@
 #define STRING_FILE (20 + 1)
 #define FUNCTION_FAIL -2
 #define FUNCTION_SUCESS -1
-#define TIME_MAP 1000
+#define TIME_MAP 1500
 #define TIME_STRATEGY 2000
 
 // Keys

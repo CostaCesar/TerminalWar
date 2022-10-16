@@ -588,9 +588,10 @@ B_Tile* get_AdjTile(B_Map* map, B_Pos pos, T_Direc direction)
     }
 }
 
-bool unit_Retreat(B_Unit* unit, B_Map* map)
+bool unit_Retreat(B_Unit* unit, B_Map* map, int mode)
 {
     int hasMoved = false;
+    B_Pos previous = unit->position;
     T_Direc direction;
 
     // What direction it should move
@@ -604,11 +605,13 @@ bool unit_Retreat(B_Unit* unit, B_Map* map)
         direction = South;
     else
         direction = rand() % Northwest; // Random direction
+    char *msg; 
 
     // Trying to move foward, then diagonals
     B_Tile* adj = get_AdjTile(map, unit->position, direction);
     if((adj) && adj->unit == NULL)
         hasMoved = move_Unit(map, unit, direction);
+    msg = get_MapSprite(&map->tiles[previous.Y][previous.X], mode);
     if (hasMoved == FUNCTION_FAIL)
     {
         adj = get_AdjTile(map, unit->position, direction -1);
@@ -623,6 +626,7 @@ bool unit_Retreat(B_Unit* unit, B_Map* map)
                 return false;
         }
     }
+    update_Map(previous.X, previous.Y, msg);
     return true;
 }
 

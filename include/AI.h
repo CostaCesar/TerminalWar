@@ -62,43 +62,50 @@ B_Unit **get_UnitsInRange(B_Unit *unit, B_Map* map, int* nFoes, int distance)
     return targets;
 }
 
-int get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
+int* get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
 {
     int bestAdvtg = -100, posibAdvtg = -100, index = NO_UNIT;
     B_Pos foe_Pos;
-    bool ranged = false;
     // Checking if units exists
     if((unit && nFoes < 1) || (unit->position.X < 0 || unit->position.Y < 0))
-        return FUNCTION_FAIL;
+        return NULL;
 
     for(int i = 0; i < nFoes; i++)
     {
         if(foes[i].position.X < 0 || foes[i].position.Y < 0)
             continue;
 
-        if(autoMove(map, 
+        T_Direc *path = autoMove(map, 
             &map->tiles[unit->position.Y][unit->position.X],
-            &map->tiles[foes[i].position.Y][foes[i].position.X]) == NULL)
+            &map->tiles[foes[i].position.Y][foes[i].position.X]);
+        if(path == NULL)
             continue;
+        free(path);
 
         posibAdvtg = get_BonusByClass(unit->type, foes[i].type, false);
         // + get_BonusByHeight(map->tiles[unit->position.Y][unit->position.X].elevation -
         // map->tiles[foes[i].position.Y][foes[i].position.X].elevation)
         // + get_BonusByVeget(map->tiles[unit->position.Y][unit->position.X].vegetation);
         if(posibAdvtg > bestAdvtg)
+            index = i, bestAdvtg = posibAdvtg;
+        else if(posibAdvtg = bestAdvtg)
         {
-            index = foes[i].ID, bestAdvtg = posibAdvtg;
-            if (unit->ammo > 0 && unit->range > 0 && unit->attack_RangeP > foes[i].defend_RangeP)
-                ranged = true;
-            else ranged = false;
+            B_Pos cDiff = { abs(foes[i].position.X - unit->position.X),
+                            abs(foes[i].position.Y - unit->position.Y) };
+            B_Pos pDiff = { abs(foes[index].position.X - unit->position.X),
+                            abs(foes[index].position.Y - unit->position.Y) };
+            int cDist = cDiff.X > cDiff.Y ? cDiff.X : cDiff.Y; 
+            int pDist = pDiff.X > pDiff.Y ? pDiff.X : pDiff.Y; 
+            
+            index = pDist < cDist ? i : index;              
         }
     }
-    return index;
+    return &foes[index].ID;
 }
 
 int get_ClosestEnemyMove(B_Side *enemies, B_Pos from)
 {
-    int closest = __INT_MAX__, test = 0;;
+    int closest = 0x7fffffff, test = 0;;
     for(int i = 0; i < enemies->size; i++)
     {
         if(enemies->units[i].position.X < 0 || enemies->units[i].position.Y < 0)
@@ -113,7 +120,7 @@ int get_ClosestEnemyMove(B_Side *enemies, B_Pos from)
 
 int get_ClosestEnemyID(B_Side *enemies, B_Pos from)
 {
-    int closest = 0, test = 0, buffer = __INT_MAX__;
+    int closest = 0, test = 0, buffer = 0x7fffffff;
     for(int i = 0; i < enemies->size; i++)
     {
         if(enemies->units[i].position.X < 0 || enemies->units[i].position.Y < 0)
@@ -141,16 +148,32 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
             possib = UNIT_DAMAGE_BONUS_SMALL;
 
         if(possib > best)
-            best = possib, bestI = 1;
+            best = possib, bestI = i;
+        else if(possib == best)
+        {
+            B_Pos cDiff = { abs(test[bestI]->pos.X - unit->position.X),
+                            abs(test[bestI]->pos.Y - unit->position.Y) };
+            B_Pos pDiff = { abs(test[i]->pos.X - unit->position.X),
+                            abs(test[i]->pos.Y - unit->position.Y) };
+            int cDist = cDiff.X > cDiff.Y ? cDiff.X : cDiff.Y; 
+            int pDist = pDiff.X > pDiff.Y ? pDiff.X : pDiff.Y; 
+            
+            bestI = pDist < cDist ? i : bestI;              
+        }
     }
     return test[bestI]->pos;
 }
 
 T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
 {
+    // Alvo atual ainda existe?
+    if((current->chaseID) && get_UnitIndex(they, *current->chaseID) == FUNCTION_FAIL)
+        current->goal.X = NO_UNIT, current->goal.Y = NO_UNIT, current->chaseID = NULL;
+    
     if(get_ClosestEnemyMove(they, current->position) < current->moves)
         return AI_Retreat;
 
+    // Atacar alvos a distância
     if(current->range > 0 && current->ammo > 0)
     {
         int nFoes = 0;
@@ -163,11 +186,26 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
         }
     }
 
+    // Buscar posição avantajosa
+    // IMPLEMENTAR
+
+    // Ir para pisação ranged
+    // IMPLEMENTAR
+
+    // Buscar combate melee
     if(current->morale > 70 && current->men > current->men_Max / 3) 
     {
-        // Se estiver do lado
-        // return AI_ENGAGE
-        get_BestTileMatch(map, );
+        // Enquanto tiver um alvo, não reprocessar;
+        if(current->goal.X != -1 && current->goal.Y != -1)
+            return AI_GoTo;
+        
+        // Se estiver do lado, engajar
+        if(current->goal.X == current->position.X && current->goal.Y == current->position.Y)
+            return AI_Engage;
+
+        // Obtendo alvo e melhor angulo de ataque
+        current->chaseID = get_BestMatchup(current, they->units, they->size, map);
+        current->goal = get_BestTileMatch(map, they->units[get_UnitIndex(they, *current->chaseID)].position, current);
         return AI_GoTo;
     }
     return AI_Wait;

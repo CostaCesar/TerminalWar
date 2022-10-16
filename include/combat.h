@@ -30,6 +30,17 @@ int get_BonusByHeight(double height)
     else return (int) pow(2, height);
 }
 
+int get_UnitIndex(B_Side *side, int ID)
+{
+    for (int i = 0; i < side->size; i++)
+    {
+        if (side->units[i].ID == ID)
+            return i;
+    }
+    printf("ERROR: get_UnitIndex >> 1");
+    return FUNCTION_FAIL;
+}
+
 int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRange)
 {
     int output = 0;
@@ -466,8 +477,8 @@ int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vege
     }
 
     // If attaker != cavalary OR charriot, engage
-    if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
-        attacker->inCombat = true;
+    // if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
+    //     attacker->inCombat = true;
     // Defender must be engaged
     // defender->inCombat = true;
 
@@ -522,7 +533,6 @@ int do_Combat_Ranged(B_Unit* attacker, B_Unit* defender, int heightDif, int vege
     // Showing results
     B_Result res = {*attacker, *defender, false};
     bool LevelUP = show_Combat_Result(res);
-    getchar();
     if(LevelUP == true)
         attacker->level++;
 
