@@ -54,8 +54,11 @@ B_Unit **get_UnitsInRange(B_Unit *unit, B_Map* map, int* nFoes, int distance)
         }
     }
 
-    if(nFoes == 0)
+    if(*nFoes == 0)
+    {
         free(targets);
+        targets = NULL;
+    }
     return targets;
 }
 
@@ -98,8 +101,10 @@ int get_ClosestEnemyMove(B_Side *enemies, B_Pos from)
     int closest = __INT_MAX__, test = 0;;
     for(int i = 0; i < enemies->size; i++)
     {
-        test = (enemies->units[i].position.X > enemies->units[i].position.Y) ?
-                enemies->units[i].position.X : enemies->units[i].position.Y;
+        if(enemies->units[i].position.X < 0 || enemies->units[i].position.Y < 0)
+            continue;
+        B_Pos diff = { abs(enemies->units[i].position.X - from.X), abs(enemies->units[i].position.Y - from.Y) };
+        test = diff.X > diff.Y ? diff.X : diff.Y;
         if(test < closest)
             closest = test;
     }
@@ -111,27 +116,59 @@ int get_ClosestEnemyID(B_Side *enemies, B_Pos from)
     int closest = 0, test = 0, buffer = __INT_MAX__;
     for(int i = 0; i < enemies->size; i++)
     {
-        test = (enemies->units[i].position.X > enemies->units[i].position.Y) ?
-                enemies->units[i].position.X : enemies->units[i].position.Y;
+        if(enemies->units[i].position.X < 0 || enemies->units[i].position.Y < 0)
+            continue;
+        B_Pos diff = { abs(enemies->units[i].position.X - from.X), abs(enemies->units[i].position.Y - from.Y) };
+        test = diff.X > diff.Y ? diff.X : diff.Y;
         if(test < buffer)
             buffer = test, closest = i;
     }
     return closest;
 }
 
+B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
+{
+    int best = -100, possib = -1, bestI = -1;
+    B_Tile* test[8];
+    for(int i = 0; i <= Northwest; i++)
+    {
+        test[i] = get_AdjTile(map, from, i);
+        if(test[i]->vegetation >= Grove && unit_HasBuff(unit, Forest_Advtg))
+            possib = UNIT_DAMAGE_BONUS_SMALL;
+        else if(test[i]->terrain == Desert_Advtg && unit_HasBuff(unit, Desert_Advtg))
+            possib = UNIT_DAMAGE_BONUS_SMALL;
+        else if(test[i]->elevation > map->tiles[from.Y][from.X].elevation && unit_HasBuff(unit, Height_Advtg))
+            possib = UNIT_DAMAGE_BONUS_SMALL;
+
+        if(possib > best)
+            best = possib, bestI = 1;
+    }
+    return test[bestI]->pos;
+}
+
 T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
 {
-    if(get_ClosestEnemyMove(they, current->position) < current->moves);
+    if(get_ClosestEnemyMove(they, current->position) < current->moves)
         return AI_Retreat;
 
     if(current->range > 0 && current->ammo > 0)
     {
-        B_Unit **inRange = get_UnitsInRange(current, map, they->size, current->range);
+        int nFoes = 0;
+        B_Unit **inRange = get_UnitsInRange(current, map, &nFoes, current->range);
         if(inRange != NULL)
         {
-            int rangeID = get_ClosestEnemyID(*inRange, current->position);
+            current->goal = they->units[get_ClosestEnemyID(they, current->position)].position;
             free(inRange);
+            return AI_Fire;
         }
+    }
+
+    if(current->morale > 70 && current->men > current->men_Max / 3) 
+    {
+        // Se estiver do lado
+        // return AI_ENGAGE
+        get_BestTileMatch(map, );
+        return AI_GoTo;
     }
     return AI_Wait;
 }

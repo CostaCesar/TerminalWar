@@ -39,6 +39,13 @@ typedef struct S_Position
     short int Y;
 } B_Pos;
 
+typedef struct S_AI
+{
+    int fortBias;
+    int *path;              // Actualy a T_Direc, see "map.h"
+    int *chaseID;
+    B_Pos attackTarget;
+} B_AI;
 typedef struct S_Unit
 {
     char name[STRING_NAME];
@@ -197,6 +204,15 @@ char *get_UnitBuff(Unit_Buff buff)
             break;
     }
     return type;   
+}
+
+bool unit_HasBuff(B_Unit *unit, Unit_Buff buff)
+{
+    for(int i = 0; i < unit->buffs_S; i++)
+    {
+        if(unit->buffs[i] == buff) return true;
+    }
+    return false;
 }
 
 void show_Unit(B_Unit Unit)

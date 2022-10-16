@@ -980,43 +980,47 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
 
             if (moves < player->units[unitA_I].moves && player->units[unitA_I].isRetreating == false && player->units[unitA_I].inCombat == false)
             {
-                FRes = get_BestMatchup(&player->units[unitA_I], opponent->units, opponent->size, battleMap);
-                if (pos_A.Y > 10)
+                pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
+                switch(AI_Process(battleMap, player, opponent, &player->units[unitA_I], AI_Easy))
                 {
-                    pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
-                    FRes = move_Unit(battleMap, &player->units[unitA_I], Northeast);
-                    pos_A = player->units[unitA_I].position;
-                    update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
+                    case AI_Fire:
+                        pos_B = player->units[unitA_I].goal;
+                        // Show
+                        update_Map(pos_A.X, pos_A.Y, "XXX");
+                        Sleep(TIME_MAP);
+                        update_Map(pos_B.X, pos_B.Y, "OOO");
+                        Sleep(TIME_MAP);
+                        clear_afterMap(battleMap->height);
+                        // Go
+                        target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->ID);
+                        int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
+                        short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
+                        FRes = do_Combat_Ranged(&player->units[unitA_I], &opponent->units[target_I], tHeight, tVeget, tFort);
+                        // Done
+                        if(FRes == FUNCTION_SUCESS)
+                        {
+                            show_gUnit(&player->units[unitA_I]);
+                            show_gUnit(&opponent->units[target_I]);
+                            printf(">> Press ENTER to continue ");
+                            Status_A.loss += A_Loss, Status_B.loss += B_Loss;
+                            while (get_KeyPress(false) != KEY_ENTER) continue;
+                            system("cls");
+                            show_Map(battleMap, *mode, true);
+                            moves = Side_A.units[unitA_I].moves;
+                        }
+                        // else moves--;
+                        update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
+                        update_Map(pos_B.X, pos_B.Y, opponent->units[target_I].name);
+                        break;
+                    default:
+                        FRes = move_Unit(battleMap, &player->units[unitA_I], Northeast);
+                        pos_A = player->units[unitA_I].position;
+                        update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
+                        break;
                 }
-                else
-                {
-                    clear_afterMap(battleMap->height);
-                    inc_FortLevel(battleMap, player->units[unitA_I].build_Cap, pos_A);
-                }
-                if (FRes == OUT_COMBAT)
-                {
-                    // Show
-                    update_Map(pos_A.X, pos_A.Y, "XXX");
-                    Sleep(TIME_MAP);
-                    pos_B = get_AdjTile_Pos(battleMap, pos_A, Northeast);
-                    update_Map(pos_B.X, pos_B.Y, "OOO");
-                    Sleep(TIME_MAP);
-                    // Glow
-                    system("cls");   
-                    snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", pos_B.X, pos_B.Y);
-                    print_Message(msg, true);
-                    // Go
-                    target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->ID);
-                    do_Combat(&player->units[unitA_I], &opponent->units[target_I], get_HeightDif(battleMap, pos_A, pos_B), &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel);
-                    Status_B.loss += A_Loss, Status_A.loss += B_Loss;
-                    show_gUnit(&player->units[unitA_I]);
-                    show_gUnit(&opponent->units[target_I]);
-                    printf(">> Press ENTER to continue ");
-                    while (get_KeyPress(false) != KEY_ENTER) continue;
-                    system("cls");
-                    show_Map(battleMap, *mode, true);
-                }
-                else if (FRes > -1)
+                clear_afterMap(battleMap->height);
+                //inc_FortLevel(battleMap, player->units[unitA_I].build_Cap, pos_A);
+                if (FRes > -1)
                     moves += FRes+1;
                 update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
             }

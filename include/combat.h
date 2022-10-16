@@ -106,6 +106,21 @@ int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRang
         else if (defender_Type == Hv_Infantry)
             output += UNIT_DAMAGE_BONUS_MEDIUM;
         break;
+    case Lg_Siege:
+        // Light Siege
+        // Good X Infantry
+        // IMPLEMENT
+        break;
+    case Md_Siege:
+        // Light Siege
+        // Somewhat Good X Other siege
+        // IMPLEMENT
+        break;
+    case Hv_Siege:
+        // Light Siege
+        // Somewhat Good X ??
+        // IMPLEMENT
+        break;
     // What if attacker has no type?   
     default:
         fprintf(stderr, "No type defined!");
