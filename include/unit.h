@@ -17,7 +17,6 @@ typedef enum E_buffs
     Pike_Formation,
     Charge_Buff
 } Unit_Buff;
-
 typedef enum E_class
 {
     Lg_Infantry,    // Ranged Infantry

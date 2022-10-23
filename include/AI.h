@@ -118,7 +118,7 @@ int get_ClosestEnemyMove(B_Side *enemies, B_Pos from)
     return closest;
 }
 
-int get_ClosestEnemyID(B_Side *enemies, B_Pos from)
+int get_ClosestEnemyIndex(B_Side *enemies, B_Pos from)
 {
     int closest = 0, test = 0, buffer = 0x7fffffff;
     for(int i = 0; i < enemies->size; i++)
@@ -131,6 +131,35 @@ int get_ClosestEnemyID(B_Side *enemies, B_Pos from)
             buffer = test, closest = i;
     }
     return closest;
+}
+
+B_Pos get_BestTileRanged(B_Map *map, B_Unit *unit, B_Unit *foe)
+{
+    B_Pos start = { foe->position.X - unit->range < 0 ? 0 : foe->position.X - unit->range,
+                    foe->position.Y - unit->range < 0 ? 0 : foe->position.Y - unit->range};
+    B_Pos finsh = { foe->position.X + unit->range > map->width ? map->width : foe->position.X + unit->range,
+                    foe->position.Y + unit->range > map->height ? map->height : foe->position.Y + unit->range};
+    B_Pos best;
+    int bestDmg = -100, possibDmg = 0, bestDist = -100, possibDist = 0;
+    for(int i = start.Y; i <= finsh.Y; i++)
+    {
+        for(int j = start.X; j < finsh.X; j++)
+        {
+            if(i > start.Y && i < finsh.Y && j > start.X && j < finsh.X)
+                continue;
+            if(abs(j - unit->position.X) < abs(i - unit->position.Y))
+                possibDist = j;
+            else possibDist = i;
+            
+            possibDmg = get_AbsHeigthDif(map, (B_Pos){i,j}, foe->position);
+            if(possibDist + possibDmg < bestDist + bestDmg)
+            {
+                bestDist = possibDist, bestDmg = bestDmg;
+                best.X = j, best.Y = i;
+            }
+        }
+    }
+    return best;
 }
 
 B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
@@ -158,11 +187,12 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
             int cDist = cDiff.X > cDiff.Y ? cDiff.X : cDiff.Y; 
             int pDist = pDiff.X > pDiff.Y ? pDiff.X : pDiff.Y; 
             
-            bestI = pDist < cDist ? i : bestI;              
+            bestI = pDist < cDist ? i : bestI;             
         }
     }
     return test[bestI]->pos;
 }
+
 
 T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
 {
@@ -180,7 +210,7 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
         B_Unit **inRange = get_UnitsInRange(current, map, &nFoes, current->range);
         if(inRange != NULL)
         {
-            current->goal = they->units[get_ClosestEnemyID(they, current->position)].position;
+            current->goal = they->units[get_ClosestEnemyIndex(they, current->position)].position;
             free(inRange);
             return AI_Fire;
         }
@@ -190,7 +220,10 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     // IMPLEMENTAR
 
     // Ir para pisação ranged
-    // IMPLEMENTAR
+    if(they->units[get_ClosestEnemyIndex(they, current->position)].defend_RangeP < current->attack_RangeP)
+    {
+        B_Tile* 
+    }
 
     // Buscar combate melee
     if(current->morale > 70 && current->men > current->men_Max / 3) 
