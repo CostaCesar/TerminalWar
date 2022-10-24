@@ -68,3 +68,24 @@ mapDesc: Not much to say
 I HAVE XD
 #this is my 2nd map ;)
 $
+map: update.map
+mapTitle: AI Test
+music: NU_Battle.wav
+table: new2.bin
+attacker: sideB
+sideA: Player
+placement: chosen
+units: 5
+0
+1
+2
+3
+4
+sideB: AI
+placement: forced
+units: 1
+4 5 15
+mapDesc: |#|
+Mate todos as unidades da Imperia
+e veja como ela reage ;)
+$

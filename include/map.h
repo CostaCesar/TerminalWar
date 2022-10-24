@@ -305,7 +305,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
     return;
 }
 
-int get_AbsHeigthDif(B_Map* map, B_Pos aPoint , B_Pos bPoint)
+int get_AbsHeightDif(B_Map* map, B_Pos aPoint , B_Pos bPoint)
 {
     int height_A = map->tiles[aPoint.Y][aPoint.X].elevation;
     int height_B = map->tiles[bPoint.Y][bPoint.X].elevation;
@@ -692,7 +692,7 @@ B_Map create_Map(T_Clime climate, T_Time time)
                     continue;
 
                 B_Tile *temp = get_AdjTile(&creation, creation.tiles[i][j].unit->position, k);
-                if((get_AbsHeigthDif(&creation, creation.tiles[i][j].unit->position, temp->unit->position) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
+                if((get_AbsHeightDif(&creation, creation.tiles[i][j].unit->position, temp->unit->position) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
                 {
                     creation.tiles[i][j].node.conectP[k] = false;
                     creation.tiles[i][j].node.conectS[k] = -1;

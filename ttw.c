@@ -406,9 +406,9 @@ int load_Scenery(int nScen, int playMap)
         while(1)
         {
             fgets(word, sizeof(word), scen);
-            if(feof(scen)) break;
             if(word[0] == '$')
                 output++;
+            if(feof(scen)) break;
         }
     }
     fclose(scen);
@@ -996,19 +996,23 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         }
                         update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
                         update_Map(pos_B.X, pos_B.Y, opponent->units[target_I].name);
+                        moves = player->units[unitA_I].moves;
                         break;
                     case AI_GoTo:
                         pos_A.X = player->units[unitA_I].position.X, pos_A.Y = player->units[unitA_I].position.Y;
                         pos_B.X = player->units[unitA_I].goal.X, pos_B.Y = player->units[unitA_I].goal.Y;
                         player->units[unitA_I].path = (int *)autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[pos_B.Y][pos_B.X]);
-                        if (player->units[unitA_I].path != NULL)
+                        if (player->units[unitA_I].path == NULL) break;
+                        for(int steps = 0; steps < player->units[unitA_I].moves; steps++)
                         {
-                            FRes = move_Unit(battleMap, &player->units[unitA_I], player->units[unitA_I].path[0]);
-                            pos_A = player->units[unitA_I].position;
+                            FRes = move_Unit(battleMap, &player->units[unitA_I], player->units[unitA_I].path[steps]);
                             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
-                            pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
-                            free(player->units[unitA_I].path);
+                            if( player->units[unitA_I].position.X == player->units[unitA_I].goal.X &&
+                                player->units[unitA_I].position.Y == player->units[unitA_I].goal.Y)
+                                break;
+                            moves++;
                         }
+                        free(player->units[unitA_I].path);
                         break;
                     default:
                         FRes = move_Unit(battleMap, &player->units[unitA_I], Northeast);
@@ -1017,9 +1021,10 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         break;
                 }
                 clear_afterMap(battleMap->height);
+                pos_A = player->units[unitA_I].position;
                 //inc_FortLevel(battleMap, player->units[unitA_I].build_Cap, pos_A);
-                if (FRes > -1)
-                    moves += FRes+1;
+                // if (FRes > -1)
+                //     moves += FRes+1;
                 update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
             }
             else
@@ -1116,6 +1121,7 @@ startMenu:
         }
     }
     // Placing Player on map
+    mode = MODE_UNITS;
     if (placementMenu(&battleMap, &Side_A, &mode) == FUNCTION_FAIL)
     {
         (void)deallocAll();

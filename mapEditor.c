@@ -102,7 +102,7 @@ void map_Connections(B_Map* map)
                 B_Pos pos_Current = {j, i};
                 B_Tile *temp = get_AdjTile(map, pos_Current, k);
                 B_Pos pos_Adj = get_AdjTile_Pos(map, pos_Current, k);
-                if((get_AbsHeigthDif(map, pos_Current, pos_Adj) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
+                if((get_AbsHeightDif(map, pos_Current, pos_Adj) > HEIGHT_DIF) || (temp->elevation < -1 && temp->terrain == Water))
                 {
                     map->tiles[i][j].node.conectP[k] = false;
                     map->tiles[i][j].node.conectS[k] = -1;

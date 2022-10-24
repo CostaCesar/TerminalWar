@@ -145,14 +145,15 @@ B_Pos get_BestTileRanged(B_Map *map, B_Unit *unit, B_Unit *foe)
     {
         for(int j = start.X; j < finsh.X; j++)
         {
-            if(i > start.Y && i < finsh.Y && j > start.X && j < finsh.X)
+            if(abs(i - foe->position.Y) <= foe->moves || abs(j - foe->position.X) <= foe->moves)
                 continue;
+            
             if(abs(j - unit->position.X) < abs(i - unit->position.Y))
                 possibDist = j;
             else possibDist = i;
             
-            possibDmg = get_AbsHeigthDif(map, (B_Pos){i,j}, foe->position);
-            if(possibDist + possibDmg < bestDist + bestDmg)
+            possibDmg = get_HeightDif(map, (B_Pos){i,j}, foe->position);
+            if(possibDist + possibDmg > bestDist + bestDmg)
             {
                 bestDist = possibDist, bestDmg = bestDmg;
                 best.X = j, best.Y = i;
@@ -197,6 +198,7 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
 T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
 {
     // Alvo atual ainda existe?
+    B_Unit *closest = &they->units[get_ClosestEnemyIndex(they, current->position)];
     if((current->chaseID) && get_UnitIndex(they, *current->chaseID) == FUNCTION_FAIL)
         current->goal.X = NO_UNIT, current->goal.Y = NO_UNIT, current->chaseID = NULL;
     
@@ -210,7 +212,7 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
         B_Unit **inRange = get_UnitsInRange(current, map, &nFoes, current->range);
         if(inRange != NULL)
         {
-            current->goal = they->units[get_ClosestEnemyIndex(they, current->position)].position;
+            current->goal = closest->position;
             free(inRange);
             return AI_Fire;
         }
@@ -219,10 +221,11 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     // Buscar posição avantajosa
     // IMPLEMENTAR
 
-    // Ir para pisação ranged
-    if(they->units[get_ClosestEnemyIndex(they, current->position)].defend_RangeP < current->attack_RangeP)
+    // Ir para posição ranged
+    if(closest->defend_RangeP < current->attack_RangeP)
     {
-        B_Tile* 
+        current->goal = get_BestTileRanged(map, current, closest);
+        return AI_GoTo;
     }
 
     // Buscar combate melee
@@ -238,7 +241,7 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
 
         // Obtendo alvo e melhor angulo de ataque
         current->chaseID = get_BestMatchup(current, they->units, they->size, map);
-        current->goal = get_BestTileMatch(map, they->units[get_UnitIndex(they, *current->chaseID)].position, current);
+        current->goal = get_BestTileMatch(map, closest->position, current);
         return AI_GoTo;
     }
     return AI_Wait;
