@@ -509,7 +509,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 if (Side->units[i].position.X >= 0 && Side->units[i].position.Y >= 0)
                 {
                     printf(">> At %dX - %dY \n", Side->units[i].position.X, Side->units[i].position.Y);
-                    show_Unit(Side->units[i]);
+                    show_gUnit(&Side->units[i]);
                 }
             if (i < 0)
             {
@@ -550,7 +550,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 if (Side->units[i].position.X >= 0 && Side->units[i].position.Y >= 0)
                 {
                     printf(">> At %dX - %dY \n", Side->units[i].position.X, Side->units[i].position.Y);
-                    show_Unit(Side->units[i]);
+                    show_gUnit(&Side->units[i]);
                 }
             if (i < 0)
             {
@@ -768,6 +768,11 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                             while (get_KeyPress(false) != KEY_ENTER) continue;
                             system("cls");
+                            if(opponent->units[target_I].men == 0)
+                            {
+                                delete_Unit(&opponent->units[target_I], &opponent->size, target_I);
+                                battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
+                            }
                             show_Map(battleMap, *mode, true);
                             moves = Side_A.units[unitA_I].moves;
                         }
@@ -802,6 +807,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         print_Message("This unit cannot build fortifications!", true);
                         moves--;
                     }
+                    clear_afterMap(battleMap->height);
                 }
                 else if (action == 'g') // See tile stats
                 {
@@ -904,6 +910,11 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 printf(">> Press ENTER to continue ");
                                 while (get_KeyPress(false) != KEY_ENTER) continue;
                                 system("cls");
+                                if(opponent->units[target_I].men == 0)
+                                {
+                                    delete_Unit(&opponent->units[target_I], &opponent->size, target_I);
+                                    battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
+                                }
                                 show_Map(battleMap, *mode, true);
                             }
                             else if (FRes == FUNCTION_FAIL)
@@ -922,7 +933,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         moves--;
                     }
                 }
-                update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
+                update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
                 if ((pos_A.X == xGoal && pos_A.Y == yGoal) || FRes == OUT_COMBAT)
                 {
                     player->units[unitA_I].chaseID = NULL;
@@ -991,11 +1002,15 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                             while (get_KeyPress(false) != KEY_ENTER) continue;
                             system("cls");
+                            if(opponent->units[target_I].men == 0)
+                            {
+                                delete_Unit(&opponent->units[target_I], &opponent->size, target_I);
+                                battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
+                            }
                             show_Map(battleMap, *mode, true);
                             moves = Side_A.units[unitA_I].moves;
                         }
-                        update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
-                        update_Map(pos_B.X, pos_B.Y, opponent->units[target_I].name);
+                        else update_Map(pos_B.X, pos_B.Y, get_MapSprite(&battleMap->tiles[pos_B.Y][pos_B.X], *mode));
                         moves = player->units[unitA_I].moves;
                         break;
                     case AI_GoTo:
@@ -1017,15 +1032,10 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     default:
                         FRes = move_Unit(battleMap, &player->units[unitA_I], Northeast);
                         pos_A = player->units[unitA_I].position;
-                        update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
                         break;
                 }
                 clear_afterMap(battleMap->height);
                 pos_A = player->units[unitA_I].position;
-                //inc_FortLevel(battleMap, player->units[unitA_I].build_Cap, pos_A);
-                // if (FRes > -1)
-                //     moves += FRes+1;
-                update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
             }
             else
             {
@@ -1034,9 +1044,10 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
             }
+            update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
         }
         info_Upper(battleMap->name, turn, Side_B.name, false, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, NO_UNIT);
-        update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
+        update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
         Sleep(TIME_STRATEGY);
     }
     return FUNCTION_SUCESS;
@@ -1139,6 +1150,8 @@ startMenu:
     // Game Starts
     jukebox("Game1.wav", SND_ASYNC | SND_LOOP | SND_FILENAME);
     system("cls");
+    screen_Victory(Status_A, Status_B);
+    mode = MODE_GRAPHIC;
     show_Map(&battleMap, mode, true);
     
     int unitA_I = 0, unitB_I = 0, target_I = 0;
@@ -1157,6 +1170,18 @@ startMenu:
         if(do_Turn(&Side_A, &Side_B, &battleMap, unitA_I, i, &mode) == FUNCTION_FAIL)
             break;
         unitA_I++;
+        
+        // Checking for victory
+        // Use fielded troops to get victory
+        // IMPLEMENT
+        fflush(stdin);
+        if(Side_B.size == 0)
+        {
+            screen_Victory(Status_A, Status_B);
+            while (get_KeyPress(false) != KEY_ENTER)
+                continue;
+            break;
+        }
 
         // Get next unit
         for(int index = 0; index < Side_B.size; index++)
@@ -1170,6 +1195,18 @@ startMenu:
         if (do_Turn(&Side_B, &Side_A, &battleMap, unitB_I, i, &mode) == FUNCTION_FAIL)
             break;
         unitB_I++;
+
+        // Checking for victory
+        // Use fielded troops to get victory
+        // IMPLEMENT
+        fflush(stdin);
+        if (Side_A.size == 0)
+        {
+            screen_Victory(Status_B, Status_A);
+            while (get_KeyPress(false) != KEY_ENTER)
+                continue;
+            break;
+        }
         
         // Cheking for retreat
         for (int j = 0; j < Side_A.size && j < Side_B.size; j++)
@@ -1205,24 +1242,6 @@ startMenu:
                     update_Map(Side_B.units[j].position.X, Side_B.units[j].position.Y, Side_B.units[j].name);
                 }
             }
-        }
-        // Checking for victory
-        // Use fielded troops to get victory
-        // IMPLEMENT
-        fflush(stdin);
-        if (Side_A.size == 0)
-        {
-            screen_Victory(Status_B, Status_A);
-            while (get_KeyPress(false) != KEY_ENTER)
-                continue;
-            break;
-        }
-        else if (Side_B.size == 0)
-        {
-            screen_Victory(Status_A, Status_B);
-            while (get_KeyPress(false) != KEY_ENTER)
-                continue;
-            break;
         }
     }
 

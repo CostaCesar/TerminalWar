@@ -322,7 +322,7 @@ int get_AbsHeightDif(B_Map* map, B_Pos aPoint , B_Pos bPoint)
 
 int get_HeightDif(B_Map* map, B_Pos aPoint, B_Pos bPoint)
 {
-    int height_A = map->tiles[aPoint.Y][aPoint.Y].elevation;
+    int height_A = map->tiles[aPoint.Y][aPoint.X].elevation;
     int height_B = map->tiles[bPoint.Y][bPoint.X].elevation;
     return (height_A - height_B);
 }

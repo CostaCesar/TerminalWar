@@ -139,23 +139,24 @@ B_Pos get_BestTileRanged(B_Map *map, B_Unit *unit, B_Unit *foe)
                     foe->position.Y - unit->range < 0 ? 0 : foe->position.Y - unit->range};
     B_Pos finsh = { foe->position.X + unit->range > map->width ? map->width : foe->position.X + unit->range,
                     foe->position.Y + unit->range > map->height ? map->height : foe->position.Y + unit->range};
-    B_Pos best;
-    int bestDmg = -100, possibDmg = 0, bestDist = -100, possibDist = 0;
+    B_Pos best, comp;
+    int bestDmg = 0, possibDmg = 0, bestMoves = 0x7fffffff, possibMoves = 0;
     for(int i = start.Y; i <= finsh.Y; i++)
     {
         for(int j = start.X; j < finsh.X; j++)
         {
-            if(abs(i - foe->position.Y) <= foe->moves || abs(j - foe->position.X) <= foe->moves)
+            if(abs(i - foe->position.Y) <= foe->moves && abs(j - foe->position.X) <= foe->moves)
                 continue;
             
-            if(abs(j - unit->position.X) < abs(i - unit->position.Y))
-                possibDist = j;
-            else possibDist = i;
+            comp.X = abs(j - unit->position.X), comp.Y = abs(i - unit->position.Y);
+            if(comp.X > comp.Y)
+                possibMoves = comp.X;
+            else possibMoves = comp.Y;
             
-            possibDmg = get_HeightDif(map, (B_Pos){i,j}, foe->position);
-            if(possibDist + possibDmg > bestDist + bestDmg)
+            possibDmg = get_HeightDif(map, (B_Pos){j,i}, foe->position);
+            if((possibMoves - possibDmg < bestMoves - bestDmg) || (possibDmg == bestDmg && possibMoves < bestMoves))
             {
-                bestDist = possibDist, bestDmg = bestDmg;
+                bestMoves = possibMoves, bestDmg = possibDmg;
                 best.X = j, best.Y = i;
             }
         }

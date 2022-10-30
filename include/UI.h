@@ -65,10 +65,10 @@ void toggle_Cursor(bool cursor)
 void clear_afterMap(short int mHeight)
 {
     int screenWidth = get_ScreenWidth();
-    COORD pos = {5, MAP_OFFSET_Y+mHeight*2};
+    COORD pos = {0, MAP_OFFSET_Y+mHeight*2};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    printf("                                                                                                                                                                        ");
-    printf("                                                                                                                                                                        ");
+    printf("                                                                                                                                                                         ");
+    printf("                                                                                                                                                                         ");
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     return;   
 }
@@ -979,6 +979,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     int sWidth = get_ScreenWidth();
     int sHeight = get_ScreenHeight();
     int auxHeight = 0;
+    char msg[STRING_NAME];
     
     // printf("           Winner X Looser\n");
     // printf("Deployed:  %6d   %6d\n", winner.deployed, looser.deployed);
@@ -986,44 +987,51 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     // printf("Lost:      %6d   %6d\n", winner.loss, looser.loss);
     // printf("Remaining: %6d   %6d\n", winner.deployed - winner.loss, looser.deployed - looser.loss);
 
-    printf("#");
-    for(int i = 0; i < sWidth - 2; i++)
-        printf("-");
-    printf("#\n");
+    
+    //printf("#");
+    //for(int i = 0; i < sWidth - 2; i++)
+    //    printf("-");
+    //printf("#\n");
 
-    printf("|");
-    for(int i = 0; i < sWidth - 2; i++)
-        printf(" ");
-    printf("|\n");
+    //printf("|");
+    //for(int i = 0; i < sWidth - 2; i++)
+    //    printf(" ");
+    //printf("|\n");
 
-    printf("|");
-    for(int i = 0; i < (sWidth / 2) - floorf((strlen(winner.name) / 2.0f)) - 11; i++)
-        printf(" ");
-    printf("%s has won the battle!", winner.name);
-    for(int i = 0; i < (sWidth / 2) - ceilf((strlen(winner.name) / 2.0f)) - 11; i++)
-        printf(" ");
-    printf("|\n");
+    // printf("|");
+    // for(int i = 0; i < (sWidth / 2) - floorf((strlen(winner.name) / 2.0f)) - 11; i++)
+    //     printf(" ");
+    // printf("%s has won the battle!", winner.name);
+    // for(int i = 0; i < (sWidth / 2) - ceilf((strlen(winner.name) / 2.0f)) - 11; i++)
+    //     printf(" ");
+    // printf("|\n");
 
+    snprintf(msg, sizeof(msg), "%s has won the battle!", winner.name);
+    print_Line(NULL);
+    print_Line(" ");
+    print_Line(msg);
     for(int i = 0; i < ceilf((sHeight - 13) / 2.0f); i++)
     {
         auxHeight++;
-        printf("|");
-        for(int j = 0; j < sWidth - 2; j++)
-            printf(" ");
-        printf("|\n");
+        print_Line(" ");
+        // printf("|");
+        // for(int j = 0; j < sWidth - 2; j++)
+        //     printf(" ");
+        // printf("|\n");
     }
     
     int aux = 0;
     printf("|");
-    for(int i = 0; i < (sWidth / 4.0f) - floorf((strlen(winner.name) / 2.0f)) - 1; i++)
+    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf((strlen(winner.name) / 2.0f)) - 1; i++)
     { printf(" "); aux++; }
     printf("%s", winner.name);
-    for(int i = 0; i < (sWidth / 2.0f) - aux - (strlen(winner.name)); i++)
+    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(strlen(winner.name)) + 1; i++)
         printf(" ");
-    for(int i = 0; i < (sWidth / 4.0f) - (strlen(looser.name) / 2.0f); i++)
+    printf("|");
+    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(strlen(looser.name) / 2.0f); i++)
         printf(" ");
     printf("%s", looser.name);
-    for(int i = 0; i < (sWidth / 4.0f) - ceilf((strlen(looser.name) / 2.0f)) - 2; i++)
+    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf((strlen(looser.name) / 2.0f)); i++)
         printf(" ");
     printf("|\n");
 
@@ -1044,7 +1052,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < (sWidth / 4.0f) - floorf(nLen / 2.0f) - 4; i++)
         printf(" ");
     printf("%d", looser.deployed);
-    for(int i = 0; i < (sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+    for(int i = 0; i < (sWidth / 4.0f) - ceilf(nLen / 2.0f) - 4; i++)
         printf(" ");
     printf("|\n");
 
