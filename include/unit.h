@@ -214,6 +214,16 @@ bool unit_HasBuff(B_Unit *unit, Unit_Buff buff)
     return false;
 }
 
+bool side_HasType(B_Side *units, T_Class type)
+{
+    for(int i = 0; i < units->size; i++)
+    {
+        if(units->units[i].type == type)
+            return true;
+    }
+    return false;
+}
+
 void show_Unit(B_Unit Unit)
 {
     char* type = get_UnitType(Unit.type);

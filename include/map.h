@@ -91,6 +91,17 @@ float calcDistance(B_Pos A, B_Pos B)
     return sqrtf((A.X - B.X) * (A.X - B.X) + (A.Y - B.Y) * (A.Y - B.Y));
 }
 
+int calcMoves(B_Pos A, B_Pos B)
+{
+    B_Pos dist = {abs(A.X - B.X), abs(A.Y - B.Y)};
+    return dist.X < dist.Y ? dist.X : dist.Y;
+}
+
+int compPos(B_Pos A, B_Pos B)
+{
+    return A.X == B.Y && A.Y == B.Y;
+}
+
 char *tTerrain_toStr(T_Terrain source)
 {
     switch (source)
@@ -583,7 +594,7 @@ B_Tile* get_AdjTile(B_Map* map, B_Pos pos, T_Direc direction)
         return &map->tiles[destPos.Y][destPos.X];
     else
     {
-        printf("ERROR: getRLTV_UnitId >> 2!");
+        // printf("ERROR: getRLTV_UnitId >> 2!");
         return NULL;
     }
 }
