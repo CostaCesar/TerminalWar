@@ -2,6 +2,9 @@
     "files.associations": {
         "stdbool.h": "c",
         "stdio.h": "c",
-        "math.h": "c"
+        "math.h": "c",
+        "cmath": "c",
+        "cstdlib": "c",
+        "random": "c"
     }
 }
