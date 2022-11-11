@@ -76,6 +76,8 @@ void clear_afterMap(short int mHeight)
 void print_Line(char *message)
 {
     int screenWidth = get_ScreenWidth();
+    CONSOLE_SCREEN_BUFFER_INFO cursor;
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if(!message)
     {
@@ -95,22 +97,20 @@ void print_Line(char *message)
         }
         firstLine = !firstLine;
     }
-    else if(message[0] == ' ' && strlen(message) == 1)
-    {
-        putchar(186);
-        for(int i = 0; i < screenWidth - 2; i++)
-             printf(" ");
-        putchar(186);
-    }
     else
     {
-        int msg_len = strlen(message);
         putchar(186);
-        for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
-             printf(" ");
-         printf("%s", message);
-         for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
-             printf(" ");
+        GetConsoleScreenBufferInfo(console, &cursor);
+
+        if(message[0] != ' ' && strlen(message) > 1)
+        {
+            int msg_len = strlen(message);
+            cursor.dwCursorPosition.X = floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f);
+            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+            printf("%s", message);
+        }
+        cursor.dwCursorPosition.X = screenWidth-1;
+        SetConsoleCursorPosition(console, cursor.dwCursorPosition);
         putchar(186);
         printf("\n");
     }
@@ -130,6 +130,9 @@ void fillSpace_ToBottom(int offset)
 void print_LineOffset(char *message, int offset, bool doBorders)
 {
     int screenWidth = get_ScreenWidth();
+    CONSOLE_SCREEN_BUFFER_INFO cursor;
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+
     if(!message)
     {
         if(firstLine == true)
@@ -154,20 +157,25 @@ void print_LineOffset(char *message, int offset, bool doBorders)
         if(doBorders == true)
         {
             putchar(186);
-            for(int i = 0; i < offset - 1; i++)
-                printf(" ");
+            GetConsoleScreenBufferInfo(console, &cursor);
+            
+            cursor.dwCursorPosition.X = offset;
+            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
             printf("%s", message);
-            for(int i = 0; i < screenWidth - offset - msg_len - 1; i++)
-                printf(" ");
+            
+            cursor.dwCursorPosition.X = screenWidth-1;
+            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
             putchar(186);
         }
         else
         {
-            for(int i = 0; i < offset; i++)
-                printf(" ");
+            GetConsoleScreenBufferInfo(console, &cursor);
+            cursor.dwCursorPosition.X = floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f);
+            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
             printf("%s", message);
-            for(int i = 0; i < screenWidth - offset - msg_len; i++)
-                printf(" ");
+            
+            cursor.dwCursorPosition.X = screenWidth;
+            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
         }
         printf("\n");
     }
@@ -176,10 +184,29 @@ void print_LineOffset(char *message, int offset, bool doBorders)
 
 void print_Message(char *message, bool doWait)
 {
+    int screenWidth = get_ScreenWidth();
+    int msg_len = strlen(message);
+
     print_Line(NULL);
-    print_Line(" ");
-    print_Line(message);
-    print_Line(" ");
+    
+    putchar(186);
+    for(int i = 0; i < screenWidth-2; i++)
+        printf(" ");
+    putchar(186);
+
+    putchar(186);
+    for(int i = 0; i < floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    printf("%s", message);
+    for(int i = 0; i < ceilf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
+        printf(" ");
+    putchar(186);
+    
+    putchar(186);
+    for(int i = 0; i < screenWidth-2; i++)
+        printf(" ");
+    putchar(186);
+
     print_Line(NULL);
 
     if(doWait)
@@ -976,6 +1003,7 @@ int screen_Menu(float version)
 void screen_Victory(B_endStats winner, B_endStats looser)
 {
     system("cls");
+    fflush(stdin);
     int sWidth = get_ScreenWidth();
     int sHeight = get_ScreenHeight();
     int auxHeight = 0;
@@ -1025,13 +1053,13 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf((strlen(winner.name) / 2.0f)) - 1; i++)
     { printf(" "); aux++; }
     printf("%s", winner.name);
-    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(strlen(winner.name)) + 1; i++)
+    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(strlen(winner.name)) + 2; i++)
         printf(" ");
     printf("|");
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(strlen(looser.name) / 2.0f); i++)
         printf(" ");
     printf("%s", looser.name);
-    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf((strlen(looser.name) / 2.0f)); i++)
+    for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf((strlen(looser.name) / 2.0f)) - 3; i++)
         printf(" ");
     printf("|\n");
 

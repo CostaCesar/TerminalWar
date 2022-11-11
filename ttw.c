@@ -418,13 +418,14 @@ int load_Scenery(int nScen, int playMap)
 
 int placementMenu(B_Map *map, B_Side *Side, int *mode)
 {
+    system("cls");
     int Index = -1, out = 0, i = 0;
     short int dUnits = 0;
     do
     {
         Index = -1;
         B_Pos unitPos = {-1, -1};
-        system("cls");
+        reset_Cursor();
         toggle_Cursor(false);
 
         printf(">> ");
@@ -1146,11 +1147,12 @@ startMenu:
     for (int i = 0; i < Side_B.size; i++)
         if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
             Status_B.deployed += Side_B.units[i].men;
-
     // Game Starts
     jukebox("Game1.wav", SND_ASYNC | SND_LOOP | SND_FILENAME);
     system("cls");
     screen_Victory(Status_A, Status_B);
+    getchar();
+    
     mode = MODE_GRAPHIC;
     show_Map(&battleMap, mode, true);
     
