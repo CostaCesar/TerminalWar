@@ -167,6 +167,7 @@ B_Unit* edit_List(int* out, B_Unit *list, int *size)
         scanf("%hd%c", &list[pos].defend_MeleeP, &chr);
         printf("> Poder a distancia defensivo: ");
         scanf("%hd%c", &list[pos].defend_RangeP, &chr);
+        list[pos].attack_RangeP = -1;
 
         printf("> Moral da unidade [MAXIMO = %.3f]: ", UNIT_MAX_MORALE);
         scanf("%f%c", &list[pos].morale, &chr);
@@ -266,6 +267,11 @@ B_Unit* load_List(int *out, B_Unit *list, int *size, char *name, char *desc)
     fclose(file);
     
     printf(">> Arquivo aberto com sucesso! << \n");
+    // File correction
+    for(int i = 0; i < *size; i++)
+    {
+        if(list[i].range <= 0) list[i].attack_RangeP = -1;
+    }
 
     *out = CONTINUE;
     return list;
