@@ -1122,6 +1122,8 @@ startMenu:
 
     xHiLi = NO_UNIT, yHiLi = NO_UNIT;
     Status_A.name = Side_A.name, Status_B.name = Side_B.name;
+    Status_A.deployed = 0, Status_A.killed = 0, Status_A.loss = 0;
+    Status_B.deployed = 0, Status_B.killed = 0, Status_B.loss = 0;
 
     // Placing AI on Map
     if(Side_B.isAI == true)
@@ -1145,12 +1147,11 @@ startMenu:
         if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
             Status_A.deployed += Side_A.units[i].men;
     for (int i = 0; i < Side_B.size; i++)
-        if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
+        if(Side_B.units[i].position.X != NO_UNIT && Side_B.units[i].position.Y != NO_UNIT)
             Status_B.deployed += Side_B.units[i].men;
     // Game Starts
     jukebox("Game1.wav", SND_ASYNC | SND_LOOP | SND_FILENAME);
     system("cls");
-    screen_Victory(Status_A, Status_B);
     getchar();
     
     mode = MODE_GRAPHIC;
