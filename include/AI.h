@@ -33,9 +33,9 @@ B_Unit **get_UnitsInRange(B_Unit *unit, B_Map* map, int* nFoes, int distance)
     maxCoord.X = (unit->position.X + distance < map->width) ? unit->position.X + distance : map->width - 1;
     maxCoord.Y = (unit->position.Y + distance < map->height) ? unit->position.Y + distance : map->height - 1;
 
-    for(int i = minCoord.Y; i < maxCoord.Y; i++)
+    for(int i = minCoord.Y; i <= maxCoord.Y; i++)
     {
-        for(int j = minCoord.X; j < maxCoord.X; j++)
+        for(int j = minCoord.X; j <= maxCoord.X; j++)
         {
             if(map->tiles[i][j].unit != NULL)
             {
@@ -239,6 +239,7 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     B_Pos test;
     B_Unit *closest_Foe = get_ClosestUnit(they, current->position);
     B_Unit *closest_Ally = get_ClosestUnit(ours, current->position);
+    B_Tile *current_Tile = &map->tiles[current->position.Y][current->position.X];
     
     // Alvo atual ainda existe?
     if((current->chaseID) && get_UnitIndex(they, *current->chaseID) == FUNCTION_FAIL)
@@ -247,12 +248,16 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     // Se muito perto, recuar
     // talvex só ranged ou algo assim
     // IMPLEMENTAR?
-    if((get_UnitPowerGap(closest_Ally, closest_Foe, false) <= 0.5
+    if((get_UnitPowerGap(current, closest_Foe,
+                         get_HeightDif(map, current->position, closest_Foe->position),
+                         current_Tile->fortLevel, false) <= 0.5
         && calcMoves(closest_Foe->position, current->position) < closest_Foe->moves 
         && closest_Foe->attack_MeleeP > current->defend_MeleeP
         && closest_Foe->defend_RangeP > current->attack_MeleeP)
         ||
-        (get_UnitPowerGap(closest_Ally, closest_Foe, true) <= 0.5
+        (get_UnitPowerGap(current, closest_Foe,
+                         get_HeightDif(map, current->position, closest_Foe->position),
+                         current_Tile->fortLevel, true) <= 0.5
         && calcMoves(closest_Foe->position, current->position) < closest_Foe->range 
         && closest_Foe->attack_RangeP > current->defend_RangeP))
         return AI_Retreat;
