@@ -1151,6 +1151,8 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     print_Line("Press ENTER to continue...");
     print_Line(" ");
     print_Line(NULL);
-
+    
+    while (get_KeyPress(false) != KEY_ENTER)
+        continue;
     return;
 }

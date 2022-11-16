@@ -771,7 +771,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             system("cls");
                             if(opponent->units[target_I].men == 0)
                             {
-                                delete_Unit(&opponent->units[target_I], &opponent->size, target_I);
+                                delete_Unit(opponent->units, &opponent->size, target_I);
                                 battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
                             }
                             show_Map(battleMap, *mode, true);
@@ -913,7 +913,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 system("cls");
                                 if(opponent->units[target_I].men == 0)
                                 {
-                                    delete_Unit(&opponent->units[target_I], &opponent->size, target_I);
+                                    delete_Unit(opponent->units, &opponent->size, target_I);
                                     battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
                                 }
                                 show_Map(battleMap, *mode, true);
@@ -1005,7 +1005,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                             system("cls");
                             if(opponent->units[target_I].men == 0)
                             {
-                                delete_Unit(&opponent->units[target_I], &opponent->size, target_I);
+                                delete_Unit(opponent->units, &opponent->size, target_I);
                                 battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
                             }
                             show_Map(battleMap, *mode, true);
@@ -1202,14 +1202,26 @@ startMenu:
         // Checking for victory
         // Use fielded troops to get victory
         // IMPLEMENT
+        int remainingA, remainingB;
         fflush(stdin);
-        if (Side_A.size == 0)
+        for(remainingA = Side_A.size-1; remainingA >= 0; remainingA--)
         {
-            screen_Victory(Status_B, Status_A);
-            while (get_KeyPress(false) != KEY_ENTER)
-                continue;
-            break;
+            if(compPos(Side_A.units[remainingA].position, (B_Pos){-1, -1}) == false)
+                break;
+            else if(remainingA == 0)
+            { remainingA = -1; break; }
         }
+        for(remainingB = Side_B.size-1; remainingB >= 0; remainingB--)
+        {
+            if(compPos(Side_B.units[remainingB].position, (B_Pos){-1, -1}) == false)
+                break;
+            else if(remainingB == 0)
+            { remainingB = -1; break; }
+        }
+        if(remainingA < 0)
+        { screen_Victory(Status_B, Status_A); break; }
+        else if(remainingB < 0)
+        { screen_Victory(Status_A, Status_B); break; }
         
         // Cheking for retreat
         for (int j = 0; j < Side_A.size && j < Side_B.size; j++)
