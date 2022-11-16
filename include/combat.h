@@ -216,16 +216,18 @@ int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRang
     return output;
 }
 
-float get_UnitPowerGap(B_Unit *attacker, B_Unit *defender, bool ranged)
+float get_UnitPowerGap(B_Unit *attacker, B_Unit *defender, int HeightDiff, int atck_Fort, bool ranged)
 {
-    float attacker_Power = attacker->attack_MeleeP * (attacker->morale / 100) + (rand() % 10) + attacker->level;
-    float defender_Power = defender->defend_MeleeP * (defender->morale / 100) + (rand() % 10) + defender->level;
+    float attacker_Power = attacker->attack_MeleeP * (attacker->morale / 100) + attacker->level;
+    float defender_Power = defender->defend_MeleeP * (defender->morale / 100) + defender->level;
     
     if(attacker_Power < 0)
         attacker_Power = 0;
     if(defender_Power < 0)
         defender_Power = 0;
 
+    attacker_Power += HeightDiff;
+    attacker_Power += (atck_Fort / 2.0f);
     return attacker_Power - defender_Power + get_BonusByClass(attacker->type, defender->type, ranged);
 }
 
