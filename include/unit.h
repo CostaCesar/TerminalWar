@@ -107,7 +107,7 @@ B_Unit* dealloc_Unit(B_Unit* Unit, int* size)
 
 void remove_Unit(B_Unit* Unit, int size, int posit)
 {
-    for(int i = posit; i <= (size - 1); i++)
+    for(int i = posit; i < (size - 1); i++)
     {
         Unit[i] = Unit[i + 1];
     }
