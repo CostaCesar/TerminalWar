@@ -16,7 +16,6 @@
 // Game Variables
 B_Map battleMap;
 B_Side Side_A, Side_B;
-B_endStats Status_A = {0}, Status_B = {0};
 B_Unit *unit_Table = NULL;
 int unit_TableSize = 0;
 char nowPlaying[30] = {0};
@@ -759,14 +758,15 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         target_I = get_UnitIndex(opponent, battleMap->tiles[yTarget][xTarget].unit->ID);
                         int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
                         short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
-                        FRes = do_Combat_Ranged(&player->units[unitA_I], &opponent->units[target_I], tHeight, tVeget, tFort);
+                        FRes = do_Combat_Ranged(&player->units[unitA_I], &player->stats,
+                                                &opponent->units[target_I], &opponent->stats,
+                                                tHeight, tVeget, tFort);
                         // Done
                         if(FRes == FUNCTION_SUCESS)
                         {
                             show_gUnit(&player->units[unitA_I]);
                             show_gUnit(&opponent->units[target_I]);
                             printf(">> Press ENTER to continue ");
-                            Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                             while (get_KeyPress(false) != KEY_ENTER) continue;
                             system("cls");
                             if(opponent->units[target_I].men == 0)
@@ -902,12 +902,14 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 print_Message(msg, true);
                                 // Go
                                 target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->ID);
-                                do_Combat(&player->units[unitA_I], &opponent->units[target_I], get_HeightDif(battleMap, pos_A, pos_B), &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel);
+                                do_Combat(&player->units[unitA_I], &player->stats,
+                                          &opponent->units[target_I], &opponent->stats,
+                                          get_HeightDif(battleMap, pos_A, pos_B),
+                                          &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel);
                                 moves = player->units[unitA_I].moves;
                                 // Done
                                 show_gUnit(&player->units[unitA_I]);
                                 show_gUnit(&opponent->units[target_I]);
-                                Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                                 printf(">> Press ENTER to continue ");
                                 while (get_KeyPress(false) != KEY_ENTER) continue;
                                 system("cls");
@@ -993,14 +995,15 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->ID);
                         int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
                         short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
-                        FRes = do_Combat_Ranged(&player->units[unitA_I], &opponent->units[target_I], tHeight, tVeget, tFort);
+                        FRes = do_Combat_Ranged(&player->units[unitA_I], &player->stats,
+                                                &opponent->units[target_I], &opponent->stats,
+                                                tHeight, tVeget, tFort);
                         // Done
                         if(FRes == FUNCTION_SUCESS)
                         {
                             show_gUnit(&player->units[unitA_I]);
                             show_gUnit(&opponent->units[target_I]);
                             printf(">> Press ENTER to continue ");
-                            Status_A.loss += A_Loss, Status_B.loss += B_Loss;
                             while (get_KeyPress(false) != KEY_ENTER) continue;
                             system("cls");
                             if(opponent->units[target_I].men == 0)
@@ -1064,10 +1067,8 @@ int main(/*int argc, char** argv*/)
     toggle_Cursor(false);
 
     int nMaps = 0, cScen = 0, cMap = 0, out = 0, mode = MODE_UNITS;
-    extern short int A_Loss, B_Loss;
     extern short int xHiLi, yHiLi;
     extern bool muted;
-    A_Loss = 0, B_Loss = 0;
 
 
 startMenu:
@@ -1121,9 +1122,9 @@ startMenu:
     } while (1);
 
     xHiLi = NO_UNIT, yHiLi = NO_UNIT;
-    Status_A.name = Side_A.name, Status_B.name = Side_B.name;
-    Status_A.deployed = 0, Status_A.killed = 0, Status_A.loss = 0;
-    Status_B.deployed = 0, Status_B.killed = 0, Status_B.loss = 0;
+    Side_A.stats.name = Side_A.name, Side_B.stats.name = Side_B.name;
+    Side_A.stats.deployed = 0, Side_A.stats.killed = 0, Side_A.stats.loss = 0;
+    Side_B.stats.deployed = 0, Side_B.stats.killed = 0, Side_B.stats.loss = 0;
 
     // Placing AI on Map
     if(Side_B.isAI == true)
@@ -1145,14 +1146,13 @@ startMenu:
     // Getting deployed troops
     for (int i = 0; i < Side_A.size; i++)
         if(Side_A.units[i].position.X != NO_UNIT && Side_A.units[i].position.Y != NO_UNIT)
-            Status_A.deployed += Side_A.units[i].men;
+            Side_A.stats.deployed += Side_A.units[i].men;
     for (int i = 0; i < Side_B.size; i++)
         if(Side_B.units[i].position.X != NO_UNIT && Side_B.units[i].position.Y != NO_UNIT)
-            Status_B.deployed += Side_B.units[i].men;
+            Side_B.stats.deployed += Side_B.units[i].men;
     // Game Starts
     jukebox("Game1.wav", SND_ASYNC | SND_LOOP | SND_FILENAME);
     system("cls");
-    getchar();
     
     mode = MODE_GRAPHIC;
     show_Map(&battleMap, mode, true);
@@ -1180,7 +1180,7 @@ startMenu:
         fflush(stdin);
         if(Side_B.size == 0)
         {
-            screen_Victory(Status_A, Status_B);
+            screen_Victory(Side_A.stats, Side_B.stats);
             while (get_KeyPress(false) != KEY_ENTER)
                 continue;
             break;
@@ -1219,9 +1219,9 @@ startMenu:
             { remainingB = -1; break; }
         }
         if(remainingA < 0)
-        { screen_Victory(Status_B, Status_A); break; }
+        { screen_Victory(Side_B.stats, Side_A.stats); break; }
         else if(remainingB < 0)
-        { screen_Victory(Status_A, Status_B); break; }
+        { screen_Victory(Side_A.stats, Side_B.stats); break; }
         
         // Cheking for retreat
         for (int j = 0; j < Side_A.size && j < Side_B.size; j++)

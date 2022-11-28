@@ -79,6 +79,14 @@ typedef struct S_Unit
     int *chaseID;
 } B_Unit;
 
+typedef struct P_endStats
+{
+    char *name;
+    int deployed;
+    int loss;
+    int killed;
+} B_endStats;
+
 typedef struct S_Side
 {
     B_Unit *units;
@@ -86,6 +94,7 @@ typedef struct S_Side
     int size;
     int ID;
     B_Pos cCoords;
+    B_endStats stats;
     bool canPlace;
     bool isAI;
     bool attacker;
