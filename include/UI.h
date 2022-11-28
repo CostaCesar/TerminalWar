@@ -9,13 +9,6 @@
 
 bool firstLine = true, muted = false;
 short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
-typedef struct P_endStats
-{
-    char *name;
-    int deployed;
-    int loss;
-    int killed;
-} B_endStats;
 
 typedef struct P_tileData
 {
@@ -1007,14 +1000,14 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     int sWidth = get_ScreenWidth();
     int sHeight = get_ScreenHeight();
     int auxHeight = 0, msg_len = 0;
-    int aux1 = 0, aux2 = 0;
     char msg[STRING_NAME];
+    int aux1 = 0, aux2 = 0;
     switch ((int) sWidth % 4)
     {
     case 3:
         aux1++;
         break;
-    case 2:
+    case 1:
         aux2++;
         break;
     }
@@ -1072,7 +1065,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(msg_len / 2.0f) - 1; i++)
         printf(" ");
     printf("%s", looser.name);
-    for(int i = 0; i < /* aux1 + aux2 */+ floorf(sWidth /4.0f) - ceilf(msg_len / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(sWidth /4.0f) - ceilf(msg_len / 2.0f) - 2 - aux2; i++)
         printf(" ");
     putchar(186);
     printf("\n");
@@ -1091,7 +1084,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(nLen / 2.0f) - 4; i++)
         printf(" ");
     printf("%d", looser.deployed);
-    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2 - aux2; i++)
         printf(" ");
     putchar(186);
     printf("\n");
@@ -1108,7 +1101,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(nLen / 2.0f) - 3; i++)
         printf(" ");
     printf("%d", looser.killed);
-    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2 - aux2; i++)
         printf(" ");
     putchar(186);
     printf("\n");
@@ -1125,7 +1118,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(nLen / 2.0f) - 2; i++)
         printf(" ");
     printf("%d", looser.loss);
-    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2 - aux2; i++)
         printf(" ");
     putchar(186);
     printf("\n");
@@ -1142,7 +1135,7 @@ void screen_Victory(B_endStats winner, B_endStats looser)
     for(int i = 0; i < ceilf(sWidth / 4.0f) - floorf(nLen / 2.0f) - 4; i++)
         printf(" ");
     printf("%d", looser.deployed - looser.loss);
-    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2; i++)
+    for(int i = 0; i < floorf(sWidth / 4.0f) - ceilf(nLen / 2.0f) - 2 - aux2; i++)
         printf(" ");
     putchar(186);
     printf("\n");
