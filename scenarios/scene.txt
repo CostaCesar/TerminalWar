@@ -2,24 +2,24 @@ scenario: The Conquest Of The East
 map: update.map
 mapTitle: Imperia
 music: NU_Battle.wav
-table: new2.bin
+table: update.bin
 attacker: sideA
 sideA: Egypt
 placement: chosen
 units: 5
-0
-4
-0
-4
-0
+1
+2
+1
+2
+1
 sideB: Parthia
 placement: forced
 units: 5
-1 5 15
-1 6 15
-1 7 15
-2 6 17
-2 6 18
+0 5 15
+0 6 15
+0 7 15
+3 6 17
+3 6 18
 mapDesc: They Are coming for us
 What they don't know is
 * They
@@ -71,20 +71,19 @@ $
 map: update.map
 mapTitle: AI Test
 music: NU_Battle.wav
-table: new2.bin
+table: update.bin
 attacker: sideB
 sideA: Player
 placement: chosen
-units: 5
+units: 4
 0
 1
 2
 3
-4
 sideB: AI
 placement: forced
 units: 1
-4 5 15
+2 5 15
 mapDesc: |#|
 Mate todos as unidades da Imperia
 e veja como ela reage ;)
