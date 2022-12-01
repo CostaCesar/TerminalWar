@@ -39,7 +39,7 @@ B_Unit **get_UnitsInRange(B_Unit *unit, B_Map* map, int* nFoes, int distance)
         {
             if(map->tiles[i][j].unit != NULL)
             {
-                if(map->tiles[i][j].unit->ID % 2 == unit->ID % 2) // Same team
+                if(map->tiles[i][j].unit->Game_ID % 2 == unit->Game_ID % 2) // Same team
                     continue;
                 targets[*nFoes] = map->tiles[i][j].unit;
                 (*nFoes)++;
@@ -100,7 +100,7 @@ int* get_BestMatchup(B_Unit *unit, B_Unit *foes, int nFoes, B_Map *map)
             index = pDist < cDist ? i : index;              
         }
     }
-    return &foes[index].ID;
+    return &foes[index].Game_ID;
 }
 
 int get_ClosestEnemyMove(B_Side *enemies, B_Pos from)

@@ -62,6 +62,11 @@ void clear_afterMap(short int mHeight)
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     printf("                                                                                                                                                                         ");
     printf("                                                                                                                                                                         ");
+    printf("                                                                                                                                                                         ");
+    printf("                                                                                                                                                                         ");
+    printf("                                                                                                                                                                         ");
+    printf("                                                                                                                                                                         ");
+    printf("                                                                                                                                                                         ");
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     return;   
 }
@@ -206,6 +211,43 @@ void print_Message(char *message, bool doWait)
         Sleep(2000);
 
     return;     
+}
+
+void print_UnitDesc(int descPos, char *descFile)
+{
+    FILE *desc = fopen(descFile, "r");
+    if(desc == NULL)
+    {
+        printf("ERROR: Could not load file \n");
+        return;
+    }
+    char buffer[STRING_DESC];
+    int count = 0;
+    do 
+    {
+        fgets(buffer, STRING_DESC, desc);
+        if(buffer[0] == '#')
+            count++;
+        else if(feof(desc))
+            break;
+    } while(count <= descPos);
+    
+    print_Line(NULL);
+    print_Line(" ");
+    do
+    {
+        fgets(buffer, STRING_DESC, desc);
+        
+        if(buffer[0] == '#')
+            break;
+        print_Line(buffer);
+        
+    } while (1);
+    print_Line(" ");
+    print_Line(NULL);
+    
+    fclose(desc);
+    return;
 }
 
 char get_KeyPress(bool fLowerCase)
@@ -649,7 +691,7 @@ void show_gUnit(B_Unit *unit)
 
     print_Line(NULL);
     print_Line(" ");
-    snprintf(msg, sizeof(msg), "Unit %d", unit->ID);
+    snprintf(msg, sizeof(msg), "Unit %d", unit->Game_ID);
     print_Line(msg);
     snprintf(msg, sizeof(msg), "%s [%s]", unit->name, unit->faction);
     print_Line(msg);
@@ -702,9 +744,9 @@ void show_gUnit(B_Unit *unit)
     }
 
     print_Line(" ");
-    if (unit->inCombat == true)
+    if (unit->engaged == true)
         print_Line("<!> Engaged In Combat");
-    if (unit->isRetreating == true)
+    if (unit->retreating == true)
         print_Line("<!> Retreating");
     print_Line(NULL);
 }

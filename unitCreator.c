@@ -90,6 +90,7 @@ B_Unit* edit_List(int* out, B_Unit *list, int *size)
             for(int i = 0; i < *size; i++)
             {
                 printf(">%02d> %s \n", i, list[i].name);
+                list[i].Table_ID = i;
             }
         }
         printf("[C] Criar nova unidade \n");
@@ -200,9 +201,9 @@ B_Unit* edit_List(int* out, B_Unit *list, int *size)
 
         // Defaults
         list[pos].faction = NULL;
-        list[pos].ID = -1;
-        list[pos].isRetreating = false;
-        list[pos].inCombat = false;
+        list[pos].Game_ID = -1;
+        list[pos].retreating = false;
+        list[pos].engaged = false;
         list[pos].position.X = -1;
         list[pos].position.Y = -1;
         list[pos].goal.X = -1;

@@ -15,7 +15,8 @@ typedef enum E_buffs
     Rally,
     Ambusher,
     Pike_Formation,
-    Charge_Buff
+    Charge_Buff,
+    Hit_And_Move
 } Unit_Buff;
 typedef enum E_class
 {
@@ -50,7 +51,8 @@ typedef struct S_Unit
     char name[STRING_NAME];
     T_Class type;
     char *faction;
-    int ID;
+    int Game_ID;
+    int Table_ID;
     
     short int moves;
     short int men;
@@ -70,8 +72,8 @@ typedef struct S_Unit
     short int buffs_S;
     Unit_Buff buffs[BUFFS_IMPLEMENTED];
 
-    bool isRetreating;
-    bool inCombat;
+    bool retreating;
+    bool engaged;
     
     B_Pos position;
     B_Pos goal;
@@ -125,7 +127,7 @@ void remove_Unit(B_Unit* Unit, int size, int posit)
 
 void delete_Unit(B_Unit* Unit, int* size, int posit)
 {
-    printf("Unit %d has vanished forever! \n", Unit[posit].ID);
+    printf("Unit %d has vanished forever! \n", Unit[posit].Game_ID);
     remove_Unit(Unit, *size, posit);
     Unit = dealloc_Unit(Unit, size);
 }
@@ -207,6 +209,9 @@ char *get_UnitBuff(Unit_Buff buff)
         case Charge_Buff:
             type = "Charger";
             break;
+        case Hit_And_Move:
+            type = "Hit & Run";
+            break;
         default:
             type = "UNKNOWN";
             break;
@@ -237,8 +242,8 @@ void show_Unit(B_Unit Unit)
 {
     char* type = get_UnitType(Unit.type);
     printf("======================================================\n");
-    if(Unit.ID > -1)
-    printf("| Unit %04d \n", Unit.ID);
+    if(Unit.Game_ID > -1)
+    printf("| Unit %04d \n", Unit.Game_ID);
     printf("| %s", Unit.name);
     if(Unit.faction != NULL)
         printf(" (%s) ", Unit.faction);
@@ -258,10 +263,10 @@ void show_Unit(B_Unit Unit)
     for(int i = 0; i < Unit.buffs_S; i++)
         printf("%s, ", get_UnitBuff(Unit.buffs[i]));
     printf("\n");
-    if(Unit.isRetreating){
+    if(Unit.retreating){
     printf("| <!> Retreating \n");
     }
-    if(Unit.inCombat){
+    if(Unit.engaged){
     printf("| <!> Engaged \n");
     }
     printf("======================================================\n");

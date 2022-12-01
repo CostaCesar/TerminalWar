@@ -2,6 +2,7 @@
 // common
 #define STRING_NAME (50 + 1)
 #define STRING_FILE (20 + 1)
+#define STRING_DESC (200 + 1)
 #define FUNCTION_FAIL -2
 #define FUNCTION_SUCESS -1
 #define TIME_MAP 1500
@@ -24,7 +25,7 @@
 
 
 // unit.h
-#define BUFFS_IMPLEMENTED 9
+#define BUFFS_IMPLEMENTED 10
 #define UNIT_MAX_LEVEL 5
 #define UNIT_MAX_MORALE 120.0f
 

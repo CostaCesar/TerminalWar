@@ -30,7 +30,7 @@ int get_UnitIndex(B_Side *side, int ID)
 {
     for (int i = 0; i < side->size; i++)
     {
-        if (side->units[i].ID == ID)
+        if (side->units[i].Game_ID == ID)
             return i;
     }
     printf("ERROR: get_UnitIndex >> 1");
@@ -235,7 +235,7 @@ B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
     short int A_Buffer = 0, D_Buffer = 0;
     result.isDraw = false;
 
-    unit_Attacker->inCombat = true, unit_Defender->inCombat = true;
+    unit_Attacker->engaged = true, unit_Defender->engaged = true;
     float attacker_Power = unit_Attacker->attack_MeleeP * (unit_Attacker->morale / 100) + (rand() % 10) + unit_Attacker->level;
     // float attacker_Power = ((unit_Attacker->morale / 10) + unit_Attacker->level + add_BonusDamage_ByHeightDif(heightDif)) * unit_Attacker->men;
     float defender_Power = unit_Defender->defend_MeleeP * (unit_Defender->morale / 100) + (rand() % 10) + unit_Defender->level;
@@ -281,8 +281,8 @@ B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
         if(unit_Defender->morale <= 1 )
         {
             unit_Defender->men = (short int) ((1.0f / (float) OFFSET) * unit_Defender->men_Max);
-            unit_Defender->isRetreating = true;
-            unit_Defender->inCombat = false;
+            unit_Defender->retreating = true;
+            unit_Defender->engaged = false;
             unit_Defender->morale = 1.0f;
         }
         else 
@@ -293,8 +293,8 @@ B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
             {
                 unit_Defender->men = (short int) ((1.0f / (float) OFFSET) * unit_Defender->men_Max);
                 unit_Defender->morale = 0.0f;
-                unit_Defender->isRetreating = true;
-                unit_Defender->inCombat = false;
+                unit_Defender->retreating = true;
+                unit_Defender->engaged = false;
             }
         }
         attackStats->killed += D_Buffer - unit_Defender->men;
@@ -322,8 +322,8 @@ B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
         if(unit_Attacker->morale <= 1)
         {
             unit_Attacker->men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker->men_Max);
-            unit_Attacker->isRetreating = true;
-            unit_Attacker->inCombat = false;
+            unit_Attacker->retreating = true;
+            unit_Attacker->engaged = false;
             unit_Attacker->morale = 1.0f;
         }
         else 
@@ -334,8 +334,8 @@ B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
             {
                 unit_Attacker->men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker->men_Max);
                 unit_Attacker->morale = 0.0f;
-                unit_Attacker->isRetreating = true;
-                unit_Attacker->inCombat = false;
+                unit_Attacker->retreating = true;
+                unit_Attacker->engaged = false;
             }
         }
         attackStats->loss += A_Buffer - unit_Attacker->men;
@@ -367,14 +367,14 @@ void tryHeal_Unit(B_Side* Side_A, B_Side* Side_B)
     // Cheking for units in side A
     for(int i = 0; i < Side_A->size; i++)
     {
-        if(Side_A->units[i].isRetreating == true && Side_A->units[i].inCombat == false)
+        if(Side_A->units[i].retreating == true && Side_A->units[i].engaged == false)
         {
             Side_A->units[i].morale += (rand() % 10);
             // Can't regain > 100 points
             if(Side_A->units[i].morale > 100.0f)
             {
                 Side_A->units[i].morale = 100.0f;  
-                Side_A->units[i].isRetreating = false;        
+                Side_A->units[i].retreating = false;        
             }
         }
     }
@@ -382,14 +382,14 @@ void tryHeal_Unit(B_Side* Side_A, B_Side* Side_B)
     // Cheking for units in side B
     for(int i = 0; i < Side_B->size; i++)
     {
-        if(Side_B->units[i].isRetreating == true && Side_B->units[i].inCombat == false)
+        if(Side_B->units[i].retreating == true && Side_B->units[i].engaged == false)
         {
             Side_B->units[i].morale += (rand() % 10);
             // Can't regain > 100 points
             if(Side_B->units[i].morale > 100.0f)
             {
                 Side_B->units[i].morale = 100.0f;    
-                Side_B->units[i].isRetreating = false;
+                Side_B->units[i].retreating = false;
             }
         }
     }
@@ -402,7 +402,7 @@ bool show_Combat_Result(B_Result *units)
     {
         printf("Both units were equal. The fight resulted in retreat and devastating losses for both sides! \n");
     }
-    else if (units->winner->isRetreating == false && units->looser->isRetreating == false)
+    else if (units->winner->retreating == false && units->looser->retreating == false)
     {
         printf("%s is gaining the upper hand! \n", units->winner->name);
         printf("%s is falling apart! \n", units->looser->name);        
@@ -422,14 +422,14 @@ bool show_Combat_Result(B_Result *units)
 void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_endStats* defendStats, int heigthDif, short int *fortLevel)
 {
     // Unit cannot be already engaged at combat
-    if(attacker->inCombat == true)
+    if(attacker->engaged == true)
     {
         /* printf("\n");
         printf("#===============================================# \n");
         printf("| We must disengage the enemy before attacking! | \n");
         printf("#===============================================# \n"); */
         print_Message("We must disengage the enemy before attacking!", true);    
-        attacker->inCombat = false;
+        attacker->engaged = false;
         return;
     }
 
@@ -439,9 +439,9 @@ void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_en
     if(LevelUP == true)
         Result.winner->level++; 
     // Whoever wins gains the innitiative (can disengage/engage)
-    Result.winner->inCombat = false;
+    Result.winner->engaged = false;
     
-    if(attacker->ID == Result.winner->ID)
+    if(attacker->Game_ID == Result.winner->Game_ID)
     {
         *attacker = *Result.winner;
         *defender = *Result.looser;        
@@ -483,7 +483,7 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defend
     }
 
     // Testing if attacker is routing
-    if(attacker->isRetreating == true)
+    if(attacker->retreating == true)
     {
         /* printf("\n");
         printf("#============================================# \n");
@@ -531,8 +531,8 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defend
     if(defender->morale <= 1)
     {
         defender->men = (short int) (1.0f / (float) OFFSET) * defender->men_Max;
-        defender->isRetreating = true;
-        defender->inCombat = false;
+        defender->retreating = true;
+        defender->engaged = false;
         defender->morale = 1.0f;
     }
     else
@@ -543,8 +543,8 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defend
         {
             defender->men = (short int) (1.0f / (float) OFFSET) * defender->men_Max;
             defender->morale = 0.0f;
-            defender->isRetreating = true;
-            defender->inCombat = false;
+            defender->retreating = true;
+            defender->engaged = false;
         }
     }
     defenderStats->loss += men_Buffer - defender->men;

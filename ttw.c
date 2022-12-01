@@ -18,7 +18,8 @@ B_Map battleMap;
 B_Side Side_A, Side_B;
 B_Unit *unit_Table = NULL;
 int unit_TableSize = 0;
-char nowPlaying[30] = {0};
+char unit_Desc[STRING_FILE];
+char nowPlaying[STRING_NAME] = {0};
 
 // File->Game functions
 B_Unit *getFile_Unit(char *path, int *size)
@@ -35,6 +36,7 @@ B_Unit *getFile_Unit(char *path, int *size)
     fread(size, sizeof(int), 1, file);
     B_Unit *output = calloc(*size, sizeof(B_Unit));
     fread(output, sizeof(B_Unit), *size, file);
+    fread(unit_Desc, sizeof(char), STRING_FILE, file);
 
     fclose(file);
     return output;
@@ -83,7 +85,7 @@ void set_fUnitTable(B_Unit *table, int index, B_Side *side)
 
     side->units[pos] = table[index];
     side->units[pos].faction = side->name;
-    side->units[pos].ID = pos * 2 + side->ID;
+    side->units[pos].Game_ID = pos * 2 + side->ID;
     return;
 }
 
@@ -95,7 +97,7 @@ void def_Unit(B_Unit *unit, B_Map *map, bool ignoreSpawn)
     for (int i = 0; i < map->height; i++)
         for (int j = 0; j < map->width; j++)
         {
-            if ((map->tiles[i][j].spawn > 0 && unit->ID % 2 == 0) || (map->tiles[i][j].spawn < 0 && unit->ID % 2 == 1))
+            if ((map->tiles[i][j].spawn > 0 && unit->Game_ID % 2 == 0) || (map->tiles[i][j].spawn < 0 && unit->Game_ID % 2 == 1))
             {
                 if (map->tiles[i][j].unit == NULL)
                 {
@@ -119,7 +121,8 @@ int deallocAll()
     if(battleMap.tiles) free(battleMap.tiles);
     if(Side_A.units) free(Side_A.units);
     if(Side_B.units) free(Side_B.units);
-    Side_A.size = 0, Side_B.size = 0, Side_A.isAI = false, Side_B.isAI = true;
+    if(unit_Table) free(unit_Table);
+    Side_A.size = 0, Side_B.size = 0, Side_A.isAI = false, Side_B.isAI = true, unit_TableSize = 0;
     return FUNCTION_SUCESS;
 }
 
@@ -144,7 +147,7 @@ int load_Scenery(int nScen, int playMap)
     FindClose(handle);
 
     // Reading File
-    char word[STRING_NAME*3] = {0}, scen_Name[STRING_NAME] = {0}, scen_Map[STRING_NAME] = {0};
+    char word[STRING_DESC] = {0}, scen_Name[STRING_NAME] = {0}, scen_Map[STRING_NAME] = {0};
     int cMap = 0, strBuff = 0, unit_N = NO_UNIT;
     FILE *scen = fopen(file, "r");
     if(!scen)
@@ -621,8 +624,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             int FRes = false;
             char msg[STRING_NAME];
             xHiLi = pos_A.X, yHiLi = pos_A.Y;
-            info_Upper(battleMap->name, turn, player->name, true, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, player->units[unitA_I].moves - moves);
-            if (moves < player->units[unitA_I].moves && player->units[unitA_I].isRetreating == false && player->units[unitA_I].inCombat == false)
+            info_Upper(battleMap->name, turn, player->name, true, player->units[unitA_I].name, player->units[unitA_I].Game_ID, pos_A.X, pos_A.Y, player->units[unitA_I].moves - moves);
+            if (moves < player->units[unitA_I].moves && player->units[unitA_I].retreating == false && player->units[unitA_I].engaged == false)
             {
                 toggle_Cursor(false);
                 fflush(stdin);
@@ -711,8 +714,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     }
                     else
                     {
-                        target_I = get_UnitIndex(opponent, battleMap->tiles[yGoal][xGoal].unit->ID);
-                        player->units[unitA_I].chaseID = &opponent->units[target_I].ID;
+                        target_I = get_UnitIndex(opponent, battleMap->tiles[yGoal][xGoal].unit->Game_ID);
+                        player->units[unitA_I].chaseID = &opponent->units[target_I].Game_ID;
                         player->units[unitA_I].goal.X = xGoal, player->units[unitA_I].goal.Y = yGoal;
                         print_Message("Moving to intercept the unit!", true);
                     }
@@ -740,7 +743,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         print_Message("There's nothing to attack here!", true);
                         moves--; continue;
                     }
-                    else if(battleMap->tiles[yTarget][xTarget].unit->ID % 2 == player->units[unitA_I].ID % 2)
+                    else if(battleMap->tiles[yTarget][xTarget].unit->Game_ID % 2 == player->units[unitA_I].Game_ID % 2)
                     {
                         print_Message("These are our own troops Sir!", true);
                         moves--; continue;
@@ -755,7 +758,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         Sleep(TIME_MAP);
                         clear_afterMap(battleMap->height);
                         // Go
-                        target_I = get_UnitIndex(opponent, battleMap->tiles[yTarget][xTarget].unit->ID);
+                        target_I = get_UnitIndex(opponent, battleMap->tiles[yTarget][xTarget].unit->Game_ID);
                         int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
                         short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
                         FRes = do_Combat_Ranged(&player->units[unitA_I], &player->stats,
@@ -788,6 +791,18 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                     reset_Cursor();
                     system("cls");
                     show_gUnit(&player->units[unitA_I]);
+                    printf(">> Press ENTER to continue \n");
+                    while (get_KeyPress(false) != KEY_ENTER) continue;
+                    system("cls");
+                    show_Map(battleMap, *mode, true);
+                    moves--;
+                }
+                else if (action == 'w') // View unit wiki
+                {
+                    reset_Cursor();
+                    system("cls");
+                    show_gUnit(&unit_Table[player->units[unitA_I].Table_ID]);
+                    print_UnitDesc(player->units[unitA_I].Table_ID, unit_Desc);
                     printf(">> Press ENTER to continue \n");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
                     system("cls");
@@ -833,7 +848,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         print_Line(msg);
                         if(battleMap->tiles[yTarget][xTarget].unit)
                         {
-                            snprintf(msg, sizeof(msg), "Unit in here: %d (%s)", battleMap->tiles[yTarget][xTarget].unit->ID, battleMap->tiles[yTarget][xTarget].unit->name);
+                            snprintf(msg, sizeof(msg), "Unit in here: %d (%s)", battleMap->tiles[yTarget][xTarget].unit->Game_ID, battleMap->tiles[yTarget][xTarget].unit->name);
                             print_Line(msg);
                         }
                         print_Line(" ");
@@ -901,7 +916,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", pos_B.X, pos_B.Y);
                                 print_Message(msg, true);
                                 // Go
-                                target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->ID);
+                                target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
                                 do_Combat(&player->units[unitA_I], &player->stats,
                                           &opponent->units[target_I], &opponent->stats,
                                           get_HeightDif(battleMap, pos_A, pos_B),
@@ -949,7 +964,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 }
                 toggle_Cursor(false);
             }
-            else if (player->units[unitA_I].isRetreating == true)
+            else if (player->units[unitA_I].retreating == true)
             {
                 Sleep(TIME_STRATEGY);
                 // Algo gráfico pra representar o retreat
@@ -959,7 +974,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             else
             {
                 clear_afterMap(battleMap->height);
-                player->units[unitA_I].inCombat = false, moves++;
+                player->units[unitA_I].engaged = false, moves++;
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
             }
@@ -973,12 +988,12 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
         {
             // show_Map(&battleMap, MODE_HEIGHT);
             int FRes = false;
-            info_Upper(battleMap->name, turn, player->name, false, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, NO_UNIT);
+            info_Upper(battleMap->name, turn, player->name, false, player->units[unitA_I].name, player->units[unitA_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
             update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
             Sleep(TIME_STRATEGY);
             COORD pos_Screen = {0, MAP_OFFSET_Y+battleMap->height*2};
 
-            if (moves < player->units[unitA_I].moves && player->units[unitA_I].isRetreating == false && player->units[unitA_I].inCombat == false)
+            if (moves < player->units[unitA_I].moves && player->units[unitA_I].retreating == false && player->units[unitA_I].engaged == false)
             {
                 pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
                 switch(AI_Process(battleMap, player, opponent, &player->units[unitA_I], AI_Easy))
@@ -992,7 +1007,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         Sleep(TIME_MAP);
                         clear_afterMap(battleMap->height);
                         // Go
-                        target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->ID);
+                        target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
                         int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
                         short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
                         FRes = do_Combat_Ranged(&player->units[unitA_I], &player->stats,
@@ -1044,13 +1059,13 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
             else
             {
                 clear_afterMap(battleMap->height);
-                player->units[unitA_I].inCombat = false;
+                player->units[unitA_I].engaged = false;
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
             }
             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
         }
-        info_Upper(battleMap->name, turn, Side_B.name, false, player->units[unitA_I].name, player->units[unitA_I].ID, pos_A.X, pos_A.Y, NO_UNIT);
+        info_Upper(battleMap->name, turn, Side_B.name, false, player->units[unitA_I].name, player->units[unitA_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
         Sleep(TIME_STRATEGY);
     }
@@ -1113,7 +1128,7 @@ startMenu:
             jukebox("Menu.wav", SND_ASYNC | SND_FILENAME | SND_LOOP);
             continue;
         case 4:
-            free(unit_Table);
+            deallocAll();
             return 0;
         default:
             continue;
@@ -1228,7 +1243,7 @@ startMenu:
         {
             bool retreated = true;
             char *msg;
-            if (Side_A.units[j].isRetreating == true)
+            if (Side_A.units[j].retreating == true)
             { 
                 for (int moves = 0; moves < Side_A.units[j].moves; moves++)
                 {
@@ -1242,7 +1257,7 @@ startMenu:
                 }
                 update_Map(Side_A.units[j].position.X, Side_A.units[j].position.Y, Side_A.units[j].name);
             }
-            if (Side_B.units[j].isRetreating == true)
+            if (Side_B.units[j].retreating == true)
             {
                 msg = get_MapSprite(&battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X], mode);
                 for (int moves = 0; moves < Side_B.units[j].moves; moves++)

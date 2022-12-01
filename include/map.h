@@ -421,12 +421,12 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
         }
 
         // Cheking for units (if friend, then if foe)
-        if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->ID % 2))
+        if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
         {
             print_Message("Units can't go over eachother!", true);
             return FUNCTION_FAIL;             
         }
-        else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->ID % 2))
+        else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
             return OUT_COMBAT;
         
         short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
@@ -453,7 +453,7 @@ int put_Unit_OnMap(B_Map *map, B_Unit *unit, int ignoreSpawn)
     }
 
     // Cheking if it's spawn tiles
-    if(((!map->tiles[pos.Y][pos.X].spawn > 0 && unit->ID % 2 == 0) || (!map->tiles[pos.Y][pos.X].spawn < 0 && unit->ID % 2 == 1)) && ignoreSpawn == 0)
+    if(((!map->tiles[pos.Y][pos.X].spawn > 0 && unit->Game_ID % 2 == 0) || (!map->tiles[pos.Y][pos.X].spawn < 0 && unit->Game_ID % 2 == 1)) && ignoreSpawn == 0)
     {
         fprintf(stderr, "Not in spawn coordinates!");
         return FUNCTION_FAIL;    
