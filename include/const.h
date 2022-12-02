@@ -26,6 +26,7 @@
 
 // unit.h
 #define BUFFS_IMPLEMENTED 10
+#define UNIT_MAX_BUFFS 10
 #define UNIT_MAX_LEVEL 5
 #define UNIT_MAX_MORALE 120.0f
 

@@ -24,12 +24,14 @@ void handleBuffs(B_Unit *unit)
         for(int j = 0; j < BUFFS_IMPLEMENTED; j++)
         {
             for(int k = 0; k < unit->buffs_S; k++)
+            {
                 if(j == unit->buffs[k])
                 {
                     printf("<X> ");
                     skip = true;
                     break;
-                }     
+                }
+            } 
             if(!skip)
                 printf("< > ");
             skip = false;
@@ -183,8 +185,10 @@ B_Unit* edit_List(int* out, B_Unit *list, int *size)
         if(list[pos].level > UNIT_MAX_LEVEL)
             list[pos].level = UNIT_MAX_LEVEL;
 
-        printf("> Quantidade de habilidades [MAXIMO = %d]: ", BUFFS_IMPLEMENTED);
+        printf("> Quantidade de habilidades [MAXIMO = %d]: ", UNIT_MAX_BUFFS);
         scanf("%hd%c", &list[pos].buffs_S, &chr);
+        if(list[pos].buffs_S > UNIT_MAX_BUFFS)
+            list[pos].buffs_S = UNIT_MAX_BUFFS;
         handleBuffs(&list[pos]);
 
         printf("> Alcance [quadrado] da unidade: ");
