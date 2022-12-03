@@ -454,10 +454,9 @@ void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_en
     return;
 }
 
-int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defender, B_endStats* defenderStats, int heightDif, int vegetat, short int *fortLevel)
+int check_Ranged(B_Unit *attacker, B_Unit *defender)
 {
-    // Testing if in range of attack
-    char msg[51];
+    char msg[STRING_NAME];
     if(defender->position.X > attacker->position.X + attacker->range
     || defender->position.X < attacker->position.X - attacker->range
     || defender->position.Y > attacker->position.Y + attacker->range
@@ -492,6 +491,15 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defend
         print_Message("This unit will not fire, they're routing!", true);
         return FUNCTION_FAIL;       
     }
+    return FUNCTION_SUCESS;
+}
+
+int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defender, B_endStats* defenderStats, int heightDif, int vegetat, short int *fortLevel)
+{
+    char msg[51];
+    // Testing 
+    if(check_Ranged(attacker, defender) == FUNCTION_FAIL)
+        return FUNCTION_FAIL;
 
     // If attaker != cavalary OR charriot, engage
     // if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)

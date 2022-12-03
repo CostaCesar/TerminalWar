@@ -141,7 +141,7 @@ B_Pos get_BestTileRanged(B_Map *map, B_Unit *unit, B_Unit *foe)
                     foe->position.Y - unit->range < 0 ? 0 : foe->position.Y - unit->range};
     B_Pos finsh = { foe->position.X + unit->range > map->width ? map->width : foe->position.X + unit->range,
                     foe->position.Y + unit->range > map->height ? map->height : foe->position.Y + unit->range};
-    B_Pos best;
+    B_Pos best = {-1, -1};
     int bestDmg = 0, possibDmg = 0, bestMoves = 0x7fffffff, possibMoves = 0;
     for(int i = start.Y; i <= finsh.Y; i++)
     {
@@ -298,7 +298,8 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     if(closest_Foe->defend_RangeP < current->attack_RangeP)
     {
         current->goal = get_BestTileRanged(map, current, closest_Foe);
-        return AI_GoTo;
+        if(current->goal.X != -1 && current->goal.Y != -1)
+            return AI_GoTo;
     }
 
     // Buscar combate melee

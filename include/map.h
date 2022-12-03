@@ -99,7 +99,27 @@ int calcMoves(B_Pos A, B_Pos B)
 
 int compPos(B_Pos A, B_Pos B)
 {
-    return A.X == B.Y && A.Y == B.Y;
+    return A.X == B.X && A.Y == B.Y;
+}
+
+int check_MapAttack(B_Map *map, B_Pos pos, int ID)
+{
+    if(pos.X < 0 || pos.X >= map->width || pos.Y < 0 || pos.Y >= map->height)
+    {
+        print_Message("Coordinates out of boundaries!", true);
+        return FUNCTION_FAIL;
+    }
+    else if(map->tiles[pos.Y][pos.X].unit == NULL)
+    {
+        print_Message("There's nothing to attack here!", true);
+        return FUNCTION_FAIL;
+    }
+    else if(map->tiles[pos.Y][pos.X].unit->Game_ID % 2 == ID % 2)
+    {
+        print_Message("These are our own troops Sir!", true);
+        return FUNCTION_FAIL;
+    }
+    return FUNCTION_SUCESS;
 }
 
 char *tTerrain_toStr(T_Terrain source)
@@ -429,7 +449,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
         else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
             return OUT_COMBAT;
         
-        short int mCost = 0;//source_Map->tiles[destPos.Y][destPos.X].elevation - source_Map->tiles[unitPos->Y][unitPos->X].elevation;
+        short int mCost = 0;
         mCost += source_Map->tiles[destPos.Y][destPos.X].terrain;
         source_Map->tiles[destPos.Y][destPos.X].unit = unit;
         source_Map->tiles[unit->position.Y][unit->position.X].unit = NULL;

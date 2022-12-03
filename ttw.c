@@ -604,358 +604,366 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
     } while (1);
 }
 
-int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int turn, int *mode)
+int handleMove(B_Map *map, B_Unit *unit, int *moves, B_Side *player, B_Side *opponent, int mode)
 {
-    B_Pos pos_A = player->units[unitA_I].position;
-    B_Pos pos_B = {0, 0};
+    int result = 0;
+    B_Pos pos_A = unit->position, pos_B, pos_Screen = unit->position;
+    char msg[STRING_NAME];
+    for (int steps = 0; *moves < unit->moves; steps++)
+    {
+        if (compPos(unit->position, unit->goal) == true || result == OUT_COMBAT)
+        {
+            unit->goal.X = NO_UNIT, unit->goal.Y = NO_UNIT;
+            update_Map(pos_A.X, pos_A.Y, get_MapSprite(&map->tiles[pos_A.Y][pos_A.X], mode));
+            (*moves)--; return FUNCTION_SUCESS;
+        }
+        result = move_Unit(map, unit, unit->path[steps]);
+        pos_A = unit->position;
+        update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&map->tiles[pos_Screen.Y][pos_Screen.X], mode));
+        pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
+        if (result > -1)
+            (*moves) += result+1;
+        else if (result == OUT_COMBAT)
+        {
+            // Show
+            update_Map(pos_A.X, pos_A.Y, "XXX");
+            Sleep(TIME_MAP);
+            pos_B = get_AdjTile_Pos(map, pos_A, unit->path[steps]);
+            update_Map(pos_B.X, pos_B.Y, "OOO");
+            Sleep(TIME_MAP);
+            // Glow
+            system("cls");   
+            snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", pos_B.X, pos_B.Y);
+            print_Message(msg, true);
+            // Go
+            int target_I = get_UnitIndex(opponent, map->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
+            do_Combat(unit, &player->stats,
+                      &opponent->units[target_I], &opponent->stats,
+                      get_HeightDif(map, pos_A, pos_B),
+                      &map->tiles[pos_B.Y][pos_B.X].fortLevel);
+            // Done
+            show_gUnit(unit);
+            show_gUnit(&opponent->units[target_I]);
+            printf(">> Press ENTER to continue ");
+            while (get_KeyPress(false) != KEY_ENTER) continue;
+            system("cls");
+            if(opponent->units[target_I].men == 0)
+            {
+                delete_Unit(opponent->units, &opponent->size, target_I);
+                map->tiles[pos_B.Y][pos_B.X].unit = NULL;
+            }
+            show_Map(map, mode, true);
+            (*moves)= unit->moves;
+            break;
+        }
+        else if (result == FUNCTION_FAIL)
+        {(*moves)--; break; }
+    }
+    update_Map(pos_A.X, pos_A.Y, get_MapSprite(&map->tiles[pos_A.Y][pos_A.X], mode));
+    return result;
+}
+
+int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int turn, int *mode)
+{
+    B_Pos pos_A = player->units[cUnit_I].position, pos_B = {-1, -1}, goal = {-1, -1}, target = {-1, -1};
+    COORD pos_Screen = {0, 0};
     int target_I = 0;
     char action = 'x', msg[STRING_NAME];
 
     // Setting up unit
     if(pos_A.Y == NO_UNIT || pos_A.X == NO_UNIT)
         return FUNCTION_FAIL;
-    // Map_Unit player->units[unitA_I] = battleMap->tiles[pos_A.Y][pos_A.X].unit, pos_B;
     if(player->isAI == false) // Player Zone
     {
-        // player->units[unitA_I] = set_MapUnit(&player->units[unitA_I]);
-        for (int moves = 0; moves < player->units[unitA_I].moves; moves++)
+        for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
-            short int xGoal = NO_UNIT, yGoal = NO_UNIT, xTarget = NO_UNIT, yTarget = NO_UNIT;
-            int FRes = false;
-            char msg[STRING_NAME];
-            xHiLi = pos_A.X, yHiLi = pos_A.Y;
-            info_Upper(battleMap->name, turn, player->name, true, player->units[unitA_I].name, player->units[unitA_I].Game_ID, pos_A.X, pos_A.Y, player->units[unitA_I].moves - moves);
-            if (moves < player->units[unitA_I].moves && player->units[unitA_I].retreating == false && player->units[unitA_I].engaged == false)
+            pos_A = player->units[cUnit_I].position;
+            info_Upper (battleMap->name, turn, player->name, true, player->units[cUnit_I].name,
+                        player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, player->units[cUnit_I].moves - moves);
+            if (player->units[cUnit_I].retreating == true)
             {
+                Sleep(TIME_STRATEGY);
+                // Algo gráfico pra representar o retreat
+                // IMPLEMENTAR
+                break;
+            }
+            if (player->units[cUnit_I].engaged == true)
+            {
+                // Um sistema melhor para sesengajar
+                // IMPLEMENTAR?
+                clear_afterMap(battleMap->height);
+                player->units[cUnit_I].engaged = false;
+                snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
+                print_Message(msg, true);
+                continue;
+            }
+            
+            toggle_Cursor(false);
+            fflush(stdin);
+            
+            while(1)
+            {
+                if(_kbhit())
+                { action = _getch(); break; }
+                char highlight[3] = {219, 219, 219};
+                update_Map(pos_A.X, pos_A.Y, highlight);
+                Sleep(250);
+                if(_kbhit())
+                { action = _getch(); break; }
+                Sleep(250);
                 toggle_Cursor(false);
-                fflush(stdin);
-                while(1)
+                if(_kbhit())
+                { action = _getch(); break; }
+                update_Map(pos_A.X, pos_A.Y, player->units[cUnit_I].name);
+                Sleep(250);
+                if(_kbhit())
+                { action = _getch(); break; }
+                Sleep(250);
+            }
+            pos_Screen.X = 0, pos_Screen.Y = MAP_OFFSET_Y + (battleMap->height * 2);
+            if (action >= '0' && action <= '9') // Move to a adjacent tile
+            {
+                tNum_ToDirec(&action);
+                pos_B = get_AdjTile_Pos(battleMap, pos_A, action);
+                player->units[cUnit_I].goal = pos_B;
+                player->units[cUnit_I].chaseID = NULL;
+            }
+            else if (action == 'a') // Move to a location
+            {
+                clear_afterMap(battleMap->height);
+                toggle_Cursor(true);
+                printf(">> Goal coordinates <X Y> \n");
+                printf(" >=> ");
+                scanf("%hd %hd", &goal.X, &goal.Y);
+                toggle_Cursor(false);
+                if(goal.X < 0 || goal.Y < 0 || goal.X >= battleMap->width || goal.Y >= battleMap->height)
                 {
-                    if(_kbhit())
-                    {
-                        action = _getch();
-                        break;
-                    }
-                    char msg[3] = {219, 219, 219};
-                    update_Map(pos_A.X, pos_A.Y, msg);
-                    Sleep(500);
-                    toggle_Cursor(false);
-                    if(_kbhit())
-                    {
-                        action = _getch();
-                        break;
-                    }
-                    update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
-                    Sleep(500);
-                }
-                COORD pos_Screen = {0, MAP_OFFSET_Y+battleMap->height*2};
-                if (action >= '0' && action <= '9') // Move to a adjacent tile
-                {
-                    tNum_ToDirec(&action);
-                    pos_B = get_AdjTile_Pos(battleMap, pos_A, action);
-                    player->units[unitA_I].goal = pos_B;
-                    player->units[unitA_I].chaseID = NULL;
-                }
-                else if (action == 'a') // Move to a location
-                {
-                    clear_afterMap(battleMap->height);
-                    toggle_Cursor(true);
-                    printf(">> Goal coordinates <X Y> \n");
-                    printf(" >=> ");
-                    scanf("%hd %hd", &xGoal, &yGoal);
-                    toggle_Cursor(false);
-                    if(xGoal < 0 || yGoal < 0 || xGoal >= battleMap->width || yGoal >= battleMap->height)
-                    {
-                        print_Message("Invalid Coords", true);
-                        moves--; continue;
-                    }
-                    else if(!autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.Y], &battleMap->tiles[yGoal][xGoal]))
-                    {
-                        snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", xGoal, yGoal);
-                        print_Message(msg, true);
-                        moves--; continue;
-                    }
-                    else
-                    {
-                        player->units[unitA_I].goal.X = xGoal, player->units[unitA_I].goal.Y = yGoal;
-                        print_Message("Moving to tile!", true);
-                    }
-                }
-                else if (action == 't') // Change Map Mode
-                {
-                    (*mode)++;
-                    if(*mode > MODE_UNITS) *mode = MODE_HEIGHT;
-                    show_Map(battleMap, *mode, true);
-                    moves--;
-                }
-                else if (action == 's') // Intercept a unit
-                {
-                    clear_afterMap(battleMap->height);
-                    toggle_Cursor(true);
-                    printf(">> Target unit coordinates <X Y> \n");
-                    printf(" >=> ");
-                    scanf("%hd %hd", &xGoal, &yGoal);
-                    toggle_Cursor(false);
-                    if(xGoal < 0 || yGoal < 0 || xGoal >= battleMap->width || yGoal >= battleMap->height)
-                    {
-                        print_Message("Invalid Coords", true);
-                        moves--; continue;
-                    }
-                    else if(battleMap->tiles[yGoal][xGoal].unit == NULL)
-                    {
-                        print_Message("Target Not Found!", true);
-                        moves--; continue;
-                    }
-                    else if(!autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.Y], &battleMap->tiles[yGoal][xGoal]))
-                    {
-                        snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", xGoal, yGoal);
-                        print_Message(msg, true);
-                        moves--; continue;
-                    }
-                    else
-                    {
-                        target_I = get_UnitIndex(opponent, battleMap->tiles[yGoal][xGoal].unit->Game_ID);
-                        player->units[unitA_I].chaseID = &opponent->units[target_I].Game_ID;
-                        player->units[unitA_I].goal.X = xGoal, player->units[unitA_I].goal.Y = yGoal;
-                        print_Message("Moving to intercept the unit!", true);
-                    }
-                }
-                else if(action == 'f') // Fire at unit
-                {
-                    if (player->units[unitA_I].range < 1)
-                    {
-                        print_Message("This unit can't do ranged attacks!", true);
-                        moves--; continue;
-                    }
-                    clear_afterMap(battleMap->height);
-                    toggle_Cursor(true);
-                    printf(">> Target coodiantes <X Y> \n");
-                    printf(" >=> ");
-                    scanf("%hd %hd", &xTarget, &yTarget);
-                    toggle_Cursor(false);
-                    if (xTarget < 0 || xTarget >= battleMap->width || yTarget < 0 || yTarget >= battleMap->height)
-                    {
-                        print_Message("Coordinates out of boundaries!", true);
-                        moves--; continue;
-                    }
-                    else if(battleMap->tiles[yTarget][xTarget].unit == NULL)
-                    {
-                        print_Message("There's nothing to attack here!", true);
-                        moves--; continue;
-                    }
-                    else if(battleMap->tiles[yTarget][xTarget].unit->Game_ID % 2 == player->units[unitA_I].Game_ID % 2)
-                    {
-                        print_Message("These are our own troops Sir!", true);
-                        moves--; continue;
-                    }
-                    else
-                    {
-                        pos_B = battleMap->tiles[yTarget][xTarget].unit->position;
-                        // Show
-                        update_Map(pos_A.X, pos_A.Y, "XXX");
-                        Sleep(TIME_MAP);
-                        update_Map(pos_B.X, pos_B.Y, "OOO");
-                        Sleep(TIME_MAP);
-                        clear_afterMap(battleMap->height);
-                        // Go
-                        target_I = get_UnitIndex(opponent, battleMap->tiles[yTarget][xTarget].unit->Game_ID);
-                        int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
-                        short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
-                        FRes = do_Combat_Ranged(&player->units[unitA_I], &player->stats,
-                                                &opponent->units[target_I], &opponent->stats,
-                                                tHeight, tVeget, tFort);
-                        // Done
-                        if(FRes == FUNCTION_SUCESS)
-                        {
-                            show_gUnit(&player->units[unitA_I]);
-                            show_gUnit(&opponent->units[target_I]);
-                            printf(">> Press ENTER to continue ");
-                            while (get_KeyPress(false) != KEY_ENTER) continue;
-                            system("cls");
-                            if(opponent->units[target_I].men == 0)
-                            {
-                                delete_Unit(opponent->units, &opponent->size, target_I);
-                                battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
-                            }
-                            show_Map(battleMap, *mode, true);
-                            moves = Side_A.units[unitA_I].moves;
-                        }
-                        else moves--;
-                        update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
-                        update_Map(pos_B.X, pos_B.Y, opponent->units[target_I].name);
-                    }
-                    continue;
-                }
-                else if (action == 'd') // View unit stats
-                {
-                    reset_Cursor();
-                    system("cls");
-                    show_gUnit(&player->units[unitA_I]);
-                    printf(">> Press ENTER to continue \n");
-                    while (get_KeyPress(false) != KEY_ENTER) continue;
-                    system("cls");
-                    show_Map(battleMap, *mode, true);
-                    moves--;
-                }
-                else if (action == 'w') // View unit wiki
-                {
-                    reset_Cursor();
-                    system("cls");
-                    show_gUnit(&unit_Table[player->units[unitA_I].Table_ID]);
-                    print_UnitDesc(player->units[unitA_I].Table_ID, unit_Desc);
-                    printf(">> Press ENTER to continue \n");
-                    while (get_KeyPress(false) != KEY_ENTER) continue;
-                    system("cls");
-                    show_Map(battleMap, *mode, true);
-                    moves--;
-                }
-                else if (action == 'e') // Fortify
-                {
-                    clear_afterMap(battleMap->height);
-                    if (player->units[unitA_I].build_Cap > 0)
-                    {
-                        if (inc_FortLevel(battleMap, player->units[unitA_I].build_Cap, pos_A) == FUNCTION_FAIL)
-                            moves--;
-                        else moves = player->units[unitA_I].moves;
-                    }
-                    else
-                    {
-                        print_Message("This unit cannot build fortifications!", true);
-                        moves--;
-                    }
-                    clear_afterMap(battleMap->height);
-                }
-                else if (action == 'g') // See tile stats
-                {
-                    clear_afterMap(battleMap->height);
-                    toggle_Cursor(true);
-                    printf(">> Target coodiantes <X Y> \n");
-                    printf(" >=> ");
-                    scanf("%hd %hd", &xTarget, &yTarget);
-                    getchar();
-                    toggle_Cursor(false);
-                    if (xTarget >= 0 && xTarget < battleMap->width && yTarget >= 0 && yTarget < battleMap->height)
-                    {
-                        print_Line(NULL);
-                        print_Line(" ");
-                        snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap->tiles[yTarget][xTarget].terrain));
-                        print_Line(msg);
-                        snprintf(msg, sizeof(msg), "Vegetation: %s", tVeget_toStr(battleMap->tiles[yTarget][xTarget].vegetation));
-                        print_Line(msg);
-                        snprintf(msg, sizeof(msg), "Elevation: %d", battleMap->tiles[yTarget][xTarget].elevation);
-                        print_Line(msg);
-                        snprintf(msg, sizeof(msg), "Fortification: %d", battleMap->tiles[yTarget][xTarget].fortLevel);
-                        print_Line(msg);
-                        if(battleMap->tiles[yTarget][xTarget].unit)
-                        {
-                            snprintf(msg, sizeof(msg), "Unit in here: %d (%s)", battleMap->tiles[yTarget][xTarget].unit->Game_ID, battleMap->tiles[yTarget][xTarget].unit->name);
-                            print_Line(msg);
-                        }
-                        print_Line(" ");
-                        print_Line(NULL);
-                        printf(">> Press ENTER to continue \n");
-                        while (get_KeyPress(false) != KEY_ENTER) continue;
-                        system("cls");
-                        show_Map(battleMap, *mode, true);
-                        moves--;
-                    }
-                    else
-                    {
-                        print_Message("Coordinates out of boundaries!", true);
-                        moves--;
-                    }
-                }
-                else if (action == KEY_ESCAPE) // Return to Menu
-                    return FUNCTION_FAIL;
-                else if (action == KEY_ENTER) // Next Turn
-                {
-                    if(player->units[unitA_I].goal.X == NO_UNIT || player->units[unitA_I].goal.Y == NO_UNIT)
-                        moves = player->units[unitA_I].moves;
-                }
-                else // Invalid
-                {
-                    clear_afterMap(battleMap->height);
-                    print_Message("Invalid action!", true);
+                    print_Message("Invalid Coords", true);
                     moves--; continue;
                 }
-                xGoal = player->units[unitA_I].goal.X, yGoal = player->units[unitA_I].goal.Y;
-                if (xGoal > -1 && yGoal > -1 && xGoal < battleMap->width && yGoal < battleMap->height)
+                else if(!autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.Y], &battleMap->tiles[goal.Y][goal.X]))
                 {
-                    pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
-                    // Change to coordinates of pos_B if player->units[unitA_I] is chasing
-                    if (player->units[unitA_I].chaseID != NULL)
-                    {
-                        target_I = get_UnitIndex(opponent, *player->units[unitA_I].chaseID);
-                        player->units[unitA_I].goal.X = opponent->units[target_I].position.X, player->units[unitA_I].goal.Y = opponent->units[target_I].position.Y;
-                        xGoal = player->units[unitA_I].goal.X, yGoal = player->units[unitA_I].goal.Y;
-                    }
-                    player->units[unitA_I].path = (int *)autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[yGoal][xGoal]);
-                    if (player->units[unitA_I].path != NULL)
-                    {
-                        for (int steps = 0; moves < player->units[unitA_I].moves; steps++)
-                        {
-                            if ((pos_A.X == xGoal && pos_A.Y == yGoal) || FRes == OUT_COMBAT)
-                            {
-                                player->units[unitA_I].goal.X = NO_UNIT, player->units[unitA_I].goal.Y = NO_UNIT;
-                                moves--; break;
-                            }
-                            FRes = move_Unit(battleMap, &player->units[unitA_I], player->units[unitA_I].path[steps]);
-                            pos_A = player->units[unitA_I].position;
-                            update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
-                            pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
-                            if (FRes == OUT_COMBAT)
-                            {
-                                // Show
-                                update_Map(pos_A.X, pos_A.Y, "XXX");
-                                Sleep(TIME_MAP);
-                                pos_B = get_AdjTile_Pos(battleMap, pos_A, player->units[unitA_I].path[steps]);
-                                update_Map(pos_B.X, pos_B.Y, "OOO");
-                                Sleep(TIME_MAP);
-                                // Glow
-                                system("cls");   
-                                snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", pos_B.X, pos_B.Y);
-                                print_Message(msg, true);
-                                // Go
-                                target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
-                                do_Combat(&player->units[unitA_I], &player->stats,
-                                          &opponent->units[target_I], &opponent->stats,
-                                          get_HeightDif(battleMap, pos_A, pos_B),
-                                          &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel);
-                                moves = player->units[unitA_I].moves;
-                                // Done
-                                show_gUnit(&player->units[unitA_I]);
-                                show_gUnit(&opponent->units[target_I]);
-                                printf(">> Press ENTER to continue ");
-                                while (get_KeyPress(false) != KEY_ENTER) continue;
-                                system("cls");
-                                if(opponent->units[target_I].men == 0)
-                                {
-                                    delete_Unit(opponent->units, &opponent->size, target_I);
-                                    battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
-                                }
-                                show_Map(battleMap, *mode, true);
-                            }
-                            else if (FRes == FUNCTION_FAIL)
-                            {
-                                moves--; break;
-                            }
-                            else if (FRes > -1)
-                                moves += FRes+1;
-                        }
-                        free(player->units[unitA_I].path);
-                    }
-                    else
-                    {
-                        clear_afterMap(battleMap->height);
-                        print_Message("Can't move in this direction!", true);
-                        moves--;
-                    }
+                    snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", goal.X, goal.Y);
+                    print_Message(msg, true);
+                    moves--; continue;
                 }
-                update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
-                if ((pos_A.X == xGoal && pos_A.Y == yGoal) || FRes == OUT_COMBAT)
+                else
                 {
-                    player->units[unitA_I].chaseID = NULL;
-                    player->units[unitA_I].goal.X = -1, player->units[unitA_I].goal.Y = -1;
+                    player->units[cUnit_I].goal = goal;
+                    print_Message("Moving to tile!", true);
+                }
+            }
+            else if (action == 't') // Change Map Mode
+            {
+                (*mode)++;
+                if(*mode > MODE_UNITS) *mode = MODE_HEIGHT;
+                show_Map(battleMap, *mode, true);
+                moves--;
+            }
+            else if (action == 's') // Intercept a unit
+            {
+                clear_afterMap(battleMap->height);
+                toggle_Cursor(true);
+                printf(">> Target unit coordinates <X Y> \n");
+                printf(" >=> ");
+                scanf("%hd %hd", &goal.X, &goal.Y);
+                toggle_Cursor(false);
+                if(goal.X < 0 || goal.Y < 0 || goal.X >= battleMap->width || goal.Y >= battleMap->height)
+                {
+                    print_Message("Invalid Coords", true);
+                    moves--; continue;
+                }
+                else if(battleMap->tiles[goal.Y][goal.X].unit == NULL)
+                {
+                    print_Message("Target Not Found!", true);
+                    moves--; continue;
+                }
+                else if(!autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.Y], &battleMap->tiles[goal.Y][goal.X]))
+                {
+                    snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", goal.X, goal.Y);
+                    print_Message(msg, true);
+                    moves--; continue;
+                }
+                else
+                {
+                    target_I = get_UnitIndex(opponent, battleMap->tiles[goal.Y][goal.X].unit->Game_ID);
+                    player->units[cUnit_I].chaseID = &opponent->units[target_I].Game_ID;
+                    player->units[cUnit_I].goal = goal;
+                    print_Message("Moving to intercept the unit!", true);
+                }
+            }
+            else if(action == 'f') // Fire at unit
+            {
+                if (player->units[cUnit_I].range < 1)
+                {
+                    print_Message("This unit can't do ranged attacks!", true);
+                    moves--; continue;
+                }
+                clear_afterMap(battleMap->height);
+                toggle_Cursor(true);
+                printf(">> Target coodiantes <X Y> \n");
+                printf(" >=> ");
+                scanf("%hd %hd", &target.X, &target.Y);
+                toggle_Cursor(false);
+                if((check_MapAttack(battleMap, target, player->units[cUnit_I].Game_ID) == FUNCTION_FAIL) || 
+                    check_Ranged(&player->units[cUnit_I], battleMap->tiles[target.Y][target.X].unit) == FUNCTION_FAIL)
+                { moves--; continue; }
+                else
+                {
+                    pos_B = battleMap->tiles[target.Y][target.X].unit->position;
+                    // Show
+                    update_Map(pos_A.X, pos_A.Y, "XXX");
+                    Sleep(TIME_MAP);
+                    update_Map(pos_B.X, pos_B.Y, "OOO");
+                    Sleep(TIME_MAP);
+                    clear_afterMap(battleMap->height);
+                    // Go
+                    target_I = get_UnitIndex(opponent, battleMap->tiles[target.Y][target.X].unit->Game_ID);
+                    int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
+                    short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
+                    // Done
+                    if(do_Combat_Ranged(&player->units[cUnit_I], &player->stats,
+                                        &opponent->units[target_I], &opponent->stats,
+                                        tHeight, tVeget, tFort) == FUNCTION_SUCESS)
+                    {
+                        show_gUnit(&player->units[cUnit_I]);
+                        show_gUnit(&opponent->units[target_I]);
+                        printf(">> Press ENTER to continue ");
+                        while (get_KeyPress(false) != KEY_ENTER) continue;
+                        system("cls");
+                        if(opponent->units[target_I].men == 0)
+                        {
+                            delete_Unit(opponent->units, &opponent->size, target_I);
+                            battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
+                        }
+                        show_Map(battleMap, *mode, true);
+                        moves = Side_A.units[cUnit_I].moves;
+                    }
+                    else moves--;
+                    update_Map(pos_A.X, pos_A.Y, player->units[cUnit_I].name);
+                    update_Map(pos_B.X, pos_B.Y, get_MapSprite(&battleMap->tiles[pos_B.Y][pos_B.X], *mode));
+                }
+                continue;
+            }
+            else if (action == 'd') // View unit stats
+            {
+                reset_Cursor();
+                system("cls");
+                show_gUnit(&player->units[cUnit_I]);
+                printf(">> Press ENTER to continue \n");
+                while (get_KeyPress(false) != KEY_ENTER) continue;
+                system("cls");
+                show_Map(battleMap, *mode, true);
+                moves--;
+            }
+            else if (action == 'w') // View unit wiki
+            {
+                reset_Cursor();
+                system("cls");
+                show_gUnit(&unit_Table[player->units[cUnit_I].Table_ID]);
+                print_UnitDesc(player->units[cUnit_I].Table_ID, unit_Desc);
+                printf(">> Press ENTER to continue \n");
+                while (get_KeyPress(false) != KEY_ENTER) continue;
+                system("cls");
+                show_Map(battleMap, *mode, true);
+                moves--;
+            }
+            else if (action == 'e') // Fortify
+            {
+                clear_afterMap(battleMap->height);
+                if (player->units[cUnit_I].build_Cap > 0)
+                {
+                    if (inc_FortLevel(battleMap, player->units[cUnit_I].build_Cap, pos_A) == FUNCTION_FAIL)
+                        moves--;
+                    else moves = player->units[cUnit_I].moves;
+                }
+                else
+                {
+                    print_Message("This unit cannot build fortifications!", true);
+                    moves--;
+                }
+                clear_afterMap(battleMap->height);
+            }
+            else if (action == 'g') // See tile stats
+            {
+                clear_afterMap(battleMap->height);
+                toggle_Cursor(true);
+                printf(">> Target coodiantes <X Y> \n");
+                printf(" >=> ");
+                scanf("%hd %hd", &target.X, &target.Y);
+                getchar();
+                toggle_Cursor(false);
+                if (target.X >= 0 && target.X < battleMap->width && target.Y >= 0 && target.Y < battleMap->height)
+                {
+                    print_Line(NULL);
+                    print_Line(" ");
+                    snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap->tiles[target.Y][target.X].terrain));
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Vegetation: %s", tVeget_toStr(battleMap->tiles[target.Y][target.X].vegetation));
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Elevation: %d", battleMap->tiles[target.Y][target.X].elevation);
+                    print_Line(msg);
+                    snprintf(msg, sizeof(msg), "Fortification: %d", battleMap->tiles[target.Y][target.X].fortLevel);
+                    print_Line(msg);
+                    if(battleMap->tiles[target.Y][target.X].unit)
+                    {
+                        snprintf(msg, sizeof(msg), "Unit in here: %d (%s)", battleMap->tiles[target.Y][target.X].unit->Game_ID, battleMap->tiles[target.Y][target.X].unit->name);
+                        print_Line(msg);
+                    }
+                    print_Line(" ");
+                    print_Line(NULL);
+                    printf(">> Press ENTER to continue \n");
+                    while (get_KeyPress(false) != KEY_ENTER) continue;
+                    system("cls");
+                    show_Map(battleMap, *mode, true);
+                    moves--;
+                }
+                else
+                {
+                    print_Message("Coordinates out of boundaries!", true);
+                    moves--;
+                }
+            }
+            else if (action == KEY_ESCAPE) // Return to Menu
+                return FUNCTION_FAIL;
+            else if (action == KEY_ENTER) // Next Turn
+            {
+                if(player->units[cUnit_I].goal.X == NO_UNIT || player->units[cUnit_I].goal.Y == NO_UNIT)
+                    moves = player->units[cUnit_I].moves;
+            }
+            else // Invalid
+            {
+                clear_afterMap(battleMap->height);
+                print_Message("Invalid action!", true);
+                moves--; continue;
+            }
+            goal = player->units[cUnit_I].goal;
+            if(goal.X > -1 && goal.Y > -1 && goal.X < battleMap->width && goal.Y < battleMap->height)
+            {
+                pos_A = player->units[cUnit_I].position;
+                pos_Screen.X = pos_A.X, pos_Screen.Y = pos_Screen.Y = pos_A.Y;
+                if (player->units[cUnit_I].chaseID != NULL) 
+                { // Change to coordinates of goal if player unit is chasing
+                    target_I = get_UnitIndex(opponent, *player->units[cUnit_I].chaseID);
+                    goal = player->units[cUnit_I].goal = opponent->units[target_I].position;
+                }
+                
+                player->units[cUnit_I].path = (int *)
+                autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[goal.Y][goal.X]);
+                if(player->units[cUnit_I].path == NULL)
+                {
+                    clear_afterMap(battleMap->height);
+                    print_Message("No path to this tile!", true);
+                    moves--; continue;
+                }
+
+                int res = handleMove(battleMap, &player->units[cUnit_I], &moves, player, opponent, *mode);
+                free(player->units[cUnit_I].path);
+                // update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
+                if (compPos(pos_A, goal) == true || res == OUT_COMBAT)
+                {
+                    player->units[cUnit_I].chaseID = NULL;
+                    player->units[cUnit_I].goal.X = -1, player->units[cUnit_I].goal.Y = -1;
                     if(action == KEY_ENTER)
                     {
                         clear_afterMap(battleMap->height);
@@ -964,42 +972,27 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                 }
                 toggle_Cursor(false);
             }
-            else if (player->units[unitA_I].retreating == true)
-            {
-                Sleep(TIME_STRATEGY);
-                // Algo gráfico pra representar o retreat
-                // IMPLEMENTAR
-                break;
-            }
-            else
-            {
-                clear_afterMap(battleMap->height);
-                player->units[unitA_I].engaged = false, moves++;
-                snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
-                print_Message(msg, true);
-            }
         }
     }
     else // AI Zone
     {
         B_Tile *position;
-        xHiLi = NO_UNIT, yHiLi = NO_UNIT;
-        for (int moves = 0; moves < player->units[unitA_I].moves; moves++)
+        for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
             // show_Map(&battleMap, MODE_HEIGHT);
             int FRes = false;
-            info_Upper(battleMap->name, turn, player->name, false, player->units[unitA_I].name, player->units[unitA_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
-            update_Map(pos_A.X, pos_A.Y, player->units[unitA_I].name);
+            info_Upper(battleMap->name, turn, player->name, false, player->units[cUnit_I].name, player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
+            update_Map(pos_A.X, pos_A.Y, player->units[cUnit_I].name);
             Sleep(TIME_STRATEGY);
             COORD pos_Screen = {0, MAP_OFFSET_Y+battleMap->height*2};
 
-            if (moves < player->units[unitA_I].moves && player->units[unitA_I].retreating == false && player->units[unitA_I].engaged == false)
+            if (moves < player->units[cUnit_I].moves && player->units[cUnit_I].retreating == false && player->units[cUnit_I].engaged == false)
             {
                 pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
-                switch(AI_Process(battleMap, player, opponent, &player->units[unitA_I], AI_Easy))
+                switch(AI_Process(battleMap, player, opponent, &player->units[cUnit_I], AI_Easy))
                 {
                     case AI_Fire:
-                        pos_B = player->units[unitA_I].goal;
+                        pos_B = player->units[cUnit_I].goal;
                         // Show
                         update_Map(pos_A.X, pos_A.Y, "XXX");
                         Sleep(TIME_MAP);
@@ -1010,13 +1003,13 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                         target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
                         int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
                         short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
-                        FRes = do_Combat_Ranged(&player->units[unitA_I], &player->stats,
+                        FRes = do_Combat_Ranged(&player->units[cUnit_I], &player->stats,
                                                 &opponent->units[target_I], &opponent->stats,
                                                 tHeight, tVeget, tFort);
                         // Done
                         if(FRes == FUNCTION_SUCESS)
                         {
-                            show_gUnit(&player->units[unitA_I]);
+                            show_gUnit(&player->units[cUnit_I]);
                             show_gUnit(&opponent->units[target_I]);
                             printf(">> Press ENTER to continue ");
                             while (get_KeyPress(false) != KEY_ENTER) continue;
@@ -1027,45 +1020,60 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int unitA_I, int
                                 battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
                             }
                             show_Map(battleMap, *mode, true);
-                            moves = Side_A.units[unitA_I].moves;
+                            moves = Side_A.units[cUnit_I].moves;
                         }
                         else update_Map(pos_B.X, pos_B.Y, get_MapSprite(&battleMap->tiles[pos_B.Y][pos_B.X], *mode));
-                        moves = player->units[unitA_I].moves;
+                        moves = player->units[cUnit_I].moves;
                         break;
                     case AI_GoTo:
-                        pos_A.X = player->units[unitA_I].position.X, pos_A.Y = player->units[unitA_I].position.Y;
-                        pos_B.X = player->units[unitA_I].goal.X, pos_B.Y = player->units[unitA_I].goal.Y;
-                        player->units[unitA_I].path = (int *)autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[pos_B.Y][pos_B.X]);
-                        if (player->units[unitA_I].path == NULL) break;
-                        for(int steps = 0; steps < player->units[unitA_I].moves; steps++)
+                        pos_A.X = player->units[cUnit_I].position.X, pos_A.Y = player->units[cUnit_I].position.Y;
+                        pos_B.X = player->units[cUnit_I].goal.X, pos_B.Y = player->units[cUnit_I].goal.Y;
+                        player->units[cUnit_I].path = (int *)autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[pos_B.Y][pos_B.X]);
+                        if (player->units[cUnit_I].path == NULL) break;
+                        for(int steps = 0; steps < player->units[cUnit_I].moves; steps++)
                         {
-                            FRes = move_Unit(battleMap, &player->units[unitA_I], player->units[unitA_I].path[steps]);
+                            FRes = move_Unit(battleMap, &player->units[cUnit_I], player->units[cUnit_I].path[steps]);
                             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
-                            if( player->units[unitA_I].position.X == player->units[unitA_I].goal.X &&
-                                player->units[unitA_I].position.Y == player->units[unitA_I].goal.Y)
+                            if( player->units[cUnit_I].position.X == player->units[cUnit_I].goal.X &&
+                                player->units[cUnit_I].position.Y == player->units[cUnit_I].goal.Y)
                                 break;
                             moves++;
                         }
-                        free(player->units[unitA_I].path);
+                        free(player->units[cUnit_I].path);
+                        break;
+                    case AI_Engage:
+                        pos_A.X = player->units[cUnit_I].position.X, pos_A.Y = player->units[cUnit_I].position.Y;
+                        pos_B.X = player->units[cUnit_I].goal.X, pos_B.Y = player->units[cUnit_I].goal.Y;
+                        player->units[cUnit_I].path = (int *)autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.X], &battleMap->tiles[pos_B.Y][pos_B.X]);
+                        if (player->units[cUnit_I].path == NULL) break;
+                        for(int steps = 0; steps < player->units[cUnit_I].moves; steps++)
+                        {
+                            FRes = move_Unit(battleMap, &player->units[cUnit_I], player->units[cUnit_I].path[steps]);
+                            update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
+                            if( player->units[cUnit_I].position.X == player->units[cUnit_I].goal.X &&
+                                player->units[cUnit_I].position.Y == player->units[cUnit_I].goal.Y)
+                                break;
+                            moves++;
+                        }
                         break;
                     default:
-                        FRes = move_Unit(battleMap, &player->units[unitA_I], Northeast);
-                        pos_A = player->units[unitA_I].position;
+                        FRes = move_Unit(battleMap, &player->units[cUnit_I], Northeast);
+                        pos_A = player->units[cUnit_I].position;
                         break;
                 }
                 clear_afterMap(battleMap->height);
-                pos_A = player->units[unitA_I].position;
+                pos_A = player->units[cUnit_I].position;
             }
             else
             {
                 clear_afterMap(battleMap->height);
-                player->units[unitA_I].engaged = false;
+                player->units[cUnit_I].engaged = false;
                 snprintf(msg, sizeof(msg), "Disegaging unit from combat!");
                 print_Message(msg, true);
             }
             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
         }
-        info_Upper(battleMap->name, turn, Side_B.name, false, player->units[unitA_I].name, player->units[unitA_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
+        info_Upper(battleMap->name, turn, Side_B.name, false, player->units[cUnit_I].name, player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
         Sleep(TIME_STRATEGY);
     }
@@ -1082,7 +1090,6 @@ int main(/*int argc, char** argv*/)
     toggle_Cursor(false);
 
     int nMaps = 0, cScen = 0, cMap = 0, out = 0, mode = MODE_UNITS;
-    extern short int xHiLi, yHiLi;
     extern bool muted;
 
 
@@ -1136,7 +1143,6 @@ startMenu:
         break;
     } while (1);
 
-    xHiLi = NO_UNIT, yHiLi = NO_UNIT;
     Side_A.stats.name = Side_A.name, Side_B.stats.name = Side_B.name;
     Side_A.stats.deployed = 0, Side_A.stats.killed = 0, Side_A.stats.loss = 0;
     Side_B.stats.deployed = 0, Side_B.stats.killed = 0, Side_B.stats.loss = 0;

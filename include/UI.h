@@ -8,7 +8,6 @@
 #include "unit.h"
 
 bool firstLine = true, muted = false;
-short int xHiLi = NO_UNIT, yHiLi = NO_UNIT;
 
 typedef struct P_tileData
 {
