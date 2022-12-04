@@ -196,14 +196,11 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
             best = possib, bestI = i;
         else if(possib == best)
         {
-            // B_Pos cDiff = { abs(test[bestI]->pos.X - unit->position.X),
-            //                 abs(test[bestI]->pos.Y - unit->position.Y) };
-            // B_Pos pDiff = { abs(test[i]->pos.X - unit->position.X),
-            //                 abs(test[i]->pos.Y - unit->position.Y) };
-            int cDist = calcDistance(unit->position, test[bestI]->pos); // cDiff.X > cDiff.Y ? cDiff.X : cDiff.Y; 
-            int pDist = calcDistance(unit->position, test[i]->pos); // pDiff.X > pDiff.Y ? pDiff.X : pDiff.Y; 
+            B_Pos unitPos = unit->position;
+            int cDist = get_MovesToTile(map, &map->tiles[unitPos.Y][unitPos.X], test[bestI]); 
+            int pDist = get_MovesToTile(map, &map->tiles[unitPos.Y][unitPos.X], test[i]);
             
-            bestI = pDist < cDist ? i : bestI;             
+            bestI = pDist <= cDist ? i : bestI;             
         }
     }
     return test[bestI]->pos;
@@ -306,17 +303,21 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     if(current->morale > 70 && current->men > current->men_Max / 3) 
     {
         // Enquanto tiver um alvo, não reprocessar;
-        if(current->goal.X != -1 && current->goal.Y != -1)
-            return AI_GoTo;
+        // if(current->goal.X != -1 && current->goal.Y != -1)
+        //     return AI_GoTo;
         
-        // Se estiver do lado, engajar
-        if(current->goal.X == current->position.X && current->goal.Y == current->position.Y)
-            return AI_Engage;
 
         // Obtendo alvo e melhor angulo de ataque
         current->chaseID = get_BestMatchup(current, they->units, they->size, map);
         current->goal = get_BestTileMatch(map, closest_Foe->position, current);
-        return AI_GoTo;
+        
+        // Se estiver do lado, engajar
+        if(compPos(current->goal, current->position) == true)
+        {
+            current->goal = closest_Foe->position;
+            return AI_Engage;
+        }
+        else return AI_GoTo;
     }
     return AI_Wait;
 }

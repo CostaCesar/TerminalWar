@@ -740,10 +740,9 @@ B_Map create_Map(T_Clime climate, T_Time time)
     return creation;
 }
 
-T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
+void find_Path(B_Map* map, B_Tile *startNode, B_Tile *endNode)
 {
     int toTest_Size = 1, path_Size = 1;
-    T_Direc *path = (T_Direc *) calloc(path_Size, sizeof(T_Direc));
     B_Tile **toTest = (B_Tile **) calloc(toTest_Size, sizeof(B_Tile *));
     
     for(int i = 0; i < map->height; i++)
@@ -810,12 +809,42 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
             }
         }
     }
+    return;
+}
 
-    cTile = endNode;
+int get_MovesToTile(B_Map* map, B_Tile *startNode, B_Tile *endNode)
+{
+    int path_Size = 0;
+    B_Tile *cTile = endNode;
+    T_Direc *path = (T_Direc *) calloc(path_Size, sizeof(T_Direc));
+    
+    find_Path(map, startNode, endNode);
     while(cTile->node.parentPos.X > -1 && cTile->node.parentPos.Y > -1)
     {
         int prePath = -1;
+        prePath = getDirection(cTile->pos, cTile->node.parentPos);
+        if(prePath > -1)
+        {
+            cTile = &map->tiles[cTile->node.parentPos.Y][cTile->node.parentPos.X];
+            path_Size++;
+        }
+        else break;
+    }
+    if(cTile != startNode)
+        return FUNCTION_FAIL;
+    else return path_Size;
+}
 
+T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
+{
+    int path_Size = 1;
+    B_Tile *cTile = endNode;
+    T_Direc *path = (T_Direc *) calloc(path_Size, sizeof(T_Direc));
+
+    find_Path(map, startNode, endNode);
+    while(cTile->node.parentPos.X > -1 && cTile->node.parentPos.Y > -1)
+    {
+        int prePath = -1;
         prePath = getDirection(cTile->pos, cTile->node.parentPos);
         if(prePath > -1)
         {

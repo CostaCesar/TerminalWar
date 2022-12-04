@@ -29,46 +29,6 @@ What they don't know is
 #plz subscribe;
 $
 map: update.map
-mapTitle: TestGround
-music: NU_Battle.wav
-table: new2.bin
-attacker: sideA
-sideA: Greeks
-placement: chosen
-units: 3
-5
-5
-5
-sideB: Romans
-placement: chosen
-units: 2
-6
-6
-mapDesc: KILL'EM ALL
-<><><><><><><><><><>
-#plz subscribe;
-$
-map: Catalon.map
-mapTitle: At Arduino's Heart II
-table: new2.bin
-attacker: sideA
-sideA: Greeks
-placement: chosen
-units: 3
-0
-4
-0
-sideB: Romans
-placement: forced
-units: 3
-1 5 15
-1 6 15
-2 6 17
-mapDesc: Not much to say
-I HAVE XD
-#this is my 2nd map ;)
-$
-map: update.map
 mapTitle: AI Test
 music: NU_Battle.wav
 table: update.bin
@@ -83,7 +43,7 @@ units: 4
 sideB: AI
 placement: forced
 units: 1
-2 5 15
+1 5 15
 mapDesc: |#|
 Mate todos as unidades da Imperia
 e veja como ela reage ;)
