@@ -13,9 +13,9 @@
 #define KEY_ENTER 13
 
 // combat.h
-#define UNIT_DAMAGE_BONUS_SMALL 1
-#define UNIT_DAMAGE_BONUS_MEDIUM 3
-#define UNIT_DAMAGE_BONUS_LARGE 5
+#define DAMAGE_SMALL 1
+#define DAMAGE_MEDIUM 3
+#define DAMAGE_LARGE 5
 
 #define RESULT_CAP 7.0
 #define OFFSET 20.0

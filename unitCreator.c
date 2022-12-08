@@ -276,6 +276,7 @@ B_Unit* load_List(int *out, B_Unit *list, int *size, char *name, char *desc)
     for(int i = 0; i < *size; i++)
     {
         if(list[i].range <= 0) list[i].attack_RangeP = -1;
+        list[i].attacked = false;
     }
 
     *out = CONTINUE;

@@ -74,6 +74,7 @@ typedef struct S_Unit
 
     bool retreating;
     bool engaged;
+    bool attacked;
     
     B_Pos position;
     B_Pos goal;
