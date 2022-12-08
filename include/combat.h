@@ -14,9 +14,6 @@ typedef struct S_Result
     bool isDraw;
 } B_Result;
 
-float get_BonusByVeget(int tileVeget)
-{ return (tileVeget / 2.0f + 1); }
-
 int get_BonusByHeight(double height)
 {
     if(height == 0)
@@ -25,6 +22,9 @@ int get_BonusByHeight(double height)
         return ((int) pow(2, (height * -1)) * -1);
     else return (int) pow(2, height);
 }
+
+double get_BonusByVeget(int value)
+{ return ((double) value / 2.0); }
 
 int get_UnitIndex(B_Side *side, int ID)
 {
@@ -43,7 +43,7 @@ int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRang
     // Bonus againts siege (if not siege itself, excluding Medium Siege)
     if((defender_Type >= Lg_Siege && defender_Type <= Hv_Siege) && (attacker_Type != Lg_Siege && attacker_Type != Hv_Siege))
     {
-        output += UNIT_DAMAGE_BONUS_LARGE;
+        output += DAMAGE_LARGE;
         return output;
     }
     
@@ -54,64 +54,64 @@ int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRang
         // Light Invantry
         // Good X Heavier Infantry
         if(defender_Type == Md_Infantry || defender_Type == Hv_Infantry)
-            output += UNIT_DAMAGE_BONUS_MEDIUM;
+            output += DAMAGE_MEDIUM;
         // Somewaht good X Light_Charriots
         else if (defender_Type == Lg_Charriot)
-            output += UNIT_DAMAGE_BONUS_SMALL;
+            output += DAMAGE_SMALL;
         break;
     case Md_Infantry:
         // Medium Infantry
         // Very Good X Other Infantry
         if (defender_Type == Lg_Infantry || defender_Type == Hv_Infantry)
-            output += UNIT_DAMAGE_BONUS_LARGE;
+            output += DAMAGE_LARGE;
         break;
     case Hv_Infantry:
         // Heavy Infantry
         // Very Good X Cavalary
         if (defender_Type >= Lg_Cavalary && defender_Type <= Hv_Cavalary)
-            output += UNIT_DAMAGE_BONUS_LARGE;
+            output += DAMAGE_LARGE;
         // Good X Charriots
         else if (defender_Type == Lg_Charriot || defender_Type == Hv_Charriot)
-            output += UNIT_DAMAGE_BONUS_MEDIUM;
+            output += DAMAGE_MEDIUM;
         break;
     case Lg_Cavalary:
         // Light Cavalry
         // Good X Charriots
         if(defender_Type == Lg_Charriot || defender_Type == Hv_Charriot)
-            output += UNIT_DAMAGE_BONUS_MEDIUM;
+            output += DAMAGE_MEDIUM;
         break;
     case Md_Cavalary:
         // Medium Cavalary
         // Good X Cavalaries
         if(defender_Type >= Lg_Cavalary && defender_Type <= Hv_Cavalary)
-            output += UNIT_DAMAGE_BONUS_MEDIUM;
+            output += DAMAGE_MEDIUM;
         break;
     case Hv_Cavalary:
         // Heavy Cavalary
         // Very Good X Light and Medium Infantary
         if(defender_Type == Lg_Infantry || defender_Type == Md_Infantry)
-            output += UNIT_DAMAGE_BONUS_LARGE;
+            output += DAMAGE_LARGE;
         // Somewhat good X Meele Charriots
         else if (defender_Type == Hv_Charriot)
-            output += UNIT_DAMAGE_BONUS_SMALL;
+            output += DAMAGE_SMALL;
         break;
     case Lg_Charriot:
         // Light Charriot
         // Very good X Medium Cavalary and Medium Infantry
         if (defender_Type == Md_Cavalary || defender_Type == Md_Infantry)
-            output += UNIT_DAMAGE_BONUS_LARGE;
+            output += DAMAGE_LARGE;
         // Somewhat good X Heavy Cavalary and Heavy Infantry
         else if(defender_Type == Hv_Cavalary || defender_Type == Hv_Infantry)
-            output += UNIT_DAMAGE_BONUS_SMALL;
+            output += DAMAGE_SMALL;
         break;
     case Hv_Charriot:
         // Heavy Charriot
         // Very good X Light and Medium Cavalary
         if(defender_Type == Lg_Cavalary || defender_Type == Md_Cavalary)
-            output += UNIT_DAMAGE_BONUS_LARGE;
+            output += DAMAGE_LARGE;
         // Good X Heavy infantry
         else if (defender_Type == Hv_Infantry)
-            output += UNIT_DAMAGE_BONUS_MEDIUM;
+            output += DAMAGE_MEDIUM;
         break;
     case Lg_Siege:
         // Light Siege
@@ -145,64 +145,64 @@ int get_BonusByClass(T_Class attacker_Type, T_Class defender_Type, bool fromRang
         // Light Invantry
         // Good X Heavier Infantry
         if(attacker_Type == Md_Infantry || attacker_Type == Hv_Infantry)
-            output -= UNIT_DAMAGE_BONUS_MEDIUM;
+            output -= DAMAGE_MEDIUM;
         // Somewaht good X Light_Charriots
         else if (attacker_Type == Lg_Charriot)
-            output -= UNIT_DAMAGE_BONUS_SMALL;
+            output -= DAMAGE_SMALL;
         break;
     case Md_Infantry:
         // Medium Infantry
         // Very Good X Other Infantry
         if (attacker_Type == Lg_Infantry || attacker_Type == Hv_Infantry)
-            output -= UNIT_DAMAGE_BONUS_LARGE;
+            output -= DAMAGE_LARGE;
         break;
     case Hv_Infantry:
         // Heavy Infantry
         // Very Good X Cavalary
         if (attacker_Type >= Lg_Cavalary && attacker_Type <= Hv_Cavalary)
-            output -= UNIT_DAMAGE_BONUS_LARGE;
+            output -= DAMAGE_LARGE;
         // Good X Charriots
         else if (attacker_Type == Lg_Charriot || attacker_Type == Hv_Charriot)
-            output -= UNIT_DAMAGE_BONUS_MEDIUM;
+            output -= DAMAGE_MEDIUM;
         break;
     case Lg_Cavalary:
         // Light Cavalry
         // Good X Charriots
         if(attacker_Type == Lg_Charriot || attacker_Type == Hv_Charriot)
-            output -= UNIT_DAMAGE_BONUS_MEDIUM;
+            output -= DAMAGE_MEDIUM;
         break;
     case Md_Cavalary:
         // Medium Cavalary
         // Good X Cavalaries
         if(attacker_Type >= Lg_Cavalary && attacker_Type <= Hv_Cavalary)
-            output -= UNIT_DAMAGE_BONUS_MEDIUM;
+            output -= DAMAGE_MEDIUM;
         break;
     case Hv_Cavalary:
         // Heavy Cavalary
         // Very Good X Light and Medium Infantary
         if(attacker_Type == Lg_Infantry || attacker_Type == Md_Infantry)
-            output -= UNIT_DAMAGE_BONUS_LARGE;
+            output -= DAMAGE_LARGE;
         // Somewhat good X Meele Charriots
         else if (attacker_Type == Hv_Charriot)
-            output -= UNIT_DAMAGE_BONUS_SMALL;
+            output -= DAMAGE_SMALL;
         break;
     case Lg_Charriot:
         // Light Charriot
         // Very good X Medium Cavalary and Medium Infantry
         if (attacker_Type == Md_Cavalary || attacker_Type == Md_Infantry)
-            output -= UNIT_DAMAGE_BONUS_LARGE;
+            output -= DAMAGE_LARGE;
         // Somewhat good X Heavy Cavalary and Heavy Infantry
         else if(attacker_Type == Hv_Cavalary || attacker_Type == Hv_Infantry)
-            output -= UNIT_DAMAGE_BONUS_SMALL;
+            output -= DAMAGE_SMALL;
         break;
     case Hv_Charriot:
         // Heavy Charriot
         // Very good X Light and Medium Cavalary
         if(attacker_Type == Lg_Cavalary || attacker_Type == Md_Cavalary)
-            output -= UNIT_DAMAGE_BONUS_LARGE;
+            output -= DAMAGE_LARGE;
         // Good X Heavy infantry
         else if (attacker_Type == Hv_Infantry)
-            output -= UNIT_DAMAGE_BONUS_MEDIUM;
+            output -= DAMAGE_MEDIUM;
         break;
     // What if defender has no type?   
     default:
@@ -227,32 +227,34 @@ float get_UnitPowerGap(B_Unit *attacker, B_Unit *defender, int HeightDiff, int a
     return attacker_Power - defender_Power + get_BonusByClass(attacker->type, defender->type, ranged);
 }
 
-B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
-                     B_Unit *unit_Defender, B_endStats *defendStats,
+B_Result combat_Unit(B_Unit *attacker, B_endStats *attackStats,
+                     B_Unit *defender, B_endStats *defendStats,
                      int heightDif, short int *fortLevel)
 {
     B_Result result;
     short int A_Buffer = 0, D_Buffer = 0;
     result.isDraw = false;
 
-    unit_Attacker->engaged = true, unit_Defender->engaged = true;
-    float attacker_Power = unit_Attacker->attack_MeleeP * (unit_Attacker->morale / 100) + (rand() % 10) + unit_Attacker->level;
+    float attacker_Power = attacker->attack_MeleeP * (attacker->morale / 100) + (rand() % 10) + attacker->level;
     // float attacker_Power = ((unit_Attacker->morale / 10) + unit_Attacker->level + add_BonusDamage_ByHeightDif(heightDif)) * unit_Attacker->men;
-    float defender_Power = unit_Defender->defend_MeleeP * (unit_Defender->morale / 100) + (rand() % 10) + unit_Defender->level;
+    float defender_Power = defender->defend_MeleeP * (defender->morale / 100) + (rand() % 10) + defender->level;
     // float defender_Power = ((unit_Defender->morale / 10) + unit_Defender->level) * unit_Defender->men;
     if(attacker_Power < 0)
         attacker_Power = 0;
     if(defender_Power < 0)
         defender_Power = 0;
+
+    if(unit_HasBuff(attacker, Charge_Buff) == true)
+        attacker_Power += DAMAGE_SMALL;
     
     float combat_Result = attacker_Power - defender_Power + get_BonusByHeight(heightDif) - ((float) *fortLevel / 2)
-        + get_BonusByClass(unit_Attacker->type, unit_Defender->type, false);
+        + get_BonusByClass(attacker->type, defender->type, false);
 
     if(combat_Result > *fortLevel && *fortLevel >= 1)
     {
         (*fortLevel)--;
         char msg[46];
-        snprintf(msg, sizeof(msg), "Fort level at %hdX and %hdY decreased to %hd!", unit_Defender->position.X, unit_Defender->position.Y, *fortLevel);
+        snprintf(msg, sizeof(msg), "Fort level at %hdX and %hdY decreased to %hd!", defender->position.X, defender->position.Y, *fortLevel);
         print_Message(msg, false);   
     }
 
@@ -265,98 +267,98 @@ B_Result combat_Unit(B_Unit *unit_Attacker, B_endStats *attackStats,
     // Returnig winner or definig draw
     if(combat_Result > 0)
     {
-        unit_Attacker->morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
+        attacker->morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
 
         // Remaining men is defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        A_Buffer = unit_Attacker->men;
-        unit_Attacker->men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
-        * (unit_Defender->men / unit_Attacker->morale);
-        attackStats->loss += A_Buffer - unit_Attacker->men;
-        defendStats->killed += A_Buffer - unit_Attacker->men;
+        A_Buffer = attacker->men;
+        attacker->men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
+        * (defender->men / attacker->morale);
+        attackStats->loss += A_Buffer - attacker->men;
+        defendStats->killed += A_Buffer - attacker->men;
 
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
-        D_Buffer = unit_Defender->men;
-        unit_Defender->morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
-        if(unit_Defender->morale <= 1 )
+        D_Buffer = defender->men;
+        defender->morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
+        if(defender->morale <= 1 )
         {
-            unit_Defender->men = (short int) ((1.0f / (float) OFFSET) * unit_Defender->men_Max);
-            unit_Defender->retreating = true;
-            unit_Defender->engaged = false;
-            unit_Defender->morale = 1.0f;
+            defender->men = (short int) ((1.0f / (float) OFFSET) * defender->men_Max);
+            defender->retreating = true;
+            defender->engaged = false;
+            defender->morale = 1.0f;
         }
         else 
         {
-            unit_Defender->men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (A_Buffer / unit_Defender->morale) * OFFSET + OFFSET;
-            if(unit_Defender->men < 0)
+            defender->men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
+            * (A_Buffer / defender->morale) * OFFSET + OFFSET;
+            if(defender->men < 0)
             {
-                unit_Defender->men = (short int) ((1.0f / (float) OFFSET) * unit_Defender->men_Max);
-                unit_Defender->morale = 0.0f;
-                unit_Defender->retreating = true;
-                unit_Defender->engaged = false;
+                defender->men = (short int) ((1.0f / (float) OFFSET) * defender->men_Max);
+                defender->morale = 0.0f;
+                defender->retreating = true;
+                defender->engaged = false;
             }
         }
-        attackStats->killed += D_Buffer - unit_Defender->men;
-        defendStats->loss += D_Buffer - unit_Defender->men;
+        attackStats->killed += D_Buffer - defender->men;
+        defendStats->loss += D_Buffer - defender->men;
 
-        result.winner = unit_Attacker;
-        result.looser = unit_Defender;
+        result.winner = attacker;
+        result.looser = defender;
     }
     else if (combat_Result < 0)
     {  
         combat_Result = (float) fabs((double) combat_Result);
-        unit_Defender->morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
+        defender->morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
 
         // Remaining men is Defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        D_Buffer = unit_Defender->men;
-        unit_Defender->men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
-        * (unit_Attacker->men / unit_Defender->morale);
-        attackStats->killed += D_Buffer - unit_Defender->men;
-        defendStats->loss += D_Buffer - unit_Defender->men;
+        D_Buffer = defender->men;
+        defender->men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
+        * (attacker->men / defender->morale);
+        attackStats->killed += D_Buffer - defender->men;
+        defendStats->loss += D_Buffer - defender->men;
         
         // Looser losses more morale and troops
         // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
-        A_Buffer = unit_Attacker->men;
-        unit_Attacker->morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
-        if(unit_Attacker->morale <= 1)
+        A_Buffer = attacker->men;
+        attacker->morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
+        if(attacker->morale <= 1)
         {
-            unit_Attacker->men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker->men_Max);
-            unit_Attacker->retreating = true;
-            unit_Attacker->engaged = false;
-            unit_Attacker->morale = 1.0f;
+            attacker->men = (short int) ((1.0f / (float) OFFSET) * attacker->men_Max);
+            attacker->retreating = true;
+            attacker->engaged = false;
+            attacker->morale = 1.0f;
         }
         else 
         {
-            unit_Attacker->men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (A_Buffer / unit_Attacker->morale) * OFFSET + OFFSET;
-            if(unit_Attacker->men < 0)
+            attacker->men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
+            * (A_Buffer / attacker->morale) * OFFSET + OFFSET;
+            if(attacker->men < 0)
             {
-                unit_Attacker->men = (short int) ((1.0f / (float) OFFSET) * unit_Attacker->men_Max);
-                unit_Attacker->morale = 0.0f;
-                unit_Attacker->retreating = true;
-                unit_Attacker->engaged = false;
+                attacker->men = (short int) ((1.0f / (float) OFFSET) * attacker->men_Max);
+                attacker->morale = 0.0f;
+                attacker->retreating = true;
+                attacker->engaged = false;
             }
         }
-        attackStats->loss += A_Buffer - unit_Attacker->men;
-        defendStats->killed += A_Buffer - unit_Attacker->men;
+        attackStats->loss += A_Buffer - attacker->men;
+        defendStats->killed += A_Buffer - attacker->men;
 
-        result.winner = unit_Defender;
-        result.looser = unit_Attacker;
+        result.winner = defender;
+        result.looser = attacker;
     }
     else
     {
         // Draw: Both loose same amount of morale; RNG varies men losses
-        unit_Attacker->morale -= combat_Result;
-        unit_Attacker->men -= (combat_Result * unit_Defender->men) / unit_Attacker->men;
+        attacker->morale -= combat_Result;
+        attacker->men -= (combat_Result * defender->men) / attacker->men;
         /*unit_Attacker->men -= (short int) (rand() % (unit_Attacker->men / MAX_FRACTION_LOSS))
         / (int) (unit_Attacker->gear + (unit_Attacker->morale / MORALE_WIN_CONSTANT)); */
-        unit_Defender->morale -= combat_Result;
-        unit_Defender->men -= (combat_Result * unit_Attacker->men) / unit_Defender->men;
+        defender->morale -= combat_Result;
+        defender->men -= (combat_Result * attacker->men) / defender->men;
         /*unit_Defender->men -= (short int) (rand() % (unit_Defender->men / MAX_FRACTION_LOSS))
         / (int) (unit_Defender->gear + (unit_Defender->morale / MORALE_WIN_CONSTANT)); */
-        result.winner = unit_Attacker;
-        result.looser = unit_Defender;
+        result.winner = attacker;
+        result.looser = defender;
         result.isDraw = true;
     }
     return result;
@@ -418,7 +420,6 @@ bool show_Combat_Result(B_Result *units)
 
 
 // Centralization of the combat process
-
 void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_endStats* defendStats, int heigthDif, short int *fortLevel)
 {
     // Unit cannot be already engaged at combat
@@ -429,9 +430,13 @@ void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_en
         printf("| We must disengage the enemy before attacking! | \n");
         printf("#===============================================# \n"); */
         print_Message("We must disengage the enemy before attacking!", true);    
-        attacker->engaged = false;
+        // attacker->engaged = false;
         return;
     }
+    // Trivia
+    attacker->attacked = true;
+    attacker->engaged = true;
+    defender->engaged = true;
 
     B_Result Result = combat_Unit(attacker, attackStats, defender, defendStats, heigthDif, fortLevel);
     bool LevelUP = show_Combat_Result(&Result);
@@ -452,6 +457,28 @@ void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_en
         *attacker = *Result.looser;               
     }
     return;
+}
+
+bool check_UnitMove(B_Unit *unit, int moves)
+{
+    
+    if(moves >= unit->moves)
+        return false;
+    if(unit->retreating == true)
+        return false;
+    if(unit->attacked == true && unit_HasBuff(unit, Hit_And_Move) == false)
+        return false;
+    
+    if(unit->engaged == false)
+        return true;
+    else if(unit->engaged == true && moves + 1 < unit->moves)
+    {
+        unit->engaged = false;
+        moves++;
+        print_Message("Disengaging!", true);
+        return true;
+    }
+    else return false;
 }
 
 int check_Ranged(B_Unit *attacker, B_Unit *defender)
@@ -494,7 +521,9 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
     return FUNCTION_SUCESS;
 }
 
-int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defender, B_endStats* defenderStats, int heightDif, int vegetat, short int *fortLevel)
+int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
+                    B_Unit* defender, B_endStats* defenderStats,
+                    int heightDif, T_Veget vegetat, T_Terrain terrain, short int *fortLevel)
 {
     char msg[51];
     // Testing 
@@ -520,14 +549,30 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats, B_Unit* defend
     print_Line(NULL);
     Sleep(TIME_STRATEGY);
 
+    // Trivia
+    attacker->attacked = true;
+
     // Doing damage
     attacker->ammo--;
     float volley = attacker->attack_RangeP * (attacker->morale / 100) + (rand() % 10);
     float protec = defender->defend_RangeP * (defender->morale / 100) + (rand() % 10);
-    float damage = volley - protec + get_BonusByHeight(heightDif) - get_BonusByVeget(vegetat) - ((float) *fortLevel / 2)
+
+    if(unit_HasBuff(defender, Desert_Advtg) == true && terrain == Sand)
+        protec += DAMAGE_SMALL;
+    else if(unit_HasBuff(defender, Amphibious) == true && terrain == Water)
+        protec += DAMAGE_SMALL;
+    if(unit_HasBuff(defender, Forest_Advtg) == true && vegetat > Sparse)
+        protec += DAMAGE_SMALL;
+    if(unit_HasBuff(defender, Height_Advtg) && heightDif < 0)
+        protec += DAMAGE_SMALL;
+    if(unit_HasBuff(defender, Shield_Wall) && defender->engaged == false)
+        protec += DAMAGE_SMALL;
+
+
+    float damage = volley - protec + get_BonusByHeight(heightDif) - get_BonusByVeget(vegetat)- ((float) *fortLevel / 2)
         + get_BonusByClass(attacker->type, defender->type, true);
     if(damage < 0)
-        damage = 1.0f;
+        damage = 0.5f;
     else if(damage > RESULT_CAP)
         damage = RESULT_CAP;
     // float damage = attacker->men * ((((attacker->morale / 10) + attacker->level) * add_BonusDamage_ByHeightDif(heightDif) / add_BonusDamage_ByVeget(vegetat)));

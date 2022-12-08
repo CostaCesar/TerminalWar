@@ -186,11 +186,11 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
         if(test[i] == NULL) continue;
 
         if(test[i]->vegetation >= Grove && unit_HasBuff(unit, Forest_Advtg))
-            possib = UNIT_DAMAGE_BONUS_SMALL;
+            possib = DAMAGE_SMALL;
         else if(test[i]->terrain == Desert_Advtg && unit_HasBuff(unit, Desert_Advtg))
-            possib = UNIT_DAMAGE_BONUS_SMALL;
+            possib = DAMAGE_SMALL;
         else if(test[i]->elevation > map->tiles[from.Y][from.X].elevation && unit_HasBuff(unit, Height_Advtg))
-            possib = UNIT_DAMAGE_BONUS_SMALL;
+            possib = DAMAGE_SMALL;
 
         if(possib > best)
             best = possib, bestI = i;
@@ -206,11 +206,24 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
     return test[bestI]->pos;
 }
 
-B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_Ally)
+double get_hasAdvtg(B_Unit *unit, B_Tile *tile)
+{
+    double value = 0;
+    if(unit_HasBuff(unit, Desert_Advtg) && tile->terrain == Sand)
+        value += DAMAGE_SMALL;
+    else if(unit_HasBuff(unit, Amphibious) && tile->terrain == Water)
+        value += DAMAGE_SMALL;
+    if(unit_HasBuff(unit, Forest_Advtg) && tile->vegetation > Sparse)
+        value += DAMAGE_SMALL;
+    return value;
+}
+
+B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_Ally, B_Unit* us)
 {
     B_Pos best = {-1, -1};
-    int bestVeget = -1, bestHeight = -1;
-    int posbVeget, posbHeight;
+    bool hasAlly = closest_Ally.X > -1 && closest_Ally.Y > -1;
+    int bestTileStats = -1, bestHeight = -1, bestDist = map->height + map->width;
+    int posbTileStats, posbHeight, posbDist;
     for(int i = 0; i < map->height; i++)
     {
         for(int j = 0; j < map->width; j++)
@@ -218,14 +231,24 @@ B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_
             if(map->tiles[i][j].elevation < bestHeight)
                 continue;//map->tiles[unit->position.Y][unit->position.X].elevation)
             else posbHeight = map->tiles[i][j].elevation;
-            if(get_BonusByVeget(map->tiles[i][j].vegetation) < bestVeget)
+            
+            if(get_BonusByVeget(map->tiles[i][j].vegetation)
+             + get_hasAdvtg(us, &map->tiles[i][j]) < bestTileStats)
                 continue;
-            else posbVeget = get_BonusByVeget(map->tiles[i][j].vegetation);
+            else posbTileStats = get_BonusByVeget(map->tiles[i][j].vegetation)
+                                 + get_hasAdvtg(us, &map->tiles[i][j]);
+            
+            if(hasAlly == false)
+                continue;
+            else if(bestDist < calcMoves((B_Pos){j, i}, closest_Ally))
+                continue;
+            else posbDist = calcMoves((B_Pos){j, i}, closest_Ally);
 
-            if (calcMoves(best, this) - bestVeget - bestHeight > calcMoves((B_Pos){j, i}, this) - posbHeight - posbVeget)
+            if (calcMoves(best, this) - bestTileStats - bestHeight - posbDist >
+                calcMoves((B_Pos){j, i}, this) - posbHeight - posbTileStats - posbDist)
             {
-                bestHeight = posbHeight, bestVeget = posbVeget;
-                best.X = j, best.Y = i;
+                bestHeight = posbHeight, bestTileStats = posbTileStats;
+                bestDist = posbDist, best.X = j, best.Y = i;
             }
         }
     }
@@ -275,7 +298,7 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     // Buscar posição avantajosa
     if(ours->attacker == false)
     {
-        test = get_BestTileFort(map, current->position, closest_Foe->position, closest_Ally->position);
+        test = get_BestTileFort(map, current->position, closest_Foe->position, closest_Ally->position, current);
         if(test.X != -1 && test.Y != -1)
         {
             current->goal = test;
@@ -302,11 +325,6 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     // Buscar combate melee
     if(current->morale > 70 && current->men > current->men_Max / 3) 
     {
-        // Enquanto tiver um alvo, não reprocessar;
-        // if(current->goal.X != -1 && current->goal.Y != -1)
-        //     return AI_GoTo;
-        
-
         // Obtendo alvo e melhor angulo de ataque
         current->chaseID = get_BestMatchup(current, they->units, they->size, map);
         current->goal = get_BestTileMatch(map, closest_Foe->position, current);
