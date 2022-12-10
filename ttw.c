@@ -969,6 +969,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 toggle_Cursor(false);
             }
         }
+        player->units[cUnit_I].attacked = false, player->units[cUnit_I].engaged = false;
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
     }
     else // AI Zone
@@ -1051,6 +1052,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             pos_A = player->units[cUnit_I].position;
             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
         }
+        player->units[cUnit_I].attacked = false, player->units[cUnit_I].engaged = false;
         info_Upper(battleMap->name, turn, Side_B.name, false, player->units[cUnit_I].name, player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
         Sleep(TIME_STRATEGY);

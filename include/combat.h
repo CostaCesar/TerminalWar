@@ -231,26 +231,29 @@ B_Result combat_Unit(B_Unit *attacker, B_endStats *attackStats,
                      B_Unit *defender, B_endStats *defendStats,
                      int heightDif, short int *fortLevel)
 {
-    B_Result result;
+    B_Result result = {0};
+    float gap = 0.0;
     short int A_Buffer = 0, D_Buffer = 0;
-    result.isDraw = false;
 
     float attacker_Power = attacker->attack_MeleeP * (attacker->morale / 100) + (rand() % 10) + attacker->level;
-    // float attacker_Power = ((unit_Attacker->morale / 10) + unit_Attacker->level + add_BonusDamage_ByHeightDif(heightDif)) * unit_Attacker->men;
     float defender_Power = defender->defend_MeleeP * (defender->morale / 100) + (rand() % 10) + defender->level;
-    // float defender_Power = ((unit_Defender->morale / 10) + unit_Defender->level) * unit_Defender->men;
+    
+    // Limits
     if(attacker_Power < 0)
         attacker_Power = 0;
     if(defender_Power < 0)
         defender_Power = 0;
 
+    // Buffs
     if(unit_HasBuff(attacker, Charge_Buff) == true)
         attacker_Power += DAMAGE_SMALL;
     
-    float combat_Result = attacker_Power - defender_Power + get_BonusByHeight(heightDif) - ((float) *fortLevel / 2)
-        + get_BonusByClass(attacker->type, defender->type, false);
-
-    if(combat_Result > *fortLevel && *fortLevel >= 1)
+    // Calculating battle results
+    float combat_Result = attacker_Power - defender_Power
+                        + get_BonusByHeight(heightDif)
+                        - ((float) *fortLevel / 2.0)
+                        + get_BonusByClass(attacker->type, defender->type, false);
+    if(combat_Result > *fortLevel && *fortLevel > 0)
     {
         (*fortLevel)--;
         char msg[46];
@@ -258,109 +261,71 @@ B_Result combat_Unit(B_Unit *attacker, B_endStats *attackStats,
         print_Message(msg, false);   
     }
 
-    // Calculating battle results
+    // Limits
     if(combat_Result > RESULT_CAP)
         combat_Result = RESULT_CAP;
     else if (combat_Result < (RESULT_CAP * -1))
         combat_Result = RESULT_CAP * -1;
+    A_Buffer = attacker->men, D_Buffer = defender->men;
 
     // Returnig winner or definig draw
     if(combat_Result > 0)
     {
-        attacker->morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
+        // Attacker takes damage
+        gap = 1 + ((float) ( 1.0 / pow(MORALE_EXTREMNESS, (double) combat_Result)) 
+                * (defender->men / attacker->morale));
+        attacker->morale -= gap, attacker->men -= (gap / 100 * attacker->men_Max);
 
-        // Remaining men is defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        A_Buffer = attacker->men;
-        attacker->men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
-        * (defender->men / attacker->morale);
-        attackStats->loss += A_Buffer - attacker->men;
-        defendStats->killed += A_Buffer - attacker->men;
-
-        // Looser losses more morale and troops
-        // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
-        D_Buffer = defender->men;
-        defender->morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
-        if(defender->morale <= 1 )
+        // Defender takes damage
+        gap = 1 + (pow(MORALE_EXTREMNESS, (double) combat_Result)
+                * (1 / (attacker->men / defender->morale)));
+        defender->morale -= gap, defender->men -= (gap / 100 * defender->men_Max);
+        
+        if(defender->morale <= 0 ||  defender->men <= 0)
         {
-            defender->men = (short int) ((1.0f / (float) OFFSET) * defender->men_Max);
+            defender->men = (short int) (rand() % defender->men);
             defender->retreating = true;
             defender->engaged = false;
-            defender->morale = 1.0f;
+            defender->morale = 0.0f;
         }
-        else 
-        {
-            defender->men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (A_Buffer / defender->morale) * OFFSET + OFFSET;
-            if(defender->men < 0)
-            {
-                defender->men = (short int) ((1.0f / (float) OFFSET) * defender->men_Max);
-                defender->morale = 0.0f;
-                defender->retreating = true;
-                defender->engaged = false;
-            }
-        }
-        attackStats->killed += D_Buffer - defender->men;
-        defendStats->loss += D_Buffer - defender->men;
 
         result.winner = attacker;
         result.looser = defender;
     }
     else if (combat_Result < 0)
     {  
-        combat_Result = (float) fabs((double) combat_Result);
-        defender->morale -= (float) (OFFSET / pow(MORALE_WIN, (double) combat_Result)) / 2;
+        // Defender takes damage
+        gap = 1 + ((float) ( 1.0 / pow(MORALE_EXTREMNESS, (double) -combat_Result))
+                * (attacker->men / defender->morale));
+        defender->morale -= gap, defender->men -= (gap / 100 * defender->men_Max);
 
-        // Remaining men is Defined by (RNG % Fraction of men) / (remaing moral + gear of the unit)
-        D_Buffer = defender->men;
-        defender->men -= (short int) (OFFSET / pow(MORALE_WIN, (double) combat_Result))
-        * (attacker->men / defender->morale);
-        attackStats->killed += D_Buffer - defender->men;
-        defendStats->loss += D_Buffer - defender->men;
+        // Attacker takes damage
+        gap = 1 + (pow(MORALE_EXTREMNESS, (double) -combat_Result)
+                * (1 / (attacker->men / defender->morale)));
+
+        attacker->morale -= gap, attacker->men -= (gap / 100 * attacker->men_Max);
         
-        // Looser losses more morale and troops
-        // If losser's men is bellow 0, capitulate. If losser's morale <= 0, capitulate.
-        A_Buffer = attacker->men;
-        attacker->morale -= (float) (pow(MORALE_LOOSE, (double) combat_Result) * OFFSET + OFFSET) / 4;
-        if(attacker->morale <= 1)
+        if(attacker->morale <= 0 || attacker->men <= 0)
         {
-            attacker->men = (short int) ((1.0f / (float) OFFSET) * attacker->men_Max);
+            attacker->men = (short int) (short int) (rand() % attacker->men);
             attacker->retreating = true;
             attacker->engaged = false;
             attacker->morale = 1.0f;
         }
-        else 
-        {
-            attacker->men -= (short int) pow(MORALE_LOOSE, (double) combat_Result)
-            * (A_Buffer / attacker->morale) * OFFSET + OFFSET;
-            if(attacker->men < 0)
-            {
-                attacker->men = (short int) ((1.0f / (float) OFFSET) * attacker->men_Max);
-                attacker->morale = 0.0f;
-                attacker->retreating = true;
-                attacker->engaged = false;
-            }
-        }
-        attackStats->loss += A_Buffer - attacker->men;
-        defendStats->killed += A_Buffer - attacker->men;
 
         result.winner = defender;
         result.looser = attacker;
     }
-    else
-    {
-        // Draw: Both loose same amount of morale; RNG varies men losses
-        attacker->morale -= combat_Result;
-        attacker->men -= (combat_Result * defender->men) / attacker->men;
-        /*unit_Attacker->men -= (short int) (rand() % (unit_Attacker->men / MAX_FRACTION_LOSS))
-        / (int) (unit_Attacker->gear + (unit_Attacker->morale / MORALE_WIN_CONSTANT)); */
-        defender->morale -= combat_Result;
-        defender->men -= (combat_Result * attacker->men) / defender->men;
-        /*unit_Defender->men -= (short int) (rand() % (unit_Defender->men / MAX_FRACTION_LOSS))
-        / (int) (unit_Defender->gear + (unit_Defender->morale / MORALE_WIN_CONSTANT)); */
-        result.winner = attacker;
-        result.looser = defender;
+    else return combat_Unit(attacker, attackStats, defender, defendStats, heightDif, fortLevel);
+    
+    // Stats
+    attackStats->killed += D_Buffer - defender->men;
+    attackStats->loss += A_Buffer - attacker->men;
+    defendStats->killed += A_Buffer - attacker->men;
+    defendStats->loss += D_Buffer - defender->men;
+
+    if(attacker->retreating == true && defender->retreating == true)
         result.isDraw = true;
-    }
     return result;
 }
 
@@ -402,7 +367,7 @@ bool show_Combat_Result(B_Result *units)
     bool out = false;
     if(units->isDraw)
     {
-        printf("Both units were equal. The fight resulted in retreat and devastating losses for both sides! \n");
+        printf("Despite valiant efforts, neither side came out on top. Both units now run from the battle! \n");
     }
     else if (units->winner->retreating == false && units->looser->retreating == false)
     {
@@ -446,16 +411,6 @@ void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_en
     // Whoever wins gains the innitiative (can disengage/engage)
     Result.winner->engaged = false;
     
-    if(attacker->Game_ID == Result.winner->Game_ID)
-    {
-        *attacker = *Result.winner;
-        *defender = *Result.looser;        
-    }
-    else
-    {
-        *defender = *Result.winner;
-        *attacker = *Result.looser;               
-    }
     return;
 }
 
@@ -578,12 +533,12 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
     // float damage = attacker->men * ((((attacker->morale / 10) + attacker->level) * add_BonusDamage_ByHeightDif(heightDif) / add_BonusDamage_ByVeget(vegetat)));
     
     int men_Buffer = defender->men;
-    defender->morale -= (float) pow(MORALE_LOOSE, (double) damage) * OFFSET + OFFSET;
+    defender->morale -= (float) pow(MORALE_LOOSE, (double) damage) * MORALE_EXTREMNESS + MORALE_EXTREMNESS;
 
     // If morale <= 0, retreat
     if(defender->morale <= 1)
     {
-        defender->men = (short int) (1.0f / (float) OFFSET) * defender->men_Max;
+        defender->men = (short int) (1.0f / (float) MORALE_EXTREMNESS) * defender->men_Max;
         defender->retreating = true;
         defender->engaged = false;
         defender->morale = 1.0f;
@@ -591,10 +546,10 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
     else
     {
         defender->men -= (short int) (pow(MORALE_LOOSE, (double) damage)
-        * (attacker->men / defender->morale)) * OFFSET + OFFSET;
+        * (attacker->men / defender->morale)) * MORALE_EXTREMNESS + MORALE_EXTREMNESS;
         if(defender->men < 0)
         {
-            defender->men = (short int) (1.0f / (float) OFFSET) * defender->men_Max;
+            defender->men = (short int) (1.0f / (float) MORALE_EXTREMNESS) * defender->men_Max;
             defender->morale = 0.0f;
             defender->retreating = true;
             defender->engaged = false;

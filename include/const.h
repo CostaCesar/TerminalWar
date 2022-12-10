@@ -18,7 +18,7 @@
 #define DAMAGE_LARGE 5
 
 #define RESULT_CAP 7.0
-#define OFFSET 20.0
+#define MORALE_EXTREMNESS 1.75
 #define MORALE_WIN 1.35
 #define MORALE_RANGED 1.4
 #define MORALE_LOOSE 1.20
@@ -38,7 +38,7 @@
 #define BACKUP_MAP_COLUMNS 10
 #define BACKUP_MAP_ROWS 10
 #define HEIGHT_DIF 2
-#define MAX_FORT_LEVEL 10
+#define MAX_FORT_LEVEL 14
 typedef enum E_Terrain
 {
     Grass,
