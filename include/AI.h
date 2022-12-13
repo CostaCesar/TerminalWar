@@ -189,7 +189,7 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
             possib = DAMAGE_SMALL;
         else if(test[i]->terrain == Desert_Advtg && unit_HasBuff(unit, Desert_Advtg))
             possib = DAMAGE_SMALL;
-        else if(test[i]->elevation > map->tiles[from.Y][from.X].elevation && unit_HasBuff(unit, Height_Advtg))
+        else if(test[i]->elevation > map->tiles[from.Y][from.X].elevation && unit_HasBuff(unit, Height_Block))
             possib = DAMAGE_SMALL;
 
         if(possib > best)
@@ -204,18 +204,6 @@ B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
         }
     }
     return test[bestI]->pos;
-}
-
-double get_hasAdvtg(B_Unit *unit, B_Tile *tile)
-{
-    double value = 0;
-    if(unit_HasBuff(unit, Desert_Advtg) && tile->terrain == Sand)
-        value += DAMAGE_SMALL;
-    else if(unit_HasBuff(unit, Amphibious) && tile->terrain == Water)
-        value += DAMAGE_SMALL;
-    if(unit_HasBuff(unit, Forest_Advtg) && tile->vegetation > Sparse)
-        value += DAMAGE_SMALL;
-    return value;
 }
 
 B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_Ally, B_Unit* us)
@@ -233,10 +221,10 @@ B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_
             else posbHeight = map->tiles[i][j].elevation;
             
             if(get_BonusByVeget(map->tiles[i][j].vegetation)
-             + get_hasAdvtg(us, &map->tiles[i][j]) < bestTileStats)
+             + handle_Advantages(us, map->tiles[i][j].terrain, map->tiles[i][j].vegetation, 0) < bestTileStats)
                 continue;
             else posbTileStats = get_BonusByVeget(map->tiles[i][j].vegetation)
-                                 + get_hasAdvtg(us, &map->tiles[i][j]);
+                                 + handle_Advantages(us, map->tiles[i][j].terrain, map->tiles[i][j].vegetation, 0);
             
             if(hasAlly == false)
                 continue;

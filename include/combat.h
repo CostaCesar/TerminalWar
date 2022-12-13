@@ -9,8 +9,12 @@
 
 typedef struct S_Result
 {
+    short int attackerLoss;
+    short int defenderLoss;
+    
     B_Unit *winner;
     B_Unit *looser;
+
     bool isDraw;
 } B_Result;
 
@@ -21,6 +25,22 @@ int get_BonusByHeight(double height)
     else if (height < 0)
         return ((int) pow(2, (height * -1)) * -1);
     else return (int) pow(2, height);
+}
+
+double handle_Advantages(B_Unit *unit, T_Terrain terrain, T_Veget vegetation, int height)
+{
+    double value = 0.0;
+    if((unit_HasBuff(unit, Desert_Advtg) && terrain == Sand)
+    || (unit_HasBuff(unit, Amphibious) && terrain == Water)
+    || (unit_HasBuff(unit, Snow_Advtg) && terrain == Snow))
+        value += DAMAGE_SMALL;
+    
+    if(unit_HasBuff(unit, Forest_Advtg) && vegetation > Sparse)
+        value += DAMAGE_SMALL;
+    
+    if(unit_HasBuff(unit, Height_Block) && height < 0)
+        value += get_BonusByHeight(-height);
+    return value;
 }
 
 double get_BonusByVeget(int value)
@@ -227,9 +247,7 @@ float get_UnitPowerGap(B_Unit *attacker, B_Unit *defender, int HeightDiff, int a
     return attacker_Power - defender_Power + get_BonusByClass(attacker->type, defender->type, ranged);
 }
 
-B_Result combat_Unit(B_Unit *attacker, B_endStats *attackStats,
-                     B_Unit *defender, B_endStats *defendStats,
-                     int heightDif, short int *fortLevel)
+B_Result combat_Unit(B_Unit *attacker, B_Unit *defender, int heightDif, short int *fortLevel, T_Terrain terrain, T_Veget vegetation)
 {
     B_Result result = {0};
     float gap = 0.0;
@@ -247,6 +265,8 @@ B_Result combat_Unit(B_Unit *attacker, B_endStats *attackStats,
     // Buffs
     if(unit_HasBuff(attacker, Charge_Buff) == true)
         attacker_Power += DAMAGE_SMALL;
+    attacker_Power += handle_Advantages(attacker, terrain, vegetation, heightDif);
+    defender_Power += handle_Advantages(defender, terrain, vegetation, heightDif);
     
     // Calculating battle results
     float combat_Result = attacker_Power - defender_Power
@@ -316,13 +336,11 @@ B_Result combat_Unit(B_Unit *attacker, B_endStats *attackStats,
         result.winner = defender;
         result.looser = attacker;
     }
-    else return combat_Unit(attacker, attackStats, defender, defendStats, heightDif, fortLevel);
+    else return combat_Unit(attacker, defender, heightDif, fortLevel, terrain, vegetation);
     
     // Stats
-    attackStats->killed += D_Buffer - defender->men;
-    attackStats->loss += A_Buffer - attacker->men;
-    defendStats->killed += A_Buffer - attacker->men;
-    defendStats->loss += D_Buffer - defender->men;
+    result.attackerLoss = A_Buffer - attacker->men;
+    result.defenderLoss = D_Buffer - defender->men;
 
     if(attacker->retreating == true && defender->retreating == true)
         result.isDraw = true;
@@ -381,37 +399,6 @@ bool show_Combat_Result(B_Result *units)
         out = true;   
     }
     return out;
-}
-
-
-// Centralization of the combat process
-void do_Combat(B_Unit* attacker, B_endStats* attackStats, B_Unit* defender, B_endStats* defendStats, int heigthDif, short int *fortLevel)
-{
-    // Unit cannot be already engaged at combat
-    if(attacker->engaged == true)
-    {
-        /* printf("\n");
-        printf("#===============================================# \n");
-        printf("| We must disengage the enemy before attacking! | \n");
-        printf("#===============================================# \n"); */
-        print_Message("We must disengage the enemy before attacking!", true);    
-        // attacker->engaged = false;
-        return;
-    }
-    // Trivia
-    attacker->attacked = true;
-    attacker->engaged = true;
-    defender->engaged = true;
-
-    B_Result Result = combat_Unit(attacker, attackStats, defender, defendStats, heigthDif, fortLevel);
-    bool LevelUP = show_Combat_Result(&Result);
-    // Level up
-    if(LevelUP == true)
-        Result.winner->level++; 
-    // Whoever wins gains the innitiative (can disengage/engage)
-    Result.winner->engaged = false;
-    
-    return;
 }
 
 bool check_UnitMove(B_Unit *unit, int moves)
@@ -476,6 +463,9 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
     return FUNCTION_SUCESS;
 }
 
+// Extrair para o ttw.c
+// que nem o combate melee
+// IMPLEMENTAR
 int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
                     B_Unit* defender, B_endStats* defenderStats,
                     int heightDif, T_Veget vegetat, T_Terrain terrain, short int *fortLevel)
@@ -509,57 +499,40 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
 
     // Doing damage
     attacker->ammo--;
-    float volley = attacker->attack_RangeP * (attacker->morale / 100) + (rand() % 10);
-    float protec = defender->defend_RangeP * (defender->morale / 100) + (rand() % 10);
+    float volley = attacker->attack_RangeP * (attacker->morale / 100) + (rand() % 10) + attacker->level;
+    float protec = defender->defend_RangeP * (defender->morale / 100) + (rand() % 10) + defender->level;
 
-    if(unit_HasBuff(defender, Desert_Advtg) == true && terrain == Sand)
-        protec += DAMAGE_SMALL;
-    else if(unit_HasBuff(defender, Amphibious) == true && terrain == Water)
-        protec += DAMAGE_SMALL;
-    if(unit_HasBuff(defender, Forest_Advtg) == true && vegetat > Sparse)
-        protec += DAMAGE_SMALL;
-    if(unit_HasBuff(defender, Height_Advtg) && heightDif < 0)
-        protec += DAMAGE_SMALL;
+    // Buffs
+    protec += handle_Advantages(defender, terrain, vegetat, heightDif);
     if(unit_HasBuff(defender, Shield_Wall) && defender->engaged == false)
         protec += DAMAGE_SMALL;
-
+    // Negating amphibious buff
+    if(unit_HasBuff(defender, Amphibious) == true && terrain == Water)
+        protec -= DAMAGE_SMALL;
 
     float damage = volley - protec + get_BonusByHeight(heightDif) - get_BonusByVeget(vegetat)- ((float) *fortLevel / 2)
         + get_BonusByClass(attacker->type, defender->type, true);
-    if(damage < 0)
-        damage = 0.5f;
-    else if(damage > RESULT_CAP)
+    if(damage > RESULT_CAP)
         damage = RESULT_CAP;
-    // float damage = attacker->men * ((((attacker->morale / 10) + attacker->level) * add_BonusDamage_ByHeightDif(heightDif) / add_BonusDamage_ByVeget(vegetat)));
     
     int men_Buffer = defender->men;
-    defender->morale -= (float) pow(MORALE_LOOSE, (double) damage) * MORALE_EXTREMNESS + MORALE_EXTREMNESS;
-
-    // If morale <= 0, retreat
-    if(defender->morale <= 1)
+    float gap = 1 + (pow(MORALE_EXTREMNESS, (double) damage)
+                * (1 / (attacker->men / defender->morale)) / 3);
+    defender->morale -= gap, defender->men -= (gap / 100 * defender->men_Max);
+    
+    if(defender->morale <= 0 ||  defender->men <= 0)
     {
-        defender->men = (short int) (1.0f / (float) MORALE_EXTREMNESS) * defender->men_Max;
+        defender->men = (short int) (rand() % defender->men);
         defender->retreating = true;
         defender->engaged = false;
-        defender->morale = 1.0f;
+        defender->morale = 0.0f;
     }
-    else
-    {
-        defender->men -= (short int) (pow(MORALE_LOOSE, (double) damage)
-        * (attacker->men / defender->morale)) * MORALE_EXTREMNESS + MORALE_EXTREMNESS;
-        if(defender->men < 0)
-        {
-            defender->men = (short int) (1.0f / (float) MORALE_EXTREMNESS) * defender->men_Max;
-            defender->morale = 0.0f;
-            defender->retreating = true;
-            defender->engaged = false;
-        }
-    }
+
     defenderStats->loss += men_Buffer - defender->men;
     attackerStats->killed += men_Buffer - defender->men;
 
     // Showing results
-    B_Result res = {attacker, defender, false};
+    B_Result res = {0, 0, attacker, defender, false};
     bool LevelUP = show_Combat_Result(&res);
     if(LevelUP == true)
         attacker->level++;

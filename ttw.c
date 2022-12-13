@@ -126,6 +126,47 @@ int deallocAll()
     return FUNCTION_SUCESS;
 }
 
+// Centralization of the combat process
+void do_Combat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B_Unit* defender, B_Map *map)
+{
+    // Unit cannot be already engaged at combat
+    if(attacker->engaged == true)
+    {
+        /* printf("\n");
+        printf("#===============================================# \n");
+        printf("| We must disengage the enemy before attacking! | \n");
+        printf("#===============================================# \n"); */
+        print_Message("We must disengage the enemy before attacking!", true);    
+        return;
+    }
+    
+    // Obtaining data
+    int heightDif = get_HeightDif(map, attacker->position, defender->position);
+    short int* fortLvl = &map->tiles[defender->position.Y][defender->position.X].fortLevel;
+    T_Terrain terrain = map->tiles[defender->position.Y][defender->position.X].terrain;
+    T_Veget vegetation = map->tiles[defender->position.Y][defender->position.X].vegetation;
+    
+    // Trivia
+    attacker->attacked = true;
+    attacker->engaged = true;
+    defender->engaged = true;
+
+    // Combat
+    B_Result result = combat_Unit(attacker, defender, heightDif, fortLvl, terrain, vegetation);
+    attackerSide->stats.killed += result.defenderLoss;
+    defenderSide->stats.killed += result.attackerLoss;
+    defenderSide->stats.loss += result.defenderLoss;
+    attackerSide->stats.loss += result.attackerLoss;
+
+    // Level up
+    if(show_Combat_Result(&result) == true)
+        result.winner->level++; 
+    
+    // Whoever wins gains the innitiative (can disengage/engage)
+    result.winner->engaged = false;
+    return;
+}
+
 int load_Scenery(int nScen, int playMap)
 {
     char file[STRING_NAME+STRING_FILE] = "scenarios/";
@@ -637,10 +678,7 @@ int handleMove(B_Map *map, B_Unit *unit, int *moves, B_Side *player, B_Side *opp
             print_Message(msg, true);
             // Go
             int target_I = get_UnitIndex(opponent, map->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
-            do_Combat(unit, &player->stats,
-                      &opponent->units[target_I], &opponent->stats,
-                      get_HeightDif(map, pos_A, pos_B),
-                      &map->tiles[pos_B.Y][pos_B.X].fortLevel);
+            do_Combat(player, unit, opponent, &opponent->units[target_I], map);
             // Done
             show_gUnit(unit);
             show_gUnit(&opponent->units[target_I]);

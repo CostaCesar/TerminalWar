@@ -10,7 +10,8 @@ typedef enum E_buffs
     Shield_Wall,
     Forest_Advtg,
     Desert_Advtg,
-    Height_Advtg,
+    Snow_Advtg,
+    Height_Block,
     Amphibious,
     Rally,
     Ambusher,
@@ -192,8 +193,8 @@ char *get_UnitBuff(Unit_Buff buff)
         case Desert_Advtg:
             type = "Desert Lover";
             break;
-        case Height_Advtg:
-            type = "Higher Ground";
+        case Height_Block:
+            type = "Valley Survivor";
             break;
         case Amphibious:
             type = "Amphibious";
