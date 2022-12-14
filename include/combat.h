@@ -247,7 +247,7 @@ float get_UnitPowerGap(B_Unit *attacker, B_Unit *defender, int HeightDiff, int a
     return attacker_Power - defender_Power + get_BonusByClass(attacker->type, defender->type, ranged);
 }
 
-B_Result combat_Unit(B_Unit *attacker, B_Unit *defender, int heightDif, short int *fortLevel, T_Terrain terrain, T_Veget vegetation)
+B_Result execute_MeleeCombat(B_Unit *attacker, B_Unit *defender, int heightDif, short int *fortLevel, T_Terrain terrain, T_Veget vegetation)
 {
     B_Result result = {0};
     float gap = 0.0;
@@ -292,13 +292,13 @@ B_Result combat_Unit(B_Unit *attacker, B_Unit *defender, int heightDif, short in
     if(combat_Result > 0)
     {
         // Attacker takes damage
-        gap = 1 + ((float) ( 1.0 / pow(MORALE_EXTREMNESS, (double) combat_Result)) 
+        gap = 1.0 + ((float) ( 1.0 / pow(MORALE_EXTREMNESS, (double) combat_Result)) 
                 * (defender->men / attacker->morale));
         attacker->morale -= gap, attacker->men -= (gap / 100 * attacker->men_Max);
 
         // Defender takes damage
-        gap = 1 + (pow(MORALE_EXTREMNESS, (double) combat_Result)
-                * (1 / (attacker->men / defender->morale)));
+        gap = 1.0 + (pow(MORALE_EXTREMNESS, (double) combat_Result)
+                * (attacker->men / defender->morale));
         defender->morale -= gap, defender->men -= (gap / 100 * defender->men_Max);
         
         if(defender->morale <= 0 ||  defender->men <= 0)
@@ -315,28 +315,28 @@ B_Result combat_Unit(B_Unit *attacker, B_Unit *defender, int heightDif, short in
     else if (combat_Result < 0)
     {  
         // Defender takes damage
-        gap = 1 + ((float) ( 1.0 / pow(MORALE_EXTREMNESS, (double) -combat_Result))
+        gap = 1.0 + ((float) ( 1.0 / pow(MORALE_EXTREMNESS, (double) -combat_Result))
                 * (attacker->men / defender->morale));
         defender->morale -= gap, defender->men -= (gap / 100 * defender->men_Max);
 
         // Attacker takes damage
-        gap = 1 + (pow(MORALE_EXTREMNESS, (double) -combat_Result)
-                * (1 / (attacker->men / defender->morale)));
+        gap = 1.0 + ((float) (pow(MORALE_EXTREMNESS, (double) -combat_Result)
+                * (defender->men / attacker->morale)));
 
         attacker->morale -= gap, attacker->men -= (gap / 100 * attacker->men_Max);
         
         if(attacker->morale <= 0 || attacker->men <= 0)
         {
-            attacker->men = (short int) (short int) (rand() % attacker->men);
+            attacker->men = (short int) (rand() % attacker->men);
             attacker->retreating = true;
             attacker->engaged = false;
-            attacker->morale = 1.0f;
+            attacker->morale = 0.0f;
         }
 
         result.winner = defender;
         result.looser = attacker;
     }
-    else return combat_Unit(attacker, defender, heightDif, fortLevel, terrain, vegetation);
+    else return execute_MeleeCombat(attacker, defender, heightDif, fortLevel, terrain, vegetation);
     
     // Stats
     result.attackerLoss = A_Buffer - attacker->men;
@@ -380,10 +380,16 @@ void tryHeal_Unit(B_Side* Side_A, B_Side* Side_B)
     }
 }
 
-bool show_Combat_Result(B_Result *units)
+bool show_Combat(B_Result *units)
 {
     bool out = false;
-    if(units->isDraw)
+    // Normalizing men (just in case)
+    if(units->winner->men < 0)
+        units->winner->men = 0;
+    if(units->looser->men < 0)
+        units->looser->men = 0;
+
+    if(units->isDraw == true)
     {
         printf("Despite valiant efforts, neither side came out on top. Both units now run from the battle! \n");
     }
@@ -463,42 +469,15 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
     return FUNCTION_SUCESS;
 }
 
-// Extrair para o ttw.c
-// que nem o combate melee
-// IMPLEMENTAR
-int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
-                    B_Unit* defender, B_endStats* defenderStats,
-                    int heightDif, T_Veget vegetat, T_Terrain terrain, short int *fortLevel)
+B_Result execute_RangedCombat(B_Unit* attacker, B_Unit* defender, int heightDif, T_Veget vegetat, T_Terrain terrain, short int *fortLevel)
 {
-    char msg[51];
-    // Testing 
-    if(check_Ranged(attacker, defender) == FUNCTION_FAIL)
-        return FUNCTION_FAIL;
-
-    // If attaker != cavalary OR charriot, engage
-    // if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
-    //     attacker->inCombat = true;
-    // Defender must be engaged
-    // defender->inCombat = true;
-
-    // Signaling attack
-    system("cls");
-    print_Line(NULL);
-    print_Line(" ");
-    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
-    print_Line(msg);
-    print_Line("Is firing a volley into");
-    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", defender->name, defender->faction, defender->position.X, defender->position.Y);
-    print_Line(msg);
-    print_Line(" ");
-    print_Line(NULL);
-    Sleep(TIME_STRATEGY);
-
     // Trivia
+    B_Result result = {0};
+    result.winner = attacker, result.looser = defender;
     attacker->attacked = true;
+    attacker->ammo--;
 
     // Doing damage
-    attacker->ammo--;
     float volley = attacker->attack_RangeP * (attacker->morale / 100) + (rand() % 10) + attacker->level;
     float protec = defender->defend_RangeP * (defender->morale / 100) + (rand() % 10) + defender->level;
 
@@ -516,8 +495,8 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
         damage = RESULT_CAP;
     
     int men_Buffer = defender->men;
-    float gap = 1 + (pow(MORALE_EXTREMNESS, (double) damage)
-                * (1 / (attacker->men / defender->morale)) / 3);
+    float gap = 1.0 + (pow(MORALE_EXTREMNESS, (double) damage)
+                * (attacker->men / defender->morale) / 3.0);
     defender->morale -= gap, defender->men -= (gap / 100 * defender->men_Max);
     
     if(defender->morale <= 0 ||  defender->men <= 0)
@@ -527,15 +506,7 @@ int do_Combat_Ranged(B_Unit* attacker, B_endStats* attackerStats,
         defender->engaged = false;
         defender->morale = 0.0f;
     }
-
-    defenderStats->loss += men_Buffer - defender->men;
-    attackerStats->killed += men_Buffer - defender->men;
-
-    // Showing results
-    B_Result res = {0, 0, attacker, defender, false};
-    bool LevelUP = show_Combat_Result(&res);
-    if(LevelUP == true)
-        attacker->level++;
-
-    return FUNCTION_SUCESS;
+    
+    result.defenderLoss = men_Buffer - defender->men;
+    return result;
 }

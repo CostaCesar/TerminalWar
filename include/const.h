@@ -17,13 +17,12 @@
 #define DAMAGE_MEDIUM 3
 #define DAMAGE_LARGE 5
 
-#define RESULT_CAP 7.2
-#define MORALE_EXTREMNESS 2.0
-#define MORALE_RANGED 1.4
+#define RESULT_CAP 7.0
+#define MORALE_EXTREMNESS 1.5
 
 // unit.h
 #define BUFFS_IMPLEMENTED 11
-#define UNIT_MAX_BUFFS 10
+#define BUFFS_MAX 10
 #define UNIT_MAX_LEVEL 5
 #define UNIT_MAX_MORALE 120.0f
 

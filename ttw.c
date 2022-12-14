@@ -127,24 +127,23 @@ int deallocAll()
 }
 
 // Centralization of the combat process
-void do_Combat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B_Unit* defender, B_Map *map)
+void meleeCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B_Unit* defender)
 {
     // Unit cannot be already engaged at combat
     if(attacker->engaged == true)
     {
-        /* printf("\n");
-        printf("#===============================================# \n");
-        printf("| We must disengage the enemy before attacking! | \n");
-        printf("#===============================================# \n"); */
+        // printf("#===============================================# \n");
+        // printf("| We must disengage the enemy before attacking! | \n");
+        // printf("#===============================================# \n"); */
         print_Message("We must disengage the enemy before attacking!", true);    
         return;
     }
     
     // Obtaining data
-    int heightDif = get_HeightDif(map, attacker->position, defender->position);
-    short int* fortLvl = &map->tiles[defender->position.Y][defender->position.X].fortLevel;
-    T_Terrain terrain = map->tiles[defender->position.Y][defender->position.X].terrain;
-    T_Veget vegetation = map->tiles[defender->position.Y][defender->position.X].vegetation;
+    int heightDif = get_HeightDif(&battleMap, attacker->position, defender->position);
+    short int* fortLvl = &battleMap.tiles[defender->position.Y][defender->position.X].fortLevel;
+    T_Terrain terrain = battleMap.tiles[defender->position.Y][defender->position.X].terrain;
+    T_Veget vegetation = battleMap.tiles[defender->position.Y][defender->position.X].vegetation;
     
     // Trivia
     attacker->attacked = true;
@@ -152,19 +151,100 @@ void do_Combat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B_U
     defender->engaged = true;
 
     // Combat
-    B_Result result = combat_Unit(attacker, defender, heightDif, fortLvl, terrain, vegetation);
+    B_Result result = execute_MeleeCombat(attacker, defender, heightDif, fortLvl, terrain, vegetation);
     attackerSide->stats.killed += result.defenderLoss;
     defenderSide->stats.killed += result.attackerLoss;
     defenderSide->stats.loss += result.defenderLoss;
     attackerSide->stats.loss += result.attackerLoss;
 
     // Level up
-    if(show_Combat_Result(&result) == true)
+    if(show_Combat(&result) == true)
         result.winner->level++; 
     
-    // Whoever wins gains the innitiative (can disengage/engage)
-    result.winner->engaged = false;
+    // Cleanup
+    B_Pos target = attacker->position;
+    if(defender->men <= 0)
+    {
+        target = defender->position;
+        delete_Unit(defenderSide->units, &defenderSide->size, get_UnitIndex(defenderSide, defender->Game_ID));
+        battleMap.tiles[target.Y][target.X].unit = NULL;
+    }
+    if(attacker->men <= 0)
+    {
+        delete_Unit(attackerSide->units, &attackerSide->size, get_UnitIndex(attackerSide, attacker->Game_ID));
+        battleMap.tiles[target.Y][target.X].unit = NULL;
+    }
+    else
+    {
+        // Whoever wins gains the innitiative (can disengage/engage)
+        result.winner->engaged = false;
+    }
+
     return;
+}
+
+int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B_Pos target)
+{
+    char msg[STRING_NAME];
+    // Testing 
+    if(check_MapAttack(&battleMap, target, attacker->Game_ID) == FUNCTION_FAIL)
+        return FUNCTION_FAIL;
+    B_Unit *defender = &defenderSide->units[get_UnitIndex(defenderSide, battleMap.tiles[target.Y][target.X].unit->Game_ID)];
+    if(check_Ranged(attacker, defender) == FUNCTION_FAIL)
+        return FUNCTION_FAIL; 
+    
+    // Show
+    update_Map(attacker->position.X, attacker->position.Y, "XXX");
+    Sleep(TIME_MAP);
+    update_Map(target.X, target.Y, "OOO");
+    Sleep(TIME_MAP);
+    
+    // Signaling
+    system("cls");
+    print_Line(NULL);
+    print_Line(" ");
+    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
+    print_Line(msg);
+    print_Line("Is firing a volley into");
+    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", defender->name, defender->faction, defender->position.X, defender->position.Y);
+    print_Line(msg);
+    print_Line(" ");
+    print_Line(NULL);
+    Sleep(TIME_STRATEGY);
+
+    // Go
+    // If attaker != cavalary OR charriot, engage
+    // if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
+    //     attacker->inCombat = true;
+    // Defender must be engaged
+    // defender->inCombat = true;
+    int tVeget = getTile_Vegetat(&battleMap, target), tHeight = get_HeightDif(&battleMap, attacker->position, target);
+    int tTerrain = getTile_Terrain(&battleMap, target);
+    short int *tFort = &battleMap.tiles[target.Y][target.X].fortLevel;
+    B_Result res = execute_RangedCombat(attacker, defender, tHeight, tVeget, tTerrain, tFort);
+    attackerSide->stats.killed += res.defenderLoss;
+    defenderSide->stats.loss += res.defenderLoss;
+
+    // Showing results
+    if(show_Combat(&res) == true)
+        attacker->level++;
+    
+    // Done
+    show_gUnit(attacker);
+    show_gUnit(defender);
+    printf(">> Press ENTER to continue ");
+    while (get_KeyPress(false) != KEY_ENTER) continue;
+    system("cls");
+    
+    // Cleanup
+    target = defender->position;
+    if(defender->men == 0)
+    {
+        delete_Unit(defenderSide->units, &defenderSide->size, get_UnitIndex(defenderSide, defender->Game_ID));
+        battleMap.tiles[target.Y][target.X].unit = NULL;
+    }
+        
+    return FUNCTION_SUCESS;
 }
 
 int load_Scenery(int nScen, int playMap)
@@ -678,7 +758,7 @@ int handleMove(B_Map *map, B_Unit *unit, int *moves, B_Side *player, B_Side *opp
             print_Message(msg, true);
             // Go
             int target_I = get_UnitIndex(opponent, map->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
-            do_Combat(player, unit, opponent, &opponent->units[target_I], map);
+            meleeCombat(player, unit, opponent, &opponent->units[target_I]);
             // Done
             show_gUnit(unit);
             show_gUnit(&opponent->units[target_I]);
@@ -834,49 +914,23 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     print_Message("This unit can't do ranged attacks!", true);
                     moves--; continue;
                 }
-                
+
                 clear_afterMap(battleMap->height);
                 toggle_Cursor(true);
                 printf(">> Target coodiantes <X Y> \n");
                 printf(" >=> ");
                 scanf("%hd %hd", &target.X, &target.Y);
                 toggle_Cursor(false);
-                if((check_MapAttack(battleMap, target, player->units[cUnit_I].Game_ID) == FUNCTION_FAIL) || 
-                    check_Ranged(&player->units[cUnit_I], battleMap->tiles[target.Y][target.X].unit) == FUNCTION_FAIL)
-                { moves--; continue; }
                 
-                // Show
-                pos_B = battleMap->tiles[target.Y][target.X].unit->position;
-                update_Map(pos_A.X, pos_A.Y, "XXX");
-                Sleep(TIME_MAP);
-                update_Map(pos_B.X, pos_B.Y, "OOO");
-                Sleep(TIME_MAP);
-                clear_afterMap(battleMap->height);
-                // Go
-                target_I = get_UnitIndex(opponent, battleMap->tiles[target.Y][target.X].unit->Game_ID);
-                int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
-                int tTerrain = getTile_Terrain(battleMap, pos_B);
-                short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
-                // Done
-                if(do_Combat_Ranged(&player->units[cUnit_I], &player->stats,
-                                    &opponent->units[target_I], &opponent->stats,
-                                    tHeight, tVeget, tTerrain, tFort) == FUNCTION_SUCESS)
+                if(rangedCombat(player, &player->units[cUnit_I], opponent, target) == FUNCTION_FAIL)
+                { moves--; continue; }
+                if(opponent->units[target_I].men == 0)
                 {
-                    show_gUnit(&player->units[cUnit_I]);
-                    show_gUnit(&opponent->units[target_I]);
-                    printf(">> Press ENTER to continue ");
-                    while (get_KeyPress(false) != KEY_ENTER) continue;
-                    system("cls");
-                    if(opponent->units[target_I].men == 0)
-                    {
-                        delete_Unit(opponent->units, &opponent->size, target_I);
-                        battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
-                    }
-                    show_Map(battleMap, *mode, true);
+                    delete_Unit(opponent->units, &opponent->size, target_I);
+                    battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
                 }
-                else moves--;
-                update_Map(pos_A.X, pos_A.Y, player->units[cUnit_I].name);
-                update_Map(pos_B.X, pos_B.Y, get_MapSprite(&battleMap->tiles[pos_B.Y][pos_B.X], *mode));
+                
+                show_Map(battleMap, *mode, true);
                 continue;
             }
             else if (action == 'd') // View unit stats
@@ -1007,9 +1061,9 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 toggle_Cursor(false);
             }
         }
+        clear_afterMap(battleMap->height);
         player->units[cUnit_I].attacked = false, player->units[cUnit_I].engaged = false;
-        update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
-    }
+        update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));}
     else // AI Zone
     {
         B_Tile *position;
@@ -1033,21 +1087,11 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             {
                 case AI_Fire:
                     pos_B = player->units[cUnit_I].goal;
-                    // Show
-                    update_Map(pos_A.X, pos_A.Y, "XXX");
-                    Sleep(TIME_MAP);
-                    update_Map(pos_B.X, pos_B.Y, "OOO");
-                    Sleep(TIME_MAP);
-                    clear_afterMap(battleMap->height);
-                    // Go
-                    target_I = get_UnitIndex(opponent, battleMap->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
-                    int tVeget = getTile_Vegetat(battleMap, pos_B), tHeight = get_HeightDif(battleMap, pos_A, pos_B);
-                    int tTerrain = getTile_Terrain(battleMap, pos_B);
-                    short int *tFort = &battleMap->tiles[pos_B.Y][pos_B.X].fortLevel;
-                    FRes = do_Combat_Ranged(&player->units[cUnit_I], &player->stats,
-                                            &opponent->units[target_I], &opponent->stats,
-                                            tHeight, tVeget, tTerrain, tFort);
-                    // Done
+                    if(rangedCombat(player, &player->units[cUnit_I], opponent, pos_B) == FUNCTION_FAIL)
+                    {
+                        // Fazer algo
+                    }
+                        
                     if(FRes == FUNCTION_SUCESS)
                     {
                         show_gUnit(&player->units[cUnit_I]);
@@ -1055,11 +1099,6 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                         printf(">> Press ENTER to continue ");
                         while (get_KeyPress(false) != KEY_ENTER) continue;
                         system("cls");
-                        if(opponent->units[target_I].men == 0)
-                        {
-                            delete_Unit(opponent->units, &opponent->size, target_I);
-                            battleMap->tiles[pos_B.Y][pos_B.X].unit = NULL;
-                        }
                         show_Map(battleMap, *mode, true);
                     }
                     else update_Map(pos_B.X, pos_B.Y, get_MapSprite(&battleMap->tiles[pos_B.Y][pos_B.X], *mode));

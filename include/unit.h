@@ -71,7 +71,7 @@ typedef struct S_Unit
     short int ammo;
     short int range;  
     short int buffs_S;
-    Unit_Buff buffs[BUFFS_IMPLEMENTED];
+    Unit_Buff buffs[BUFFS_MAX];
 
     bool retreating;
     bool engaged;
