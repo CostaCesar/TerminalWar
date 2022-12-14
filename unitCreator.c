@@ -16,7 +16,7 @@ void handleBuffs(B_Unit *unit)
     int temp = 0;
     bool skip = false;
 
-    for(int i = 0; i < BUFFS_IMPLEMENTED; i++)
+    for(int i = 0; i < BUFFS_MAX; i++)
         unit->buffs[i] = No_Buff;
     
     for(int i = 0; i < unit->buffs_S; i++)
@@ -185,7 +185,7 @@ B_Unit* edit_List(int* out, B_Unit *list, int *size)
         if(list[pos].level > UNIT_MAX_LEVEL)
             list[pos].level = UNIT_MAX_LEVEL;
 
-        printf("> Quantidade de habilidades [MAXIMO = %d]: ", UNIT_MAX_BUFFS);
+        printf("> Quantidade de habilidades [MAXIMO = %d]: ", BUFFS_MAX);
         scanf("%hd%c", &list[pos].buffs_S, &chr);
         if(list[pos].buffs_S > UNIT_MAX_BUFFS)
             list[pos].buffs_S = UNIT_MAX_BUFFS;
@@ -277,6 +277,7 @@ B_Unit* load_List(int *out, B_Unit *list, int *size, char *name, char *desc)
     {
         if(list[i].range <= 0) list[i].attack_RangeP = -1;
         list[i].attacked = false;
+        list[i].chaseID = NULL;
     }
 
     *out = CONTINUE;
