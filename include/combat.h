@@ -278,7 +278,7 @@ B_Result execute_MeleeCombat(B_Unit *attacker, B_Unit *defender, int heightDif, 
         (*fortLevel)--;
         char msg[46];
         snprintf(msg, sizeof(msg), "Fort level at %hdX and %hdY decreased to %hd!", defender->position.X, defender->position.Y, *fortLevel);
-        print_Message(msg, false);   
+        game_Message(0, msg, false, false, -1);   
     }
 
     // Limits
@@ -423,7 +423,7 @@ bool check_UnitMove(B_Unit *unit, int moves)
     {
         unit->engaged = false;
         moves++;
-        print_Message("Disengaging!", true);
+        game_Message(0, "Disengaging!", true, false, -1);
         return true;
     }
     else return false;
@@ -441,7 +441,7 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| The units are too far away from eachother! | \n");
         printf("#============================================# \n"); */
-        print_Message("The units are too far away from eachother!", true);   
+        game_Message(0, "The units are too far away from eachother!", true, false, -1);   
         return FUNCTION_FAIL;
     }
 
@@ -452,7 +452,7 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| This has no projectiles. They can't fire!  | \n");
         printf("#============================================# \n"); */
-        print_Message("This has no projectiles. They can't fire!", true);
+        game_Message(0, "This has no projectiles. They can't fire!", true, false, -1);
         return FUNCTION_FAIL;       
     }
 
@@ -463,7 +463,7 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| This unit will not fire, they're routing!  | \n");
         printf("#============================================# \n"); */     
-        print_Message("This unit will not fire, they're routing!", true);
+        game_Message(0, "This unit will not fire, they're routing!", true, false, -1);
         return FUNCTION_FAIL;       
     }
     return FUNCTION_SUCESS;

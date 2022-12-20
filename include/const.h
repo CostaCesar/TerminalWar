@@ -55,10 +55,14 @@ typedef enum E_Vegetation
     Jungle
 } T_Veget;
 
+typedef enum E_MapMode
+{
+    Map_Height = 0, 
+    Map_Terrain = 1, 
+    Map_Vegetat = 2, 
+    Map_Graphic = 3, 
+    Map_Spawns = 4, 
+} MapMode;
+
 #define NO_UNIT -1
 #define OUT_COMBAT -3
-#define MODE_HEIGHT 0
-#define MODE_TERRAIN 1
-#define MODE_VEGETAT 2
-#define MODE_GRAPHIC 3
-#define MODE_UNITS 4

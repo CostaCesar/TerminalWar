@@ -8,6 +8,7 @@
 #include "unit.h"
 
 bool firstLine = true, muted = false;
+int customWidth = 0;
 
 typedef struct P_tileData
 {
@@ -73,8 +74,8 @@ void clear_afterMap(short int mHeight)
 void print_Line(char *message)
 {
     int screenWidth = get_ScreenWidth();
-    CONSOLE_SCREEN_BUFFER_INFO cursor;
-    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    // CONSOLE_SCREEN_BUFFER_INFO cursor;
+    // HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if(!message)
     {
@@ -97,17 +98,27 @@ void print_Line(char *message)
     else
     {
         putchar(186);
-        GetConsoleScreenBufferInfo(console, &cursor);
+        // GetConsoleScreenBufferInfo(console, &cursor);
 
         if(message[0] != ' ' && strlen(message) > 1)
         {
             int msg_len = strlen(message);
-            cursor.dwCursorPosition.X = floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f);
-            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-            printf("%s", message);
+            for(int i = 0; i < ceilf(screenWidth / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
+                putchar(' ');
+            printf(message);
+            for(int i = 0; i < floorf(screenWidth / 2.0f) - ceilf(msg_len / 2.0f) - 1; i++)
+                putchar(' ');
+            // cursor.dwCursorPosition.X = floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f);
+            // SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+            // printf("%s", message);
         }
-        cursor.dwCursorPosition.X = screenWidth-1;
-        SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+        else
+        {
+            for(int i = 0; i < screenWidth - 2; i++)
+                putchar(' ');
+        }
+        // cursor.dwCursorPosition.X = screenWidth-1;
+        // SetConsoleCursorPosition(console, cursor.dwCursorPosition);
         putchar(186);
         printf("\n");
     }
@@ -124,7 +135,7 @@ void fillSpace_ToBottom(int offset)
     return;
 }
 
-void print_LineOffset(char *message, int offset, bool doBorders)
+void print_LineOffset(char *message, int offset)
 {
     int screenWidth = get_ScreenWidth();
     CONSOLE_SCREEN_BUFFER_INFO cursor;
@@ -151,39 +162,24 @@ void print_LineOffset(char *message, int offset, bool doBorders)
     else
     {
         int msg_len = strlen(message);
-        if(doBorders == true)
-        {
-            putchar(186);
-            GetConsoleScreenBufferInfo(console, &cursor);
-            
-            cursor.dwCursorPosition.X = offset;
-            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-            printf("%s", message);
-            
-            cursor.dwCursorPosition.X = screenWidth-1;
-            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-            putchar(186);
-        }
-        else
-        {
-            GetConsoleScreenBufferInfo(console, &cursor);
-            cursor.dwCursorPosition.X = floorf(screenWidth / 2.0f) - floorf(msg_len / 2.0f);
-            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-            printf("%s", message);
-            
-            cursor.dwCursorPosition.X = screenWidth;
-            SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-        }
+        putchar(186);
+        GetConsoleScreenBufferInfo(console, &cursor);
+        
+        cursor.dwCursorPosition.X = offset;
+        SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+        printf("%s", message);
+        
+        cursor.dwCursorPosition.X = screenWidth-1;
+        SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+        putchar(186);
         printf("\n");
     }
     return;
 }
 
-void print_Message(char *message, bool doWait)
+void print_Message(char *message, int screenWidth)
 {
-    int screenWidth = get_ScreenWidth();
     int msg_len = strlen(message);
-
     print_Line(NULL);
     
     putchar(186);
@@ -205,11 +201,97 @@ void print_Message(char *message, bool doWait)
     putchar(186);
 
     print_Line(NULL);
+    return;     
+}
 
+void print_Offset(char *message, int offset, int screenWidth)
+{
+    int msg_len = strlen(message);
+    print_Line(NULL);
+    
+    putchar(186);
+    for(int i = 0; i < screenWidth-2; i++)
+        printf(" ");
+    putchar(186);
+
+    putchar(186);
+    for(int i = 0; i < offset + 1; i++)
+        printf(" ");
+    printf("%s", message);
+    for(int i = 0; i < screenWidth - msg_len - 2; i++)
+        printf(" ");
+    putchar(186);
+    
+    putchar(186);
+    for(int i = 0; i < screenWidth-2; i++)
+        printf(" ");
+    putchar(186);
+
+    print_Line(NULL);
+    return;
+}
+
+void print_Text(char *message)
+{
+    CONSOLE_SCREEN_BUFFER_INFO cursor = {0};
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    int msg_len = strlen(message);
+    
+    cursor.dwCursorPosition.X = 2, cursor.dwCursorPosition.Y = 1;    
+    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    for(int j = 0; j < customWidth -3; j++)
+        putchar(' ');
+
+    cursor.dwCursorPosition.Y++;
+    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    for(int j = 0; j < customWidth -3; j++)
+        putchar(' ');
+    
+    cursor.dwCursorPosition.Y++;
+    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    for(int i = 0; i < floorf(customWidth/ 2.0f) - floorf(msg_len / 2.0f) - 3; i++)
+        putchar(' ');
+    printf("%s", message);
+    for(int i = 0; i < ceilf(customWidth/ 2.0f) - ceilf(msg_len / 2.0f) - 3; i++)
+        putchar(' ');
+
+    cursor.dwCursorPosition.Y++;
+    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    for(int j = 0; j < customWidth -3; j++)
+        putchar(' ');
+
+    cursor.dwCursorPosition.Y++;
+    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    for(int j = 0; j < customWidth -3; j++)
+        putchar(' ');
+    
+    
+    cursor.dwCursorPosition.Y++;
+    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    for(int j = 0; j < customWidth -3; j++)
+        putchar(' ');
+    
+    return;
+}
+
+void game_Message(int Ypos, char *message, bool doWait, bool useCustomWidth, int msgOffset)
+{
+    COORD pos = { 0, Ypos};
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    
+    if(useCustomWidth == true)
+        print_Text(message);
+    else
+    {
+        if(msgOffset < 1)
+            print_Message(message, get_ScreenWidth());
+        else
+            print_Offset(message, msgOffset, get_ScreenWidth());
+    }
     if(doWait)
         Sleep(2000);
 
-    return;     
+    return;
 }
 
 void print_UnitDesc(int descPos, char *descFile)
@@ -671,7 +753,8 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
         putchar(205);
     putchar(188);
     putchar('\n');
-    return;
+    
+    return; // 8 lines 
 }
 
 void jukebox(char *sound, DWORD param)
@@ -765,7 +848,7 @@ int listScen()
             if(fd.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY)
             {
                 nScen++;
-                print_LineOffset(fd.cFileName, 7, true);
+                print_LineOffset(fd.cFileName, 7);
             }  
         } while (FindNextFile(handle, &fd));
         print_Line(" ");
@@ -773,7 +856,7 @@ int listScen()
         FindClose(handle);
     }
     else
-        print_Message("Can't load the scenarios folder, get at least one scenario in there!", true);
+        game_Message(0, "Can't load the scenarios folder, get at least one scenario in there!", true, false, -1);
     return nScen;
 }
 
@@ -824,7 +907,7 @@ void screen_Credits(float version)
     print_Line("Civilization 2 - Theme");
     print_Line("Age Of Empires I - Siege(Wally)");
     print_Line(" ");
-    print_LineOffset("Aperte ENTER para continuar", 5, true);
+    print_LineOffset("Aperte ENTER para continuar", 5);
     print_Line(NULL);
     while(get_KeyPress(false) != KEY_ENTER);
     { /* Nothing */ }

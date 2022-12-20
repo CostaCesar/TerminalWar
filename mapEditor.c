@@ -156,7 +156,7 @@ int map_Edit(B_Map* map)
 {
     char chr = 'X';
     Map_Area fArea = {-1, -1, -1, -1};
-    int fAux = 0, fMode = MODE_HEIGHT;
+    int fAux = 0, fMode = Map_Height;
     bool keepVegetation = false, keepTerrain = false;
 
     B_Tile fTile = {0};
@@ -395,8 +395,8 @@ int map_Edit(B_Map* map)
             break;
         case 't':
             fMode++;
-            if(fMode > MODE_UNITS)
-                fMode = MODE_HEIGHT;
+            if(fMode > Map_Spawns)
+                fMode = Map_Height;
             break;
         case 's':
             return SUCESS;

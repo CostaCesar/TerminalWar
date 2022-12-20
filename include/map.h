@@ -102,21 +102,40 @@ int compPos(B_Pos A, B_Pos B)
     return A.X == B.X && A.Y == B.Y;
 }
 
+char *get_MapMode(MapMode mode)
+{
+    switch (mode)
+    {
+    case Map_Height:
+        return "Heigth Map";
+    case Map_Terrain:
+        return "Terrain Map";
+    case Map_Vegetat:
+        return "Vegetation Map";
+    case Map_Spawns:
+        return "Units Map";
+    case Map_Graphic:
+        return "Battle Map";
+    default:
+        return "ERROR";
+    }
+}
+
 int check_MapAttack(B_Map *map, B_Pos pos, int ID)
 {
     if(pos.X < 0 || pos.X >= map->width || pos.Y < 0 || pos.Y >= map->height)
     {
-        print_Message("Coordinates out of boundaries!", true);
+        game_Message(0, "Coordinates out of boundaries!", true, false, -1);
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit == NULL)
     {
-        print_Message("There's nothing to attack here!", true);
+        game_Message(0, "There's nothing to attack here!", true, false, -1);
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit->Game_ID % 2 == ID % 2)
     {
-        print_Message("These are our own troops Sir!", true);
+        game_Message(0, "These are our own troops Sir!", true, false, -1);
         return FUNCTION_FAIL;
     }
     return FUNCTION_SUCESS;
@@ -242,23 +261,23 @@ char *get_MapSprite(B_Tile* tile, int mode)
     }
     switch (mode)
     {
-    case MODE_HEIGHT:
+    case Map_Height:
         snprintf(mapStat, sizeof(mapStat), "%3d", tile->elevation);
         break;
-    case MODE_UNITS:
+    case Map_Spawns:
         if(tile->spawn > 0)
             snprintf(mapStat, sizeof(mapStat), "<A>");
         else if(tile->spawn < 0)
             snprintf(mapStat, sizeof(mapStat), "<B>");
         else snprintf(mapStat, sizeof(mapStat), "   ");
         break;
-    case MODE_VEGETAT:
+    case Map_Vegetat:
         snprintf(mapStat, sizeof(mapStat), "%3d", tile->vegetation);
         break;
-    case MODE_TERRAIN:
+    case Map_Terrain:
         snprintf(mapStat, sizeof(mapStat), "%3d", tile->terrain);
         break;
-    case MODE_GRAPHIC:
+    case Map_Graphic:
         tileData.height = &tile->elevation, tileData.veget = (int *) &tile->vegetation;
         tileData.terrain = (int *) &tile->terrain, tileData.unit = tile->unit->name;
         tileData.spawn = 0;
@@ -282,26 +301,26 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
         {
             switch (mode)
             {
-            case MODE_HEIGHT:
+            case Map_Height:
                 tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
                 tiles[i * source->width + j].veget = NULL;
                 tiles[i * source->width + j].terrain = NULL;
                 tiles[i * source->width + j].spawn = NO_UNIT;
                 break;
-            case MODE_UNITS:
+            case Map_Spawns:
                 if(source->tiles[i][j].spawn > 0)
                     tiles[i * source->width + j].spawn = 1;
                 else if(source->tiles[i][j].spawn < 0)
                     tiles[i * source->width + j].spawn = 2;
                 else tiles[i * source->width + j].spawn = 0;
                 break;
-            case MODE_TERRAIN:
+            case Map_Terrain:
                 tiles[i * source->width + j].terrain = (int *) &source->tiles[i][j].terrain;
                 tiles[i * source->width + j].spawn  = NO_UNIT;
                 tiles[i * source->width + j].veget = NULL;
                 tiles[i * source->width + j].height = NULL;
                 break;
-            case MODE_GRAPHIC:
+            case Map_Graphic:
                 if(source->tiles[i][j].unit == NULL)
                 {
                     tiles[i * source->width + j].height = (short int *) &source->tiles[i][j].elevation;
@@ -312,7 +331,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
                 else
                     tiles[i * source->width + j].unit = source->tiles[i][j].unit->name;
                 break;
-            case MODE_VEGETAT:
+            case Map_Vegetat:
                 tiles[i * source->width + j].veget = (int *) &source->tiles[i][j].vegetation;
                 tiles[i * source->width + j].terrain = NULL;
                 tiles[i * source->width + j].spawn = NO_UNIT;
@@ -327,7 +346,7 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
     COORD pos = {0, 8};
     if(skipBanner == true) SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     
-    if(mode == MODE_GRAPHIC)
+    if(mode == Map_Graphic)
         print_MapGraphic(source->height, source->width, tiles);
     else print_MapStats(source->height, source->width, tiles);
     free(tiles);
@@ -375,7 +394,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
     // Checking if coordiantes are valid
     if((unit->position.X < 0 || unit->position.X >= source_Map->width) || (unit->position.Y  < 0 || unit->position.Y  >= source_Map->height))
     {
-        print_Message("Coordinates out of boundaries!", true);       
+        game_Message(0, "Coordinates out of boundaries!", true, false, -1);       
         return FUNCTION_FAIL;
     }
     
@@ -384,7 +403,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
     {
         char msg[24];
         snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unit->position.X, unit->position.Y);
-        print_Message(msg, true);
+        game_Message(0, msg, true, false, -1);
         return FUNCTION_FAIL;
     }
 
@@ -431,19 +450,19 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
         // Checking for terrain-related movement
         if(source_Map->tiles[destPos.Y][destPos.X].elevation < -1 && source_Map->tiles[destPos.Y][destPos.X].terrain == Water)
         {
-            print_Message("The water is too deep to cross!", true);
+            game_Message(0, "The water is too deep to cross!", true, false, -1);
             return FUNCTION_FAIL;           
         }
         if(abs(source_Map->tiles[unit->position.Y][unit->position.X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
-            print_Message("The terrain is too step to go!", true);
+            game_Message(0, "The terrain is too step to go!", true, false, -1);
             return FUNCTION_FAIL;
         }
 
         // Cheking for units (if friend, then if foe)
         if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
         {
-            print_Message("Units can't go over eachother!", true);
+            game_Message(0, "Units can't go over eachother!", true, false, -1);
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
@@ -457,7 +476,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
 
         return mCost;
     }
-    print_Message("Destination out of boundaries!", true);
+    game_Message(0, "Destination out of boundaries!", true, false, -1);
     return FUNCTION_FAIL;
 }
 
@@ -498,14 +517,14 @@ int inc_FortLevel(B_Map *map, short int amount, B_Pos pos)
         map->tiles[pos.Y][pos.X].fortLevel = MAX_FORT_LEVEL;
         char msg[28];
         snprintf(msg, sizeof(msg), "Max Fort Level Reached [%2d]", MAX_FORT_LEVEL);
-        print_Message(msg, true);
+        game_Message(0, msg, true, true, -1);
         return FUNCTION_FAIL;
     }
     else
     {
         char msg[29];
         snprintf(msg, sizeof(msg), "Fort Upgraded from %2d to %2d!", map->tiles[pos.Y][pos.X].fortLevel - amount, map->tiles[pos.Y][pos.X].fortLevel);
-        print_Message(msg, true);       
+        game_Message(0, msg, true, true, -1);       
         return FUNCTION_SUCESS;
     }
 }
@@ -877,7 +896,7 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         // printf("#=======================================# \n");
         char msg[38];
         snprintf(msg, sizeof(msg), "Path to %3dX %3dY could not be found!", endNode->unit->position.X, endNode->unit->position.Y);
-        print_Message(msg, true);
+        game_Message(0, msg, true, false, -1);
         
         getchar();
     }
