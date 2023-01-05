@@ -201,15 +201,15 @@ int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
     
     // Signaling
     system("cls");
-    print_Line(NULL);
-    print_Line(" ");
+    print_Line(NULL, 0);
+    print_Line(" ", 0);
     snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
-    print_Line(msg);
-    print_Line("Is firing a volley into");
+    print_Line(msg, 0);
+    print_Line("Is firing a volley into", 0);
     snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", defender->name, defender->faction, defender->position.X, defender->position.Y);
-    print_Line(msg);
-    print_Line(" ");
-    print_Line(NULL);
+    print_Line(msg, 0);
+    print_Line(" ", 0);
+    print_Line(NULL, 0);
     Sleep(TIME_STRATEGY);
 
     // Go
@@ -509,13 +509,13 @@ int load_Scenery(int nScen, int playMap)
                 fgets(word, sizeof(word), scen);
                 if(word[0] == '$') break;
                 word[strlen(word)-1] = '\0';
-                print_Line(word);
+                print_Line(word, 0);
             } while (!feof(scen));
-            print_Line(" ");
+            print_Line(" ", 0);
             fillSpace_ToBottom(3);
-            print_Line("[ARROW KEY] Change map | [ENTER] Select Map | [ESC] Return To Menu");
-            print_Line(" ");
-            print_Line(NULL);
+            print_Line("[ARROW KEY] Change map | [ENTER] Select Map | [ESC] Return To Menu", 0);
+            print_Line(" ", 0);
+            print_Line(NULL, 0);
         }
         break;
     }
@@ -553,14 +553,14 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
         toggle_Cursor(false);
         snprintf(msg, sizeof(msg), "%s [%s]", map->name, get_MapMode(*mode));
 
-        print_Line(NULL);
-        print_Line(" ");
-        print_Line(msg);
-        print_Line("[T] Change Map Type  | [A] Place A Unit");
-        print_Line("[Esc] Exit To Menu   | [M] Replace Unit");
-        print_Line("[Enter] Start Battle | [R] Remove Unit");
-        print_Line(" ");
-        print_Line(NULL);
+        print_Line(NULL, 0);
+        print_Line(" ", 0);
+        print_Line(msg, 0);
+        print_Line("[T] Change Map Type  | [A] Place A Unit", 0);
+        print_Line("[Esc] Exit To Menu   | [M] Replace Unit", 0);
+        print_Line("[Enter] Start Battle | [R] Remove Unit", 0);
+        print_Line(" ", 0);
+        print_Line(NULL, 0);
         show_Map(map, *mode, false);
 
         out = get_KeyPress(true);
@@ -777,7 +777,6 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
     {
         for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
-            customWidth = 1 + get_ScreenWidth() / 2;
             pos_A = player->units[cUnit_I].position;
             info_Upper (battleMap->name, turn, player->name, true, player->units[cUnit_I].name,
                         player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, player->units[cUnit_I].moves - moves);
@@ -966,23 +965,23 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 toggle_Cursor(false);
                 if (target.X >= 0 && target.X < battleMap->width && target.Y >= 0 && target.Y < battleMap->height)
                 {
-                    print_Line(NULL);
-                    print_Line(" ");
+                    print_Line(NULL, 0);
+                    print_Line(" ", 0);
                     snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap->tiles[target.Y][target.X].terrain));
-                    print_Line(msg);
+                    print_Line(msg, 0);
                     snprintf(msg, sizeof(msg), "Vegetation: %s", tVeget_toStr(battleMap->tiles[target.Y][target.X].vegetation));
-                    print_Line(msg);
+                    print_Line(msg, 0);
                     snprintf(msg, sizeof(msg), "Elevation: %d", battleMap->tiles[target.Y][target.X].elevation);
-                    print_Line(msg);
+                    print_Line(msg, 0);
                     snprintf(msg, sizeof(msg), "Fortification: %d", battleMap->tiles[target.Y][target.X].fortLevel);
-                    print_Line(msg);
+                    print_Line(msg, 0);
                     if(battleMap->tiles[target.Y][target.X].unit)
                     {
                         snprintf(msg, sizeof(msg), "Unit in here: %d (%s)", battleMap->tiles[target.Y][target.X].unit->Game_ID, battleMap->tiles[target.Y][target.X].unit->name);
-                        print_Line(msg);
+                        print_Line(msg, 0);
                     }
-                    print_Line(" ");
-                    print_Line(NULL);
+                    print_Line(" ", 0);
+                    print_Line(NULL, 0);
                     printf(">> Press ENTER to continue \n");
                     while (get_KeyPress(false) != KEY_ENTER) continue;
                     system("cls");
@@ -1024,7 +1023,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 if(player->units[cUnit_I].path == NULL)
                 {
                     clear_afterMap(battleMap->height);
-                    game_Message(0, "No path to this tile!", true, true, -1);
+                    reset_Cursor();
+                    game_Message(0, "No path to this tile!", true, (int)ceilf(get_ScreenWidth() / 2.0f), -1);
                     moves--; continue;
                 }
 
@@ -1049,7 +1049,6 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));}
     else // AI Zone
     {
-        customWidth = 1 + get_ScreenWidth() / 2;
         B_Tile *position;
         for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
@@ -1097,7 +1096,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     if(player->units[cUnit_I].path == NULL)
                     {
                         clear_afterMap(battleMap->height);
-                        game_Message(0, "No path to this tile!", true, true, -1);
+                        game_Message(0, "No path to this tile!", true, (int)ceilf(get_ScreenWidth() / 2.0f), -1);
                         moves--; continue;
                     }
                     (void) handleMove(battleMap, &player->units[cUnit_I], &moves, player, opponent, *mode);
@@ -1131,10 +1130,8 @@ int main(/*int argc, char** argv*/)
 
     int nMaps = 0, cScen = 0, cMap = 0, out = 0, mode = Map_Spawns;
     extern bool muted;
-    extern int customWidth;
 
 startMenu:
-    customWidth = 1 + get_ScreenWidth() / 2;
     // Playing music
     jukebox("Menu.wav", SND_ASYNC | SND_FILENAME | SND_LOOP);
     // Side_A
@@ -1187,7 +1184,6 @@ startMenu:
     Side_A.stats.name = Side_A.name, Side_B.stats.name = Side_B.name;
     Side_A.stats.deployed = 0, Side_A.stats.killed = 0, Side_A.stats.loss = 0;
     Side_B.stats.deployed = 0, Side_B.stats.killed = 0, Side_B.stats.loss = 0;
-    customWidth = 1 + get_ScreenWidth() / 2;
 
     // Placing AI on Map
     if(Side_B.isAI == true)
