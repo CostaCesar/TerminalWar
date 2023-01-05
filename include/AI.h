@@ -294,11 +294,11 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
                 return AI_Wait;
             if(current->position.X == test.X && current->position.Y == test.Y)
                 return AI_Fortify;
-            
+            // int* testPath =
+            if(autoMove(map, current_Tile, &map->tiles[test.Y][test.X]) != NULL)
+                return AI_GoTo;
             // Se for atacada, unidade não pode fortificar e unidade tem mobilidade...
             // IMPLEMENTAR
-
-            return AI_GoTo;
         }
     }
 

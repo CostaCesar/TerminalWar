@@ -113,7 +113,7 @@ void print_Line(char *message, int size)
         putchar(186);
         // GetConsoleScreenBufferInfo(console, &cursor);
 
-        if(message[0] != ' ' && strlen(message) > 1)
+        if(message[0] != ' ' || strlen(message) > 1)
         {
             int msg_len = strlen(message);
             for(int i = 0; i < ceilf(size / 2.0f) - floorf(msg_len / 2.0f) - 1; i++)
@@ -668,7 +668,7 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
 
     // Unit name
     reset_Cursor();
-    snprintf(msg, sizeof(msg), "[%04d] <||> %s", Id, unitName);
+    snprintf(msg, sizeof(msg), "         [%04d] <||> %-15s", Id, unitName);
     print_Message(msg, size + 1, 3, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
