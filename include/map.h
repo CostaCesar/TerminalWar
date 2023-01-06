@@ -102,25 +102,6 @@ int compPos(B_Pos A, B_Pos B)
     return A.X == B.X && A.Y == B.Y;
 }
 
-char *get_MapMode(MapMode mode)
-{
-    switch (mode)
-    {
-    case Map_Height:
-        return "Heigth Map";
-    case Map_Terrain:
-        return "Terrain Map";
-    case Map_Vegetat:
-        return "Vegetation Map";
-    case Map_Spawns:
-        return "Units Map";
-    case Map_Graphic:
-        return "Battle Map";
-    default:
-        return "ERROR";
-    }
-}
-
 int check_MapAttack(B_Map *map, B_Pos pos, int ID)
 {
     if(pos.X < 0 || pos.X >= map->width || pos.Y < 0 || pos.Y >= map->height)

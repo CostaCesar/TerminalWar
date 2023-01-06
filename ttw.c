@@ -536,6 +536,7 @@ int load_Scenery(int nScen, int playMap)
     }
     fclose(scen);
 
+    reset_Cursor();
     return output;
 }
 
@@ -778,8 +779,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
         for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
             pos_A = player->units[cUnit_I].position;
-            info_Upper (battleMap->name, turn, player->name, true, player->units[cUnit_I].name,
-                        player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, player->units[cUnit_I].moves - moves);
+            info_Upper (battleMap->name, *mode, turn, player->name, true, player->units[cUnit_I].name,
+                        player->units[cUnit_I].Game_ID, pos_A, player->units[cUnit_I].moves - moves);
 
             if(check_UnitMove(&player->units[cUnit_I], moves) == false)
             {
@@ -1054,7 +1055,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
         {
             // show_Map(&battleMap, Map_Height);
             int FRes = false;
-            info_Upper(battleMap->name, turn, player->name, false, player->units[cUnit_I].name, player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
+            info_Upper(battleMap->name, *mode, turn, player->name, false, player->units[cUnit_I].name,
+                       player->units[cUnit_I].Game_ID, pos_A, NO_UNIT);
             update_Map(pos_A.X, pos_A.Y, player->units[cUnit_I].name);
             Sleep(TIME_STRATEGY);
             pos_Screen.Y = MAP_OFFSET_Y+battleMap->height*2;
@@ -1112,7 +1114,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             update_Map(pos_Screen.X, pos_Screen.Y, get_MapSprite(&battleMap->tiles[pos_Screen.Y][pos_Screen.X], *mode));
         }
         player->units[cUnit_I].attacked = false, player->units[cUnit_I].engaged = false;
-        info_Upper(battleMap->name, turn, Side_B.name, false, player->units[cUnit_I].name, player->units[cUnit_I].Game_ID, pos_A.X, pos_A.Y, NO_UNIT);
+        info_Upper(battleMap->name, *mode, turn, Side_B.name, false, player->units[cUnit_I].name,
+                    player->units[cUnit_I].Game_ID, pos_A, NO_UNIT);
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));
         Sleep(TIME_STRATEGY);
     }

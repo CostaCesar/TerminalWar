@@ -71,17 +71,14 @@ void clear_afterMap(short int mHeight)
 
 void print_Line(char *message, int size)
 {
-    bool cursorInMiddle;
     int screenSize = get_ScreenWidth();
     if (size == 0)
         size = screenSize;
     CONSOLE_SCREEN_BUFFER_INFO cursor;
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor);
-    if(cursor.dwCursorPosition.X > 0)
-        cursorInMiddle = true;
-    else cursorInMiddle = false;
-
+    bool cursorInMiddle = cursor.dwCursorPosition.X > 0;
+    
     if(!message)
     {
         if(firstLine == true)
@@ -138,37 +135,39 @@ void print_Line(char *message, int size)
     return;
 }
 
-void fillSpace_ToBottom(int offset)
-{
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
-    int sHeight = get_ScreenHeight();
-    for(int i = csbi.dwCursorPosition.Y; i < sHeight - offset; i++)
-        print_Line(" ", 0);
-    return;
-}
-
-void print_LineOffset(char *message, int offset)
+void print_LineOffset(char *message, int width, int offset)
 {
     int screenWidth = get_ScreenWidth();
     CONSOLE_SCREEN_BUFFER_INFO cursor;
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor);
+    bool cursorInMiddle = cursor.dwCursorPosition.X > 0;
+    if (width == 0)
+        width = screenWidth;
 
     if(!message)
     {
         if(firstLine == true)
         {
-            putchar(201);
-            for(int i = 0; i < screenWidth - 2; i++)
+            if(cursorInMiddle == true)
+                putchar(203);
+            else putchar(201);
+            for(int i = 0; i < width - 2; i++)
                 putchar(205);
-            putchar(187);
+            if(width != screenWidth && !cursorInMiddle)
+                putchar(203);
+            else putchar(187);
         }
         else
         {
-            putchar(200);
-            for(int i = 0; i < screenWidth - 2; i++)
+            if(cursorInMiddle == true)
+                putchar(202);
+            else putchar(200);
+            for(int i = 0; i < width - 2; i++)
                 putchar(205);
-            putchar(188); 
+            if(width != screenWidth && !cursorInMiddle)
+                putchar(202);
+            else putchar(188); 
         }
         firstLine = !firstLine;
     }
@@ -182,7 +181,7 @@ void print_LineOffset(char *message, int offset)
         SetConsoleCursorPosition(console, cursor.dwCursorPosition);
         printf("%s", message);
         
-        cursor.dwCursorPosition.X = screenWidth-1;
+        cursor.dwCursorPosition.X = width-1;
         SetConsoleCursorPosition(console, cursor.dwCursorPosition);
         putchar(186);
         printf("\n");
@@ -190,7 +189,17 @@ void print_LineOffset(char *message, int offset)
     return;
 }
 
-void print_Message(char *message, int width, int line, bool overwrite)
+void fillSpace_ToBottom(int offset)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi); 
+    int sHeight = get_ScreenHeight();
+    for(int i = csbi.dwCursorPosition.Y; i < sHeight - offset; i++)
+        print_Line(" ", 0);
+    return;
+}
+
+void print_Message(char *message, int width, int line, bool overwrite, bool offset)
 {
     int msg_len = strlen(message);
     int screenWidth = get_ScreenWidth();
@@ -222,7 +231,9 @@ void print_Message(char *message, int width, int line, bool overwrite)
     }
     
     GetConsoleScreenBufferInfo(console, &cursor);
-    print_Line(message, width);
+    if(offset == true)
+        print_LineOffset(message, width, 1);
+    else print_Line(message, width);
     if(overwrite == true)
     {
         for(int i = 0; i < 5 - line; i++)
@@ -309,7 +320,7 @@ void game_Message(int Ypos, char *message, bool doWait, int width, int msgOffset
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     
     if(msgOffset < 1)
-        print_Message(message, width, 1, true);
+        print_Message(message, width, 1, true, false);
     else
         print_Offset(message, msgOffset, width);
     
@@ -618,7 +629,7 @@ void update_Map(short int xUpdate, short int yUpdate, char *data)
     return;
 }
 
-void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitName, int Id, short int X, short int Y, short int moves)
+void info_Upper(char* mapName, MapMode mode, int turns, char *side, bool isPlayer, char *unitName, int Id, B_Pos pos, short int moves)
 {
     float screenWidth = (float) get_ScreenWidth(); 
     int msg_len = 0, aux1 = 0, aux2 = 0;
@@ -643,57 +654,58 @@ void info_Upper(char* mapName, int turns, char *side, bool isPlayer, char *unitN
     char msg[STRING_NAME];
     
     // Map name
-    print_Message(mapName, cursor.dwCursorPosition.X + 1, 0, true);
+    snprintf(msg, sizeof(msg), "             %s - %10s", mapName, get_MapMode(mode));
+    print_Message(msg, cursor.dwCursorPosition.X + 1, 0, true, false);
     // -> Comands
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[NumPad] Move Unit | [F] Fire At Enemy Unit", (int)floorf(screenWidth / 2.0f), 0, false);
+    print_Message("[NumPad] Move Unit | [F] Fire At Enemy Unit", (int)floorf(screenWidth / 2.0f), 0, false, false);
 
     // Turn
     reset_Cursor();
     snprintf(msg, sizeof(msg), "Turn %d", turns);
-    print_Message(msg, size + 1, 1, false);
+    print_Message(msg, size + 1, 1, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[Esc] Exit To Menu | [A] Set Tile As Target", (int)floorf(screenWidth / 2.0f), 1, false);
+    print_Message("[Esc] Exit To Menu | [A] Set Tile As Target", (int)floorf(screenWidth / 2.0f), 1, false, false);
     
     // Side
     reset_Cursor();
     snprintf(msg, sizeof(msg), "%s%s%s", (isPlayer ? "(You) " : ""), side, (isPlayer ? "      " : ""));
-    print_Message(msg, size + 1, 2, false);
+    print_Message(msg, size + 1, 2, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[W] View Unit Wiki | [S] Set Unit As Target", (int)floorf(screenWidth / 2.0f), 2, false);
+    print_Message("[W] View Unit Wiki | [S] Set Unit As Target", (int)floorf(screenWidth / 2.0f), 2, false, false);
 
     // Unit name
     reset_Cursor();
     snprintf(msg, sizeof(msg), "         [%04d] <||> %-15s", Id, unitName);
-    print_Message(msg, size + 1, 3, false);
+    print_Message(msg, size + 1, 3, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[G] Get Tile Stats | [D] Current Unit Stats", (int)floorf(screenWidth / 2.0f), 3, false);
+    print_Message("[G] Get Tile Stats | [D] Current Unit Stats", (int)floorf(screenWidth / 2.0f), 3, false, false);
 
     // Unit position
     reset_Cursor();
-    snprintf(msg, sizeof(msg), "%3dX  <||>%3dY", X, Y);
-    print_Message(msg, size + 1, 4, false);
+    snprintf(msg, sizeof(msg), "%-3dX <||> %3dY", pos.X, pos.Y);
+    print_Message(msg, size + 1, 4, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[T] Shift Map Mode | [Q] Get The Unit Stats", (int)floorf(screenWidth / 2.0f), 4, false);
+    print_Message("[T] Shift Map Mode | [Q] Get The Unit Stats", (int)floorf(screenWidth / 2.0f), 4, false, false);
 
     // Moves left
     reset_Cursor();
     if(moves > -1)
         snprintf(msg, sizeof(msg), "%d Moves Left", moves);
     else snprintf(msg, sizeof(msg), " ");
-    print_Message(msg, size + 1, 5, false);
+    print_Message(msg, size + 1, 5, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[E] Build Trenches | [Enter] Skip Your Turn", (int)floorf(screenWidth / 2.0f), 5, false);
+    print_Message("[E] Build Trenches | [Enter] Skip Your Turn", (int)floorf(screenWidth / 2.0f), 5, false, false);
     
     return; // 8 lines 
 }
@@ -790,7 +802,7 @@ int listScen()
             if(fd.dwFileAttributes && FILE_ATTRIBUTE_DIRECTORY)
             {
                 nScen++;
-                print_LineOffset(fd.cFileName, 7);
+                print_LineOffset(fd.cFileName, 0, 7);
             }  
         } while (FindNextFile(handle, &fd));
         print_Line(" ", 0);
@@ -849,7 +861,7 @@ void screen_Credits(float version)
     print_Line("Civilization 2 - Theme", 0);
     print_Line("Age Of Empires I - Siege(Wally)", 0);
     print_Line(" ", 0);
-    print_LineOffset("Aperte ENTER para continuar", 5);
+    print_LineOffset("Aperte ENTER para continuar", 0, 5);
     print_Line(NULL, 0);
     while(get_KeyPress(false) != KEY_ENTER);
     { /* Nothing */ }

@@ -64,5 +64,24 @@ typedef enum E_MapMode
     Map_Spawns = 4, 
 } MapMode;
 
+char *get_MapMode(MapMode mode)
+{
+    switch (mode)
+    {
+    case Map_Height:
+        return "Heigth Map";
+    case Map_Terrain:
+        return "Terrain Map";
+    case Map_Vegetat:
+        return "Vegetation Map";
+    case Map_Spawns:
+        return "Units Map";
+    case Map_Graphic:
+        return "Battle Map";
+    default:
+        return "ERROR";
+    }
+}
+
 #define NO_UNIT -1
 #define OUT_COMBAT -3
