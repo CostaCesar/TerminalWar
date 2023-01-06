@@ -106,17 +106,17 @@ int check_MapAttack(B_Map *map, B_Pos pos, int ID)
 {
     if(pos.X < 0 || pos.X >= map->width || pos.Y < 0 || pos.Y >= map->height)
     {
-        game_Message(0, "Coordinates out of boundaries!", true, false, -1);
+        game_Message(0, "Coordinates out of boundaries!", true, 0, -1);
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit == NULL)
     {
-        game_Message(0, "There's nothing to attack here!", true, false, -1);
+        game_Message(0, "There's nothing to attack here!", true, 0, -1);
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit->Game_ID % 2 == ID % 2)
     {
-        game_Message(0, "These are our own troops Sir!", true, false, -1);
+        game_Message(0, "These are our own troops Sir!", true, 0, -1);
         return FUNCTION_FAIL;
     }
     return FUNCTION_SUCESS;
@@ -375,7 +375,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
     // Checking if coordiantes are valid
     if((unit->position.X < 0 || unit->position.X >= source_Map->width) || (unit->position.Y  < 0 || unit->position.Y  >= source_Map->height))
     {
-        game_Message(0, "Coordinates out of boundaries!", true, false, -1);       
+        game_Message(0, "Coordinates out of boundaries!", true, 0, -1);       
         return FUNCTION_FAIL;
     }
     
@@ -384,7 +384,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
     {
         char msg[24];
         snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unit->position.X, unit->position.Y);
-        game_Message(0, msg, true, false, -1);
+        game_Message(0, msg, true, 0, -1);
         return FUNCTION_FAIL;
     }
 
@@ -431,19 +431,19 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
         // Checking for terrain-related movement
         if(source_Map->tiles[destPos.Y][destPos.X].elevation < -1 && source_Map->tiles[destPos.Y][destPos.X].terrain == Water)
         {
-            game_Message(0, "The water is too deep to cross!", true, false, -1);
+            game_Message(0, "The water is too deep to cross!", true, 0, -1);
             return FUNCTION_FAIL;           
         }
         if(abs(source_Map->tiles[unit->position.Y][unit->position.X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
-            game_Message(0, "The terrain is too step to go!", true, false, -1);
+            game_Message(0, "The terrain is too step to go!", true, 0, -1);
             return FUNCTION_FAIL;
         }
 
         // Cheking for units (if friend, then if foe)
         if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
         {
-            game_Message(0, "Units can't go over eachother!", true, false, -1);
+            game_Message(0, "Units can't go over eachother!", true, 0, -1);
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
@@ -457,7 +457,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
 
         return mCost;
     }
-    game_Message(0, "Destination out of boundaries!", true, false, -1);
+    game_Message(0, "Destination out of boundaries!", true, 0, -1);
     return FUNCTION_FAIL;
 }
 
@@ -877,7 +877,7 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
         // printf("#=======================================# \n");
         char msg[38];
         snprintf(msg, sizeof(msg), "Path to %3dX %3dY could not be found!", endNode->unit->position.X, endNode->unit->position.Y);
-        game_Message(0, msg, true, false, -1);
+        game_Message(0, msg, true, 0, -1);
         
         getchar();
     }

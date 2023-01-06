@@ -18,6 +18,7 @@ B_Map battleMap;
 B_Side Side_A, Side_B;
 B_Unit *unit_Table = NULL;
 int unit_TableSize = 0;
+int screenHalf = 0;
 char unit_Desc[STRING_FILE];
 char nowPlaying[STRING_NAME] = {0};
 
@@ -135,7 +136,7 @@ void meleeCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
         // printf("#===============================================# \n");
         // printf("| We must disengage the enemy before attacking! | \n");
         // printf("#===============================================# \n"); */
-        game_Message(0, "We must disengage the enemy before attacking!", true, false, -1);    
+        print_Message("We must disengage the enemy before attacking!", screenHalf, 1, true, false, true);
         return;
     }
     
@@ -257,7 +258,7 @@ int load_Scenery(int nScen, int playMap)
     HANDLE handle = FindFirstFile("scenarios/*.txt", &fd);
     if(handle == INVALID_HANDLE_VALUE)
     {
-        game_Message(0, "Can't find scenarios folder!", true, false, -1);
+        print_Message("Can't find scenarios folder!", 0, 1, true, false, true);
         return FUNCTION_FAIL;    
     }
     for(int i = 0; i < nScen; i++)
@@ -273,7 +274,7 @@ int load_Scenery(int nScen, int playMap)
     FILE *scen = fopen(file, "r");
     if(!scen)
     {
-        game_Message(0, "Can't open file!", true, false, -1);
+        print_Message("Can't open file!", 0, 1, true, false, true);
         return FUNCTION_FAIL;
     }
     while(!feof(scen))
@@ -284,7 +285,7 @@ int load_Scenery(int nScen, int playMap)
         scen_Name[strlen(scen_Name)-1] = '\0';
         if(strlen(scen_Name) < strBuff)
         {
-            game_Message(0, "Invalid Scenario Title!", true, false, -1);
+            print_Message("Invalid Scenario Title!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break;
         }
         strcpy(scen_Name, scen_Name+strBuff);
@@ -294,7 +295,7 @@ int load_Scenery(int nScen, int playMap)
         {
             if(fgets(word, sizeof(word), scen) == NULL) // Not in file
             {
-                game_Message(0, "Can't find map!", true, false, -1);
+                print_Message("Can't find map!", 0, 1, true, false, true);
                 output = FUNCTION_FAIL; break;
             }
             else if(word[0] == '$') cMap++;              // Increment map counter
@@ -306,7 +307,7 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "The map can't be read!", true, false, -1);
+            print_Message("The map can't be read!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         if(getFile_Map(word+strBuff, &battleMap) == FUNCTION_FAIL){ output = FUNCTION_FAIL; break; }
@@ -316,7 +317,7 @@ int load_Scenery(int nScen, int playMap)
         scen_Map[strlen(scen_Map)-1] = '\0';
         if(strlen(scen_Map) < strBuff)
         {
-            game_Message(0, "Can't load map title!", true, false, -1);
+            print_Message("Can't load map title!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         strcpy(scen_Map, scen_Map+strBuff);
@@ -326,7 +327,7 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "Can't load the units!", true, false, -1);
+            print_Message("Can't load the units!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         if(word[4] == 'c' && word[0] == 'm')    // Music detected
@@ -336,7 +337,7 @@ int load_Scenery(int nScen, int playMap)
             word[strlen(word)-1] = '\0';
             if(strlen(word) < strBuff)
             {
-                game_Message(0, "Can't load the units!", true, false, -1);
+                print_Message("Can't load the units!", 0, 1, true, false, true);
                 output = FUNCTION_FAIL; break; 
             }
         }
@@ -350,7 +351,7 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "Can't read the side attacking!", true, false, -1);
+            print_Message("Can't read the side attacking!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         strBuff = strlen(word);
@@ -360,7 +361,7 @@ int load_Scenery(int nScen, int playMap)
             Side_A.attacker = false, Side_B.attacker = true;
         else
         {
-            game_Message(0, "Can't load the side attacking!", true, false, -1);
+            print_Message("Can't load the side attacking!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
 
@@ -371,7 +372,7 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "Can't load Side_A name!", true, false, -1);
+            print_Message("Can't load Side_A name!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         strcpy(Side_A.name, word+strBuff);
@@ -381,14 +382,14 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "Can't read Side_A placement!", true, false, -1);
+            print_Message("Can't read Side_A placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         if(word[strBuff] == 'c' || word[strBuff] == 'C') Side_A.canPlace = true;
         else if(word[strBuff] == 'f' || word[strBuff] == 'F') Side_A.canPlace = false;
         else
         {
-            game_Message(0, "Can't load Side_A placement!", true, false, -1);
+            print_Message("Can't load Side_A placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         // Get units in map
@@ -398,13 +399,13 @@ int load_Scenery(int nScen, int playMap)
         fscanf(scen, "%c", &word[0]);
         if(word[0] != ' ')
         {
-            game_Message(0, "Can't read Side_A placement!", true, false, -1);
+            print_Message("Can't read Side_A placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break;  
         }
         fscanf(scen, "%d", &unit_N);
         if(unit_N < 1)
         {
-            game_Message(0, "Can't load Side_A placement!", true, false, -1);
+            print_Message("Can't load Side_A placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         // Unit
@@ -438,7 +439,7 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "Can't load Side_B name!", true, false, -1);
+            print_Message("Can't load Side_B name!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         strcpy(Side_B.name, word+strBuff);
@@ -448,14 +449,14 @@ int load_Scenery(int nScen, int playMap)
         word[strlen(word)-1] = '\0';
         if(strlen(word) < strBuff)
         {
-            game_Message(0, "Can't read Side_B placement!", true, false, -1);
+            print_Message("Can't read Side_B placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         if(word[strBuff] == 'c' || word[strBuff] == 'C') Side_B.canPlace = true;
         else if(word[strBuff] == 'f' || word[strBuff] == 'F') Side_B.canPlace = false;
         else
         {
-            game_Message(0, "Can't load Side_B placement!", true, false, -1);
+            print_Message("Can't load Side_B placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         // Get units in map
@@ -465,13 +466,13 @@ int load_Scenery(int nScen, int playMap)
         fscanf(scen, "%c", &word[0]);
         if(word[0] != ' ')
         {
-            game_Message(0, "Can't read Side_B placement!", true, false, -1);
+            print_Message("Can't read Side_B placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break;  
         }
         fscanf(scen, "%d", &unit_N);
         if(unit_N < 1)
         {
-            game_Message(0, "Can't load Side_B placement!", true, false, -1);
+            print_Message("Can't load Side_B placement!", 0, 1, true, false, true);
             output = FUNCTION_FAIL; break; 
         }
         // Unit
@@ -579,7 +580,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                     show_gUnit(&Side->units[i]);
             if (i < 0)
             {
-                game_Message(0, "No units in the reserve!", true, false, -1);
+                print_Message("No units in the reserve!", 0, 1, true, false, true);
                 continue;
             }
 
@@ -592,24 +593,24 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             if (Index > -1 && (Side->units[Index].position.X < 0 && Side->units[Index].position.Y < 0))
             {
                 toggle_Cursor(true);
-                printf(">> Cordinates of the unit <X Y> inside |*1| area: ");
+                print_Message(">> Cordinates of the unit <X Y> inside |*1| area: ", 0, 1, true, true, false);
                 scanf(" %hd %hd", &Side->units[Index].position.X, &Side->units[Index].position.Y);
                 toggle_Cursor(false);
 
                 out = put_Unit_OnMap(map, &Side->units[Index], false);
                 if (out == FUNCTION_FAIL)
                 {
-                    game_Message(0, "Invalid coordinates!", true, false, -1);
+                    print_Message("Invalid coordinates!", 0, 3, false, false, true);
                     Side->units[Index].position.X = -1, Side->units[Index].position.Y = -1;
                 }
                 else
                 {
-                    game_Message(0, "Unit placed sucessfully!", true, false, -1);
+                    print_Message("Unit placed sucessfully!", 0, 3, false, false, true);
                     dUnits++;
                 }
             }
             else
-                game_Message(0, "This unit ID is not valid!", true, false, -1);
+                print_Message("This unit ID is not valid!", 0, 1, true, false, true);
             continue;
         case 'm':
             for (i = 0; i < Side->size; i++)
@@ -620,7 +621,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 }
             if (i < 0)
             {
-                game_Message(0, "No units in the field!", true, false, -1);
+                print_Message("No units in the field!", 0, 1, true, false, true);
                 continue;
             }
             toggle_Cursor(true);
@@ -633,7 +634,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             {
                 unitPos.X = Side->units[Index].position.X, unitPos.Y = Side->units[Index].position.Y;
                 toggle_Cursor(true);
-                printf(">> Cordinates of the unit <X Y> inside |*1| area: ");
+                print_Message(">> Cordinates of the unit <X Y> inside |*1| area: ", 0, 1, true, true, false);
                 scanf("%hd %hd", &Side->units[Index].position.X, &Side->units[Index].position.Y);
                 toggle_Cursor(false);
 
@@ -641,16 +642,16 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 if (out == FUNCTION_FAIL)
                 {
                     Side->units[Index].position.X = unitPos.X, Side->units[Index].position.Y = unitPos.Y;
-                    game_Message(0, "Invalid coordinates!", true, false, -1);
+                    print_Message("Invalid coordinates!", 0, 3, false, false, true);
                 }
                 else
                 {
                     map->tiles[unitPos.Y][unitPos.X].unit = NULL;
-                    game_Message(0, "Unit moved sucessfully!", true, false, -1);
+                    print_Message("Unit moved sucessfully!", 0, 3, false, false, true);
                 }
             }
             else
-                game_Message(0, "This unit ID is not valid!", true, false, -1);
+                print_Message("This unit ID is not valid!", 0, 3, true, false, true);
             continue;
         case 'r':
             for (i = 0; i < Side->size; i++)
@@ -661,7 +662,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 }
             if (i < 0)
             {
-                game_Message(0, "No units in the field!", true, false, -1);
+                print_Message("No units in the field!", 0, 1, true, false, true);
                 continue;
             }
 
@@ -676,11 +677,11 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 unitPos.X = Side->units[Index].position.X, unitPos.Y = Side->units[Index].position.Y;
                 map->tiles[unitPos.Y][unitPos.X].unit = NULL;
                 Side->units[Index].position.X = -1, Side->units[Index].position.Y = -1;
-                game_Message(0, "Unit removed sucessfully!", true, false, -1);
+                print_Message("Unit removed sucessfully!", 0, 1, true, false, true);
                 dUnits--;
             }
             else
-                game_Message(0, "This unit ID is not valid!", true, false, -1);
+                print_Message("This unit ID is not valid!", 0, 1, true, false, true);
             continue;
         case KEY_ESCAPE:
             return FUNCTION_FAIL;
@@ -688,21 +689,21 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             // Cheking if any units are deployed at all
             if (dUnits < 1)
             {
-                game_Message(0, "You must deploy at least one unit!", true, false, -1);
+                print_Message("You must deploy at least one unit!", 0, 1, true, false, true);
                 continue;
             }
 
             // Cheking for undeployed units
             if (dUnits < Side->size)
             {
-                game_Message(0, "There are undeployed units! Proceed? [Y/N]", false, false, -1);
+                print_Message("There are undeployed units! Proceed? [Y/N]", 0, 1, true, false, true);
                 out = get_KeyPress(true);
                 if (out != 'y')
                     continue;
             }
             return FUNCTION_SUCESS;
         default:
-            game_Message(0, "Invalid action!", true, false, -1);
+            print_Message("Invalid action!", 0, 1, true, false, true);
             continue;
         }
     } while (1);
@@ -736,9 +737,9 @@ int handleMove(B_Map *map, B_Unit *unit, int *moves, B_Side *player, B_Side *opp
             update_Map(pos_B.X, pos_B.Y, "OOO");
             Sleep(TIME_MAP);
             // Glow
-            system("cls");   
             snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", pos_B.X, pos_B.Y);
-            game_Message(0, msg, true, false, -1);
+            print_Message(msg, screenHalf, 1, true, false, true);
+            system("cls");   
             // Go
             int target_I = get_UnitIndex(opponent, map->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
             meleeCombat(player, unit, opponent, &opponent->units[target_I]);
@@ -830,25 +831,24 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             {
                 clear_afterMap(battleMap->height);
                 toggle_Cursor(true);
-                printf(">> Goal coordinates <X Y> \n");
-                printf(" >=> ");
+                print_Message(">> Goal coordinates <X Y>: ", screenHalf, 1, true, true, false);
                 scanf("%hd %hd", &goal.X, &goal.Y);
                 toggle_Cursor(false);
                 if(goal.X < 0 || goal.Y < 0 || goal.X >= battleMap->width || goal.Y >= battleMap->height)
                 {
-                    game_Message(0, "Invalid Coords", true, true, -1);
+                    print_Message("Invalid Coords", screenHalf, 3, false, false, true);
                     moves--; continue;
                 }
                 else if(!autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.Y], &battleMap->tiles[goal.Y][goal.X]))
                 {
                     snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", goal.X, goal.Y);
-                    game_Message(0, msg, true, true, -1);
+                    print_Message(msg, screenHalf, 3, false, false, true);
                     moves--; continue;
                 }
                 else
                 {
                     player->units[cUnit_I].goal = goal;
-                    game_Message(0, "Moving to tile!", true, true, -1);
+                    print_Message("Moving to tile!", screenHalf, 3, false, false, true);
                 }
             }
             else if (action == 't') // Change Map Mode
@@ -862,24 +862,23 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             {
                 clear_afterMap(battleMap->height);
                 toggle_Cursor(true);
-                printf(">> Target unit coordinates <X Y> \n");
-                printf(" >=> ");
+                print_Message(">> Target unit coordinates <X Y>: ", screenHalf, 1, true, true, false);
                 scanf("%hd %hd", &goal.X, &goal.Y);
                 toggle_Cursor(false);
                 if(goal.X < 0 || goal.Y < 0 || goal.X >= battleMap->width || goal.Y >= battleMap->height)
                 {
-                    game_Message(0, "Invalid Coords", true, true, -1);
+                    print_Message("Invalid Coords", screenHalf, 3, false, false, true);
                     moves--; continue;
                 }
                 else if(battleMap->tiles[goal.Y][goal.X].unit == NULL)
                 {
-                    game_Message(0, "Target Not Found!", true, true, -1);
+                    print_Message("Target Not Found!", screenHalf, 3, false, false, true);
                     moves--; continue;
                 }
                 else if(!autoMove(battleMap, &battleMap->tiles[pos_A.Y][pos_A.Y], &battleMap->tiles[goal.Y][goal.X]))
                 {
                     snprintf(msg, sizeof(msg), "Can't find a path to %dX %dY", goal.X, goal.Y);
-                    game_Message(0, msg, true, true, -1);
+                    print_Message(msg, screenHalf, 3, false, false, true);
                     moves--; continue;
                 }
                 else
@@ -887,21 +886,20 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     target_I = get_UnitIndex(opponent, battleMap->tiles[goal.Y][goal.X].unit->Game_ID);
                     player->units[cUnit_I].chaseID = &opponent->units[target_I].Game_ID;
                     player->units[cUnit_I].goal = goal;
-                    game_Message(0, "Moving to intercept the unit!", true, true, -1);
+                    print_Message("Moving to intercept the unit!", screenHalf, 3, false, false, true);
                 }
             }
             else if(action == 'f') // Fire at unit
             {
                 if (player->units[cUnit_I].range < 1)
                 {
-                    game_Message(0, "This unit can't do ranged attacks!", true, true, -1);
+                    print_Message("This unit can't do ranged attacks!", screenHalf, 1, true, false, true);
                     moves--; continue;
                 }
 
                 clear_afterMap(battleMap->height);
                 toggle_Cursor(true);
-                printf(">> Target coodiantes <X Y> \n");
-                printf(" >=> ");
+                print_Message(">> Target coordinates <X Y>: ", screenHalf, 1, true, true, false);
                 scanf("%hd %hd", &target.X, &target.Y);
                 toggle_Cursor(false);
                 
@@ -950,7 +948,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 }
                 else
                 {
-                    game_Message(0, "This unit cannot build fortifications!", true, true, -1);
+                    print_Message("This unit cannot build fortifications!", screenHalf, 1, true, false, true);
                     moves--; continue;
                 }
                 clear_afterMap(battleMap->height);
@@ -959,39 +957,32 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             {
                 clear_afterMap(battleMap->height);
                 toggle_Cursor(true);
-                printf(">> Target coodiantes <X Y> \n");
-                printf(" >=> ");
+                print_Message(">> Target tile coordinates <X Y>: ", screenHalf, 1, true, true, false);
                 scanf("%hd %hd", &target.X, &target.Y);
                 getchar();
                 toggle_Cursor(false);
                 if (target.X >= 0 && target.X < battleMap->width && target.Y >= 0 && target.Y < battleMap->height)
                 {
-                    print_Line(NULL, 0);
-                    print_Line(" ", 0);
                     snprintf(msg, sizeof(msg), "Terrain: %s", tTerrain_toStr(battleMap->tiles[target.Y][target.X].terrain));
-                    print_Line(msg, 0);
+                    print_Message(msg, screenHalf, 0, true, false, false);
                     snprintf(msg, sizeof(msg), "Vegetation: %s", tVeget_toStr(battleMap->tiles[target.Y][target.X].vegetation));
-                    print_Line(msg, 0);
+                    print_Message(msg, screenHalf, 1, false, false, false);
                     snprintf(msg, sizeof(msg), "Elevation: %d", battleMap->tiles[target.Y][target.X].elevation);
-                    print_Line(msg, 0);
+                    print_Message(msg, screenHalf, 2, false, false, false);
                     snprintf(msg, sizeof(msg), "Fortification: %d", battleMap->tiles[target.Y][target.X].fortLevel);
-                    print_Line(msg, 0);
+                    print_Message(msg, screenHalf, 3, false, false, false);
                     if(battleMap->tiles[target.Y][target.X].unit)
                     {
                         snprintf(msg, sizeof(msg), "Unit in here: %d (%s)", battleMap->tiles[target.Y][target.X].unit->Game_ID, battleMap->tiles[target.Y][target.X].unit->name);
-                        print_Line(msg, 0);
+                        print_Message(msg, screenHalf, 4, false, false, false);
                     }
-                    print_Line(" ", 0);
-                    print_Line(NULL, 0);
-                    printf(">> Press ENTER to continue \n");
+                    print_Message(">> Press ENTER to continue", screenHalf, 5, false, false, false);
                     while (get_KeyPress(false) != KEY_ENTER) continue;
-                    system("cls");
-                    show_Map(battleMap, *mode, true);
                     moves--; continue;
                 }
                 else
                 {
-                    game_Message(0, "Coordinates out of boundaries!", true, true, -1);
+                    print_Message("Coordinates out of boundaries!", screenHalf, 3, false, false, true);
                     moves--; continue;
                 }
             }
@@ -1005,7 +996,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             else // Invalid
             {
                 clear_afterMap(battleMap->height);
-                game_Message(0, "Invalid action!", true, true, -1);
+                print_Message("Invalid action!", screenHalf, 1, true, false, true);
                 moves--; continue;
             }
             goal = player->units[cUnit_I].goal;
@@ -1025,7 +1016,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 {
                     clear_afterMap(battleMap->height);
                     reset_Cursor();
-                    game_Message(0, "No path to this tile!", true, (int)ceilf(get_ScreenWidth() / 2.0f), -1);
+                    print_Message("No path to this tile!", screenHalf, 1, true, false, true);
                     moves--; continue;
                 }
 
@@ -1039,13 +1030,13 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     if(action == KEY_ENTER)
                     {
                         clear_afterMap(battleMap->height);
-                        game_Message(0, "Auto move disabled!", true, true, -1);
+                        print_Message("Auto move disabled!", screenHalf, 1, true, false, true);
                     }
                 }
                 toggle_Cursor(false);
             }
         }
-        clear_afterMap(battleMap->height);
+        // clear_afterMap(battleMap->height);
         player->units[cUnit_I].attacked = false, player->units[cUnit_I].engaged = false;
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));}
     else // AI Zone
@@ -1098,7 +1089,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     if(player->units[cUnit_I].path == NULL)
                     {
                         clear_afterMap(battleMap->height);
-                        game_Message(0, "No path to this tile!", true, (int)ceilf(get_ScreenWidth() / 2.0f), -1);
+                        print_Message("No path to this tile!", screenHalf, 1, true, false, true);
                         moves--; continue;
                     }
                     (void) handleMove(battleMap, &player->units[cUnit_I], &moves, player, opponent, *mode);
@@ -1217,6 +1208,7 @@ startMenu:
     system("cls");
     
     mode = Map_Graphic;
+    screenHalf = (int) ceilf(get_ScreenWidth() / 2.0f);
     show_Map(&battleMap, mode, true);
     
     int unitA_I = 0, unitB_I = 0, target_I = 0;

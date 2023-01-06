@@ -199,8 +199,12 @@ void fillSpace_ToBottom(int offset)
     return;
 }
 
-void print_Message(char *message, int width, int line, bool overwrite, bool offset)
+void print_Message(char *message, int width, int line, bool overwrite, bool offset, bool wait)
 {
+    // little hack to clear screen
+    if(offset == true && line == 1)
+        print_Message("  ", width, 0, true, false, false);
+
     int msg_len = strlen(message);
     int screenWidth = get_ScreenWidth();
     CONSOLE_SCREEN_BUFFER_INFO cursor;
@@ -214,6 +218,7 @@ void print_Message(char *message, int width, int line, bool overwrite, bool offs
     print_Line(NULL, width);
     cursor.dwCursorPosition.Y++;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+
     if (overwrite == true)
     {
         for(int i = 0; i < line; i++)
@@ -232,8 +237,9 @@ void print_Message(char *message, int width, int line, bool overwrite, bool offs
     
     GetConsoleScreenBufferInfo(console, &cursor);
     if(offset == true)
-        print_LineOffset(message, width, 1);
+        print_LineOffset(message, width, 2);
     else print_Line(message, width);
+    
     if(overwrite == true)
     {
         for(int i = 0; i < 5 - line; i++)
@@ -246,8 +252,18 @@ void print_Message(char *message, int width, int line, bool overwrite, bool offs
         cursor.dwCursorPosition.Y++, cursor.dwCursorPosition.X = startFrom;
     }
     else cursor.dwCursorPosition.Y = 7, cursor.dwCursorPosition.X = startFrom;
+    
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
     print_Line(NULL, width);
+
+    if(offset == true)
+    {
+        cursor.dwCursorPosition.Y = line + 1;
+        cursor.dwCursorPosition.X = startFrom + 2 + strlen(message);
+        SetConsoleCursorPosition(console, cursor.dwCursorPosition);
+    }
+    if(wait == true)
+        Sleep(TIME_STRATEGY);
     return;     
 }
 
@@ -320,7 +336,7 @@ void game_Message(int Ypos, char *message, bool doWait, int width, int msgOffset
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     
     if(msgOffset < 1)
-        print_Message(message, width, 1, true, false);
+        print_Message(message, width, 1, true, false, true);
     else
         print_Offset(message, msgOffset, width);
     
@@ -655,57 +671,57 @@ void info_Upper(char* mapName, MapMode mode, int turns, char *side, bool isPlaye
     
     // Map name
     snprintf(msg, sizeof(msg), "             %s - %10s", mapName, get_MapMode(mode));
-    print_Message(msg, cursor.dwCursorPosition.X + 1, 0, true, false);
+    print_Message(msg, cursor.dwCursorPosition.X + 1, 0, true, false, false);
     // -> Comands
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[NumPad] Move Unit | [F] Fire At Enemy Unit", (int)floorf(screenWidth / 2.0f), 0, false, false);
+    print_Message("[NumPad] Move Unit | [F] Fire At Enemy Unit", (int)floorf(screenWidth / 2.0f), 0, false, false, false);
 
     // Turn
     reset_Cursor();
     snprintf(msg, sizeof(msg), "Turn %d", turns);
-    print_Message(msg, size + 1, 1, false, false);
+    print_Message(msg, size + 1, 1, false, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[Esc] Exit To Menu | [A] Set Tile As Target", (int)floorf(screenWidth / 2.0f), 1, false, false);
+    print_Message("[Esc] Exit To Menu | [A] Set Tile As Target", (int)floorf(screenWidth / 2.0f), 1, false, false, false);
     
     // Side
     reset_Cursor();
     snprintf(msg, sizeof(msg), "%s%s%s", (isPlayer ? "(You) " : ""), side, (isPlayer ? "      " : ""));
-    print_Message(msg, size + 1, 2, false, false);
+    print_Message(msg, size + 1, 2, false, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[W] View Unit Wiki | [S] Set Unit As Target", (int)floorf(screenWidth / 2.0f), 2, false, false);
+    print_Message("[W] View Unit Wiki | [S] Set Unit As Target", (int)floorf(screenWidth / 2.0f), 2, false, false, false);
 
     // Unit name
     reset_Cursor();
     snprintf(msg, sizeof(msg), "         [%04d] <||> %-15s", Id, unitName);
-    print_Message(msg, size + 1, 3, false, false);
+    print_Message(msg, size + 1, 3, false, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[G] Get Tile Stats | [D] Current Unit Stats", (int)floorf(screenWidth / 2.0f), 3, false, false);
+    print_Message("[G] Get Tile Stats | [D] Current Unit Stats", (int)floorf(screenWidth / 2.0f), 3, false, false, false);
 
     // Unit position
     reset_Cursor();
     snprintf(msg, sizeof(msg), "%-3dX <||> %3dY", pos.X, pos.Y);
-    print_Message(msg, size + 1, 4, false, false);
+    print_Message(msg, size + 1, 4, false, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[T] Shift Map Mode | [Q] Get The Unit Stats", (int)floorf(screenWidth / 2.0f), 4, false, false);
+    print_Message("[T] Shift Map Mode | [Q] Get The Unit Stats", (int)floorf(screenWidth / 2.0f), 4, false, false, false);
 
     // Moves left
     reset_Cursor();
     if(moves > -1)
         snprintf(msg, sizeof(msg), "%d Moves Left", moves);
     else snprintf(msg, sizeof(msg), " ");
-    print_Message(msg, size + 1, 5, false, false);
+    print_Message(msg, size + 1, 5, false, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;
     SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    print_Message("[E] Build Trenches | [Enter] Skip Your Turn", (int)floorf(screenWidth / 2.0f), 5, false, false);
+    print_Message("[E] Build Trenches | [Enter] Skip Your Turn", (int)floorf(screenWidth / 2.0f), 5, false, false, false);
     
     return; // 8 lines 
 }
@@ -810,7 +826,7 @@ int listScen()
         FindClose(handle);
     }
     else
-        game_Message(0, "Can't load the scenarios folder, get at least one scenario in there!", true, false, -1);
+        game_Message(0, "Can't load the scenarios folder, get at least one scenario in there!", true, 0, -1);
     return nScen;
 }
 
