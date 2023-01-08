@@ -187,8 +187,10 @@ B_Unit* edit_List(int* out, B_Unit *list, int *size)
 
         printf("> Quantidade de habilidades [MAXIMO = %d]: ", BUFFS_MAX);
         scanf("%hd%c", &list[pos].buffs_S, &chr);
-        if(list[pos].buffs_S > UNIT_MAX_BUFFS)
-            list[pos].buffs_S = UNIT_MAX_BUFFS;
+        if(list[pos].buffs_S > BUFFS_MAX)
+            list[pos].buffs_S = BUFFS_MAX;
+        else if(list[pos].buffs_S < 0)
+            list[pos].buffs_S = 0;
         handleBuffs(&list[pos]);
 
         printf("> Alcance [quadrado] da unidade: ");

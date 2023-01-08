@@ -3,9 +3,9 @@ Unidade generica, com poder base alto, mas sem muitas especialidades
 Forte contra infantaria, resiste ataques a distancia, mas fraca contra cavalaria
 # Phalanx
 Uma unidade focada em segurar terreno, especialmente contra cavalaria.
-Porem, e vuneravel a ataques a distancia
+Porem, vuneravel a ataques a distancia
 # Persianites
-Feito pra bater e correr, essa unidade e altamente movel e ataca a distancia
+Feito pra bater e correr, essa unidade altamente movel ataca a distancia
 Nem pense em usar eles para atacar corpo-a-corpo
 # Balista
 Unidade de cerco que especializa em atacar outras unidades de uma distncia segura
