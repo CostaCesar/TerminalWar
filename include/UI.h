@@ -45,6 +45,11 @@ int get_ScreenHeight()
     return (int) csbi.srWindow.Bottom - csbi.srWindow.Top + 1;  
 }
 
+int get_HalfScreenWidth()
+{
+    return (int) ceilf(get_ScreenWidth() / 2.0f);
+}
+
 void toggle_Cursor(bool cursor)
 {
     CONSOLE_CURSOR_INFO info;
@@ -55,16 +60,16 @@ void toggle_Cursor(bool cursor)
 
 void clear_afterMap(short int mHeight)
 {
-    int screenWidth = get_ScreenWidth();
+    // int screenWidth = get_ScreenWidth();
     COORD pos = {0, MAP_OFFSET_Y+mHeight*2};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    printf("                                                                                                                                                                         ");
-    printf("                                                                                                                                                                         ");
-    printf("                                                                                                                                                                         ");
-    printf("                                                                                                                                                                         ");
-    printf("                                                                                                                                                                         ");
-    printf("                                                                                                                                                                         ");
-    printf("                                                                                                                                                                         ");
+    printf("%100s", " ");
+    printf("%100s", " ");
+    printf("%100s", " ");
+    printf("%100s", " ");
+    printf("%100s", " ");
+    printf("%100s", " ");
+    printf("%100s", " ");
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     return;   
 }
@@ -267,81 +272,13 @@ void print_Message(char *message, int width, int line, bool overwrite, bool offs
     return;     
 }
 
-void print_Offset(char *message, int offset, int size)
-{
-    int msg_len = strlen(message);
-    
-    print_Line(NULL, size);
-    print_Line(" ", size);
-
-    putchar(186);
-    for(int i = 0; i < offset + 1; i++)
-        printf(" ");
-    printf("%s", message);
-    for(int i = 0; i < size - msg_len - 2; i++)
-        printf(" ");
-    putchar(186);
-    
-    print_Line(" ", 0);
-    print_Line(NULL, 0);
-    return;
-}
-
-void print_Text(char *message, int width)
-{
-    CONSOLE_SCREEN_BUFFER_INFO cursor = {0};
-    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-    int msg_len = strlen(message);
-    
-    cursor.dwCursorPosition.X = 2, cursor.dwCursorPosition.Y = 1;    
-    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    for(int j = 0; j < width -3; j++)
-        putchar(' ');
-
-    cursor.dwCursorPosition.Y++;
-    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    for(int j = 0; j < width -3; j++)
-        putchar(' ');
-    
-    cursor.dwCursorPosition.Y++;
-    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    for(int i = 0; i < floorf(width/ 2.0f) - floorf(msg_len / 2.0f) - 3; i++)
-        putchar(' ');
-    printf("%s", message);
-    for(int i = 0; i < ceilf(width/ 2.0f) - ceilf(msg_len / 2.0f) - 3; i++)
-        putchar(' ');
-
-    cursor.dwCursorPosition.Y++;
-    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    for(int j = 0; j < width -3; j++)
-        putchar(' ');
-
-    cursor.dwCursorPosition.Y++;
-    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    for(int j = 0; j < width -3; j++)
-        putchar(' ');
-    
-    
-    cursor.dwCursorPosition.Y++;
-    SetConsoleCursorPosition(console, cursor.dwCursorPosition);
-    for(int j = 0; j < width -3; j++)
-        putchar(' ');
-    
-    return;
-}
-
+// REMOVER
 void game_Message(int Ypos, char *message, bool doWait, int width, int msgOffset)
 {
     COORD pos = { 0, Ypos};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     
-    if(msgOffset < 1)
-        print_Message(message, width, 1, true, false, true);
-    else
-        print_Offset(message, msgOffset, width);
-    
-    if(doWait)
-        Sleep(2000);
+    print_Message(message, width, 1, true, msgOffset > 0, doWait);
 
     return;
 }
@@ -705,7 +642,7 @@ void info_Upper(char* mapName, MapMode mode, int turns, char *side, bool isPlaye
 
     // Unit position
     reset_Cursor();
-    snprintf(msg, sizeof(msg), "%-3dX <||> %3dY", pos.X, pos.Y);
+    snprintf(msg, sizeof(msg), "%3dX <||> %3dY", pos.X, pos.Y);
     print_Message(msg, size + 1, 4, false, false, false);
     // -> Comands
     cursor.dwCursorPosition.X = size;

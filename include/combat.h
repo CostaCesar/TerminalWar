@@ -407,10 +407,10 @@ bool show_Combat(B_Result *units)
     return out;
 }
 
-bool check_UnitMove(B_Unit *unit, int moves)
+bool check_UnitMove(B_Unit *unit, int *moves)
 {
     
-    if(moves >= unit->moves)
+    if((*moves) >= unit->moves)
         return false;
     if(unit->retreating == true)
         return false;
@@ -419,11 +419,11 @@ bool check_UnitMove(B_Unit *unit, int moves)
     
     if(unit->engaged == false)
         return true;
-    else if(unit->engaged == true && moves + 1 < unit->moves)
+    else if(unit->engaged == true && (*moves) + 1 < unit->moves)
     {
         unit->engaged = false;
-        moves++;
-        game_Message(0, "Disengaging!", true, 0, -1);
+        (*moves)++;
+        print_Message("Disengaging!", get_HalfScreenWidth(), 1, true, false, true);
         return true;
     }
     else return false;
@@ -441,7 +441,7 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| The units are too far away from eachother! | \n");
         printf("#============================================# \n"); */
-        game_Message(0, "The units are too far away from eachother!", true, 0, -1);   
+        print_Message("The units are too far away from eachother!", get_HalfScreenWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
 
@@ -452,20 +452,20 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| This has no projectiles. They can't fire!  | \n");
         printf("#============================================# \n"); */
-        game_Message(0, "This has no projectiles. They can't fire!", true, 0, -1);
+        print_Message("This has no projectiles. They can't fire!", get_HalfScreenWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;       
     }
 
     // Testing if attacker is routing
-    if(attacker->retreating == true)
-    {
-        /* printf("\n");
-        printf("#============================================# \n");
-        printf("| This unit will not fire, they're routing!  | \n");
-        printf("#============================================# \n"); */     
-        game_Message(0, "This unit will not fire, they're routing!", true, 0, -1);
-        return FUNCTION_FAIL;       
-    }
+    // if(attacker->retreating == true)
+    // {
+    //     /* printf("\n");
+    //     printf("#============================================# \n");
+    //     printf("| This unit will not fire, they're routing!  | \n");
+    //     printf("#============================================# \n"); */     
+    //     game_Message(0, "This unit will not fire, they're routing!", true, 0, -1);
+    //     return FUNCTION_FAIL;       
+    // }
     return FUNCTION_SUCESS;
 }
 

@@ -130,6 +130,21 @@ int deallocAll()
 // Centralization of the combat process
 void meleeCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B_Unit* defender)
 {
+    // Show
+    update_Map(attacker->position.X, attacker->position.Y, "XXX");
+    Sleep(TIME_MAP);
+    update_Map(defender->position.X, defender->position.Y, "OOO");
+    Sleep(TIME_MAP);
+    // Glow
+    char msg[STRING_NAME];
+    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
+    print_Message(msg, screenHalf, 1, true, false, false);
+    print_Message("Is engaging in melee combat with", screenHalf, 2, false, false, false);
+    snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", defender->name, defender->faction, defender->position.X, defender->position.Y);
+    print_Message(msg, screenHalf, 3, false, false, true);
+  
+    // Go
+    system("cls");
     // Unit cannot be already engaged at combat
     if(attacker->engaged == true)
     {
@@ -201,19 +216,14 @@ int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
     Sleep(TIME_MAP);
     
     // Signaling
-    system("cls");
-    print_Line(NULL, 0);
-    print_Line(" ", 0);
     snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", attacker->name, attacker->faction, attacker->position.X, attacker->position.Y);
-    print_Line(msg, 0);
-    print_Line("Is firing a volley into", 0);
+    print_Message(msg, screenHalf, 1, true, false, false);
+    print_Message("Is firing a volley into", screenHalf, 2, false, false, false);
     snprintf(msg, sizeof(msg), "%s [%s] at %hdX %2hdY", defender->name, defender->faction, defender->position.X, defender->position.Y);
-    print_Line(msg, 0);
-    print_Line(" ", 0);
-    print_Line(NULL, 0);
-    Sleep(TIME_STRATEGY);
+    print_Message(msg, screenHalf, 3, false, false, true);
 
     // Go
+    system("cls");
     // If attaker != cavalary OR charriot, engage
     // if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
     //     attacker->inCombat = true;
@@ -564,8 +574,10 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
         print_Line(" ", 0);
         print_Line(NULL, 0);
         show_Map(map, *mode, false);
-
+        
+        reset_Cursor();
         out = get_KeyPress(true);
+        clear_afterMap(map->height);
         switch (out)
         {
         case 't':
@@ -696,7 +708,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             // Cheking for undeployed units
             if (dUnits < Side->size)
             {
-                print_Message("There are undeployed units! Proceed? [Y/N]", 0, 1, true, false, true);
+                print_Message("There are undeployed units! Proceed? [Y/N]", 0, 1, true, false, false);
                 out = get_KeyPress(true);
                 if (out != 'y')
                     continue;
@@ -728,19 +740,14 @@ int handleMove(B_Map *map, B_Unit *unit, int *moves, B_Side *player, B_Side *opp
         pos_Screen.X = pos_A.X,pos_Screen.Y = pos_A.Y;
         if (result > -1)
             (*moves) += result+1;
+        else if(result == OUT_COMBAT && unit->attacked == true)
+        {
+            print_Message("This unit can't attack until next turn!", screenHalf, 1, true, false, true);
+            (*moves)--; break;
+        }
         else if (result == OUT_COMBAT)
         {
-            // Show
-            update_Map(pos_A.X, pos_A.Y, "XXX");
-            Sleep(TIME_MAP);
             pos_B = get_AdjTile_Pos(map, pos_A, unit->path[steps]);
-            update_Map(pos_B.X, pos_B.Y, "OOO");
-            Sleep(TIME_MAP);
-            // Glow
-            snprintf(msg, sizeof(msg), "Trying engagement at %3dX %3dY", pos_B.X, pos_B.Y);
-            print_Message(msg, screenHalf, 1, true, false, true);
-            system("cls");   
-            // Go
             int target_I = get_UnitIndex(opponent, map->tiles[pos_B.Y][pos_B.X].unit->Game_ID);
             meleeCombat(player, unit, opponent, &opponent->units[target_I]);
             // Done
@@ -780,14 +787,13 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
         for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
             pos_A = player->units[cUnit_I].position;
-            info_Upper (battleMap->name, *mode, turn, player->name, true, player->units[cUnit_I].name,
-                        player->units[cUnit_I].Game_ID, pos_A, player->units[cUnit_I].moves - moves);
-
-            if(check_UnitMove(&player->units[cUnit_I], moves) == false)
+            if(check_UnitMove(&player->units[cUnit_I], &moves) == false)
             {
                 clear_afterMap(battleMap->height);
                 continue;
             }
+            info_Upper (battleMap->name, *mode, turn, player->name, true, player->units[cUnit_I].name,
+                        player->units[cUnit_I].Game_ID, pos_A, player->units[cUnit_I].moves - moves);
 
             if (player->units[cUnit_I].retreating == true)
             {
@@ -891,13 +897,20 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             }
             else if(action == 'f') // Fire at unit
             {
+                if (player->units[cUnit_I].attacked == true)
+                {
+                    print_Message("This unit can't attack until next turn!", screenHalf, 1, true, false, true);
+                    moves--; continue;
+                }
+
+                
                 if (player->units[cUnit_I].range < 1)
                 {
                     print_Message("This unit can't do ranged attacks!", screenHalf, 1, true, false, true);
                     moves--; continue;
                 }
 
-                clear_afterMap(battleMap->height);
+                // clear_afterMap(battleMap->height);
                 toggle_Cursor(true);
                 print_Message(">> Target coordinates <X Y>: ", screenHalf, 1, true, true, false);
                 scanf("%hd %hd", &target.X, &target.Y);
@@ -1027,11 +1040,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 {
                     player->units[cUnit_I].chaseID = NULL;
                     player->units[cUnit_I].goal.X = -1, player->units[cUnit_I].goal.Y = -1;
-                    if(action == KEY_ENTER)
-                    {
-                        clear_afterMap(battleMap->height);
+                    if(action == KEY_ENTER && moves != 0)
                         print_Message("Auto move disabled!", screenHalf, 1, true, false, true);
-                    }
                 }
                 toggle_Cursor(false);
             }
@@ -1052,7 +1062,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             Sleep(TIME_STRATEGY);
             pos_Screen.Y = MAP_OFFSET_Y+battleMap->height*2;
 
-            if(check_UnitMove(&player->units[cUnit_I], moves) == false)
+            if(check_UnitMove(&player->units[cUnit_I], &moves) == false)
             {
                 clear_afterMap(battleMap->height);
                 continue;

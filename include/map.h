@@ -106,17 +106,17 @@ int check_MapAttack(B_Map *map, B_Pos pos, int ID)
 {
     if(pos.X < 0 || pos.X >= map->width || pos.Y < 0 || pos.Y >= map->height)
     {
-        game_Message(0, "Coordinates out of boundaries!", true, 0, -1);
+        print_Message("Coordinates out of boundaries!", get_HalfScreenWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit == NULL)
     {
-        game_Message(0, "There's nothing to attack here!", true, 0, -1);
+        print_Message("There's nothing to attack here!", get_HalfScreenWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit->Game_ID % 2 == ID % 2)
     {
-        game_Message(0, "These are our own troops Sir!", true, 0, -1);
+        print_Message("These are our own troops Sir!", get_HalfScreenWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
     return FUNCTION_SUCESS;
