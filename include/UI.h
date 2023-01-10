@@ -285,7 +285,9 @@ void game_Message(int Ypos, char *message, bool doWait, int width, int msgOffset
 
 void print_UnitDesc(int descPos, char *descFile)
 {
-    FILE *desc = fopen(descFile, "r");
+    char file[STRING_NAME] = "units/";
+    strcat(file, descFile);
+    FILE *desc = fopen(file, "r");
     if(desc == NULL)
     {
         printf("ERROR: Could not load file \n");
@@ -307,6 +309,7 @@ void print_UnitDesc(int descPos, char *descFile)
     do
     {
         fgets(buffer, STRING_DESC, desc);
+        buffer[strlen(buffer) -1] = '\0';
         
         if(buffer[0] == '#')
             break;
@@ -679,9 +682,12 @@ void show_gUnit(B_Unit *unit)
 
     print_Line(NULL, 0);
     print_Line(" ", 0);
-    snprintf(msg, sizeof(msg), "Unit %d", unit->Game_ID);
-    print_Line(msg, 0);
-    snprintf(msg, sizeof(msg), "%s [%s]", unit->name, unit->faction);
+    if(unit->Game_ID > 0)
+    {
+        snprintf(msg, sizeof(msg), "Unit %d", unit->Game_ID);
+        print_Line(msg, 0);
+    }
+    snprintf(msg, sizeof(msg), "%s [%s]", unit->name, (unit->faction ? unit->faction : ""));
     print_Line(msg, 0);
     snprintf(msg, sizeof(msg), "Level %d", unit->level);
     print_Line(msg, 0);
@@ -694,8 +700,6 @@ void show_gUnit(B_Unit *unit)
     print_Line(msg, 0);
     print_Line("Ranged Stats", 0);
     snprintf(msg, sizeof(msg), "%d OFS X %d DFS", unit->attack_RangeP, unit->defend_RangeP);
-    print_Line(msg, 0);
-    snprintf(msg, sizeof(msg), "Level %d", unit->level);
     print_Line(msg, 0);
     snprintf(msg, sizeof(msg), "Build Power: %d", unit->build_Cap);
     print_Line(msg, 0);
