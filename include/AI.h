@@ -178,20 +178,30 @@ B_Pos get_BestTileRanged(B_Map *map, B_Unit *unit, B_Unit *foe)
 
 B_Pos get_BestTileMatch(B_Map *map, B_Pos from, B_Unit* unit)
 {
-    int best = -100, possib = -1, bestI = -1;
+    int best = -100, bestI = -1;
+    double possib = -1;
+    
     B_Tile* test[8];
+    B_Tile* foe_Tile = &map->tiles[from.Y][from.X];
+    B_Unit* foe = map->tiles[from.Y][from.X].unit;
+    
     for(int i = 0; i <= Northwest; i++)
     {
         test[i] = get_AdjTile(map, from, i);
         if(test[i] == NULL) continue;
 
-        if(test[i]->vegetation >= Grove && unit_HasBuff(unit, Forest_Advtg))
-            possib = DAMAGE_SMALL;
-        else if(test[i]->terrain == Desert_Advtg && unit_HasBuff(unit, Desert_Advtg))
-            possib = DAMAGE_SMALL;
-        else if(test[i]->elevation > map->tiles[from.Y][from.X].elevation && unit_HasBuff(unit, Height_Block))
-            possib = DAMAGE_SMALL;
-
+        int heightDif = get_HeightDif(map, test[i]->pos, from);
+        possib = get_BonusByHeight(heightDif);
+        
+        // When we defend
+        possib += handle_Advantages(unit, test[i]->terrain, test[i]->vegetation, heightDif);
+        // When we attack
+        possib += handle_Advantages(unit, foe_Tile->terrain, foe_Tile->vegetation, -heightDif);
+        // When they attack
+        possib -= handle_Advantages(foe, test[i]->terrain, test[i]->vegetation, heightDif);
+        // When they defend
+        possib -= handle_Advantages(foe, foe_Tile->terrain, foe_Tile->vegetation, -heightDif);
+        
         if(possib > best)
             best = possib, bestI = i;
         else if(possib == best)
@@ -240,6 +250,7 @@ B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_
             }
         }
     }
+    return best;
 }
 
 T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
@@ -275,11 +286,15 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     {
         int nFoes = 0;
         B_Unit **inRange = get_UnitsInRange(current, map, &nFoes, current->range);
-        if(inRange != NULL)
+        if(inRange != NULL && current->attacked == false)
         {
-            current->goal = closest_Foe->position;
+            current->goal = closest_Foe->position; // MUDAR
             free(inRange);
             return AI_Fire;
+        }
+        else if(current->attacked == true)
+        {
+            // Corret para longe
         }
     }
 
@@ -294,9 +309,11 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
                 return AI_Wait;
             if(current->position.X == test.X && current->position.Y == test.Y)
                 return AI_Fortify;
-            // int* testPath =
             if(autoMove(map, current_Tile, &map->tiles[test.Y][test.X]) != NULL)
                 return AI_GoTo;
+            // Posição alvo é uma unidade amiga, como resolver?
+            // IMPLEMENTAR
+            
             // Se for atacada, unidade não pode fortificar e unidade tem mobilidade...
             // IMPLEMENTAR
         }
@@ -322,6 +339,10 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
         {
             current->goal = closest_Foe->position;
             return AI_Engage;
+        }
+        else if(current->attacked == true)
+        {
+            // Corret para longe
         }
         else return AI_GoTo;
     }

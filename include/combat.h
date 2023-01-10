@@ -263,8 +263,8 @@ B_Result execute_MeleeCombat(B_Unit *attacker, B_Unit *defender, int heightDif, 
         defender_Power = 0;
 
     // Buffs
-    if(unit_HasBuff(attacker, Charge_Buff) == true)
-        attacker_Power += DAMAGE_SMALL;
+    if(unit_HasBuff(attacker, Charge_Buff) == true && attacker->men == attacker->men_Max)
+        attacker_Power += DAMAGE_LARGE;
     attacker_Power += handle_Advantages(attacker, terrain, vegetation, heightDif);
     defender_Power += handle_Advantages(defender, terrain, vegetation, heightDif);
     

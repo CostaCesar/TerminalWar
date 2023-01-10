@@ -1077,17 +1077,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     {
                         // Fazer algo
                     }
-                        
-                    if(FRes == FUNCTION_SUCESS)
-                    {
-                        show_gUnit(&player->units[cUnit_I]);
-                        show_gUnit(&opponent->units[target_I]);
-                        printf(">> Press ENTER to continue ");
-                        while (get_KeyPress(false) != KEY_ENTER) continue;
-                        system("cls");
-                        show_Map(battleMap, *mode, true);
-                    }
-                    else update_Map(pos_B.X, pos_B.Y, get_MapSprite(&battleMap->tiles[pos_B.Y][pos_B.X], *mode));
+                    else show_Map(battleMap, *mode, true);
                     moves = player->units[cUnit_I].moves;
                     break;
                 case AI_GoTo:
