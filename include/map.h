@@ -106,17 +106,17 @@ int check_MapAttack(B_Map *map, B_Pos pos, int ID)
 {
     if(pos.X < 0 || pos.X >= map->width || pos.Y < 0 || pos.Y >= map->height)
     {
-        print_Message("Coordinates out of boundaries!", get_HalfScreenWidth(), 1, true, false, true);   
+        print_Message("Coordinates out of boundaries!", get_HalfWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit == NULL)
     {
-        print_Message("There's nothing to attack here!", get_HalfScreenWidth(), 1, true, false, true);   
+        print_Message("There's nothing to attack here!", get_HalfWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
     else if(map->tiles[pos.Y][pos.X].unit->Game_ID % 2 == ID % 2)
     {
-        print_Message("These are our own troops Sir!", get_HalfScreenWidth(), 1, true, false, true);   
+        print_Message("These are our own troops Sir!", get_HalfWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
     return FUNCTION_SUCESS;
@@ -375,7 +375,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
     // Checking if coordiantes are valid
     if((unit->position.X < 0 || unit->position.X >= source_Map->width) || (unit->position.Y  < 0 || unit->position.Y  >= source_Map->height))
     {
-        print_Message("Coordinates out of boundaries!", get_HalfScreenWidth(), 1, true, false, true);       
+        print_Message("Coordinates out of boundaries!", get_HalfWidth(), 1, true, false, true);       
         return FUNCTION_FAIL;
     }
     
@@ -384,7 +384,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
     {
         char msg[24];
         snprintf(msg, sizeof(msg), "Nothing in %3dX %3dY", unit->position.X, unit->position.Y);
-        print_Message(msg, get_HalfScreenWidth(), 1, true, false, true);  
+        print_Message(msg, get_HalfWidth(), 1, true, false, true);  
         return FUNCTION_FAIL;
     }
 
@@ -431,19 +431,19 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
         // Checking for terrain-related movement
         if(source_Map->tiles[destPos.Y][destPos.X].elevation < -1 && source_Map->tiles[destPos.Y][destPos.X].terrain == Water)
         {
-            print_Message("The water is too deep to cross!", get_HalfScreenWidth(), 1, true, false, true);  
+            print_Message("The water is too deep to cross!", get_HalfWidth(), 1, true, false, true);  
             return FUNCTION_FAIL;           
         }
         if(abs(source_Map->tiles[unit->position.Y][unit->position.X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
-            print_Message("The terrain is too step to go!", get_HalfScreenWidth(), 1, true, false, true);  
+            print_Message("The terrain is too step to go!", get_HalfWidth(), 1, true, false, true);  
             return FUNCTION_FAIL;
         }
 
         // Cheking for units (if friend, then if foe)
         if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
         {
-            print_Message("Units can't go over eachother!", get_HalfScreenWidth(), 1, true, false, true);  
+            print_Message("Units can't go over eachother!", get_HalfWidth(), 1, true, false, true);  
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
@@ -457,7 +457,7 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
 
         return mCost;
     }
-    print_Message("Destination out of boundaries!", get_HalfScreenWidth(), 1, true, false, true);  
+    print_Message("Destination out of boundaries!", get_HalfWidth(), 1, true, false, true);  
     return FUNCTION_FAIL;
 }
 
@@ -492,20 +492,25 @@ int put_Unit_OnMap(B_Map *map, B_Unit *unit, int ignoreSpawn)
 
 int inc_FortLevel(B_Map *map, short int amount, B_Pos pos)
 {
+    if(amount < 1)
+    {
+        print_Message("This unit cannot build fortifications!", get_HalfWidth(), 1, true, false, true);
+        return FUNCTION_FAIL;
+    }
     map->tiles[pos.Y][pos.X].fortLevel += amount;
     if(map->tiles[pos.Y][pos.X].fortLevel > MAX_FORT_LEVEL)
     {
         map->tiles[pos.Y][pos.X].fortLevel = MAX_FORT_LEVEL;
         char msg[28];
         snprintf(msg, sizeof(msg), "Max Fort Level Reached [%2d]", MAX_FORT_LEVEL);
-        game_Message(0, msg, true, true, -1);
+        print_Message(msg, get_HalfWidth(), 1, true, false, true);
         return FUNCTION_FAIL;
     }
     else
     {
         char msg[29];
         snprintf(msg, sizeof(msg), "Fort Upgraded from %2d to %2d!", map->tiles[pos.Y][pos.X].fortLevel - amount, map->tiles[pos.Y][pos.X].fortLevel);
-        game_Message(0, msg, true, true, -1);       
+        print_Message(msg, get_HalfWidth(), 1, true, false, true);       
         return FUNCTION_SUCESS;
     }
 }
