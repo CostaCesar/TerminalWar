@@ -226,8 +226,10 @@ B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_
     {
         for(int j = 0; j < map->width; j++)
         {
+            if(map->tiles[i][j].unit && map->tiles[i][j].unit->Game_ID != us->Game_ID)
+                continue;
             if(map->tiles[i][j].elevation < bestHeight)
-                continue;//map->tiles[unit->position.Y][unit->position.X].elevation)
+                continue;
             else posbHeight = map->tiles[i][j].elevation;
             
             if(get_BonusByVeget(map->tiles[i][j].vegetation)

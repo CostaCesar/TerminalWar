@@ -45,7 +45,7 @@ int get_ScreenHeight()
     return (int) csbi.srWindow.Bottom - csbi.srWindow.Top + 1;  
 }
 
-int get_HalfScreenWidth()
+int get_HalfWidth()
 {
     return (int) ceilf(get_ScreenWidth() / 2.0f);
 }

@@ -952,19 +952,9 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             }
             else if (action == 'e') // Fortify
             {
-                clear_afterMap(battleMap->height);
-                if (player->units[cUnit_I].build_Cap > 0)
-                {
-                    if (inc_FortLevel(battleMap, player->units[cUnit_I].build_Cap, pos_A) == FUNCTION_FAIL)
-                        moves--;
-                    else moves = player->units[cUnit_I].moves;
-                }
-                else
-                {
-                    print_Message("This unit cannot build fortifications!", screenHalf, 1, true, false, true);
-                    moves--; continue;
-                }
-                clear_afterMap(battleMap->height);
+                if (inc_FortLevel(battleMap, player->units[cUnit_I].build_Cap, pos_A) == FUNCTION_FAIL)
+                { moves--; continue; } 
+                else moves = player->units[cUnit_I].moves;
             }
             else if (action == 'g') // See tile stats
             {
@@ -1046,7 +1036,6 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                 toggle_Cursor(false);
             }
         }
-        // clear_afterMap(battleMap->height);
         player->units[cUnit_I].attacked = false, player->units[cUnit_I].engaged = false;
         update_Map(pos_A.X, pos_A.Y, get_MapSprite(&battleMap->tiles[pos_A.Y][pos_A.X], *mode));}
     else // AI Zone
@@ -1094,6 +1083,11 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     }
                     (void) handleMove(battleMap, &player->units[cUnit_I], &moves, player, opponent, *mode);
                     free(player->units[cUnit_I].path);
+                    break;
+                case AI_Fortify:
+                    if (inc_FortLevel(battleMap, player->units[cUnit_I].build_Cap, pos_A) == FUNCTION_FAIL)
+                    { moves--; continue; } 
+                    else moves = player->units[cUnit_I].moves;
                     break;
                 default:
                     FRes = move_Unit(battleMap, &player->units[cUnit_I], Northeast);
