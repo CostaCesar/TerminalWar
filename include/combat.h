@@ -303,7 +303,9 @@ B_Result execute_MeleeCombat(B_Unit *attacker, B_Unit *defender, int heightDif, 
         
         if(defender->morale <= 0 ||  defender->men <= 0)
         {
-            defender->men = (short int) (rand() % defender->men);
+            if(defender->men < 0)
+                defender->men = (short int) (rand() % defender->men);
+            else defender->men = 0;
             defender->retreating = true;
             defender->engaged = false;
             defender->morale = 0.0f;
@@ -327,7 +329,9 @@ B_Result execute_MeleeCombat(B_Unit *attacker, B_Unit *defender, int heightDif, 
         
         if(attacker->morale <= 0 || attacker->men <= 0)
         {
-            attacker->men = (short int) (rand() % attacker->men);
+            if(attacker->men < 0)
+                attacker->men = (short int) (rand() % attacker->men);
+            else attacker->men = 0;
             attacker->retreating = true;
             attacker->engaged = false;
             attacker->morale = 0.0f;
@@ -423,7 +427,7 @@ bool check_UnitMove(B_Unit *unit, int *moves)
     {
         unit->engaged = false;
         (*moves)++;
-        print_Message("Disengaging!", get_HalfScreenWidth(), 1, true, false, true);
+        print_Message("Disengaging!", get_HalfWidth(), 1, true, false, true);
         return true;
     }
     else return false;
@@ -441,7 +445,7 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| The units are too far away from eachother! | \n");
         printf("#============================================# \n"); */
-        print_Message("The units are too far away from eachother!", get_HalfScreenWidth(), 1, true, false, true);   
+        print_Message("The units are too far away from eachother!", get_HalfWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;
     }
 
@@ -452,7 +456,7 @@ int check_Ranged(B_Unit *attacker, B_Unit *defender)
         printf("#============================================# \n");
         printf("| This has no projectiles. They can't fire!  | \n");
         printf("#============================================# \n"); */
-        print_Message("This has no projectiles. They can't fire!", get_HalfScreenWidth(), 1, true, false, true);   
+        print_Message("This has no projectiles. They can't fire!", get_HalfWidth(), 1, true, false, true);   
         return FUNCTION_FAIL;       
     }
 
