@@ -416,8 +416,6 @@ bool check_UnitMove(B_Unit *unit, int *moves)
     
     if((*moves) >= unit->moves)
         return false;
-    if(unit->retreating == true)
-        return false;
     if(unit->attacked == true && unit_HasBuff(unit, Hit_And_Move) == false)
         return false;
     

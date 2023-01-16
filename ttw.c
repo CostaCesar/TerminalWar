@@ -602,6 +602,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             toggle_Cursor(false);
 
             Index = get_UnitIndex(Side, out);
+            reset_Cursor();
             if (Index > -1 && (Side->units[Index].position.X < 0 && Side->units[Index].position.Y < 0))
             {
                 toggle_Cursor(true);
@@ -780,6 +781,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
     char action = 'x', msg[STRING_NAME];
 
     // Setting up unit
+    if(_kbhit() && _getch() == KEY_ESCAPE)
+        return FUNCTION_FAIL;
     if(pos_A.Y == NO_UNIT || pos_A.X == NO_UNIT)
         return FUNCTION_FAIL;
     if(player->isAI == false) // Player Zone
@@ -797,9 +800,8 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
 
             if (player->units[cUnit_I].retreating == true)
             {
-                Sleep(TIME_STRATEGY);
-                // Algo gráfico pra representar o retreat
-                // IMPLEMENTAR
+                toggle_Cursor(false);
+                print_Message("Retreating", get_HalfWidth(), 5, false, false, true);
                 break;
             }
             
@@ -1047,6 +1049,13 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             int FRes = false;
             info_Upper(battleMap->name, *mode, turn, player->name, false, player->units[cUnit_I].name,
                        player->units[cUnit_I].Game_ID, pos_A, NO_UNIT);
+            if (player->units[cUnit_I].retreating == true)
+            {
+                toggle_Cursor(false);
+                print_Message("Retreating", get_HalfWidth(), 5, false, false, true);
+                break;
+            }
+
             update_Map(pos_A.X, pos_A.Y, player->units[cUnit_I].name);
             Sleep(TIME_STRATEGY);
             pos_Screen.Y = MAP_OFFSET_Y+battleMap->height*2;
@@ -1107,6 +1116,60 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
     return FUNCTION_SUCESS;
 }
 
+bool check_Victory()
+{
+    fflush(stdin);
+    int remainingA, remainingB;
+    B_Pos invalid = {-1, -1};
+    for(remainingA = Side_A.size-1; remainingA >= 0; remainingA--)
+    {
+        if(compPos(Side_A.units[remainingA].position, invalid) == false)
+            break;
+        else if(remainingA == 0)
+        { remainingA = -1; break; }
+    }
+    for(remainingB = Side_B.size-1; remainingB >= 0; remainingB--)
+    {
+        if(compPos(Side_B.units[remainingB].position, invalid) == false)
+            break;
+        else if(remainingB == 0)
+        { remainingB = -1; break; }
+    }
+    if(remainingA < 0)
+    { screen_Victory(Side_B.stats, Side_A.stats); return true;}
+    else if(remainingB < 0)
+    { screen_Victory(Side_A.stats, Side_B.stats); return true;}
+    return false;
+}
+
+bool check_Retreat(int* mode, B_Side* side)
+{
+    char *msg;
+    for (int j = 0; j < side->size; j++)
+    {
+        B_Pos unitPos = side->units[j].position;
+        bool retreated = true;
+        if (side->units[j].retreating == true)
+        { 
+            for (int moves = 0; moves < side->units[j].moves; moves++)
+            {
+                retreated = unit_Retreat(&side->units[j], &battleMap, *mode);
+                unitPos = side->units[j].position;
+                if (retreated == false)
+                {
+                    update_Map(unitPos.X, unitPos.Y, "#*#");
+                    Sleep(TIME_STRATEGY);
+                    clear_afterMap(battleMap.height);
+                    battleMap.tiles[unitPos.Y][unitPos.X].unit = NULL;
+                    delete_Unit(side->units, &side->size, j);
+                    return true;
+                }
+            }
+            update_Map(unitPos.X, unitPos.Y, get_MapSprite(&battleMap.tiles[unitPos.Y][unitPos.X], *mode));
+        }
+    }
+    return false;
+}
 int main(/*int argc, char** argv*/)
 {
     // Randomizing seed
@@ -1223,16 +1286,8 @@ startMenu:
         unitA_I++;
         
         // Checking for victory
-        // Use fielded troops to get victory
-        // IMPLEMENT
-        fflush(stdin);
-        if(Side_B.size == 0)
-        {
-            screen_Victory(Side_A.stats, Side_B.stats);
-            while (get_KeyPress(false) != KEY_ENTER)
-                continue;
+        if(check_Victory() == true)
             break;
-        }
 
         // Get next unit
         for(int index = 0; index < Side_B.size; index++)
@@ -1248,64 +1303,36 @@ startMenu:
         unitB_I++;
 
         // Checking for victory
-        // Use fielded troops to get victory
-        // IMPLEMENT
-        int remainingA, remainingB;
-        fflush(stdin);
-        for(remainingA = Side_A.size-1; remainingA >= 0; remainingA--)
-        {
-            if(compPos(Side_A.units[remainingA].position, (B_Pos){-1, -1}) == false)
-                break;
-            else if(remainingA == 0)
-            { remainingA = -1; break; }
-        }
-        for(remainingB = Side_B.size-1; remainingB >= 0; remainingB--)
-        {
-            if(compPos(Side_B.units[remainingB].position, (B_Pos){-1, -1}) == false)
-                break;
-            else if(remainingB == 0)
-            { remainingB = -1; break; }
-        }
-        if(remainingA < 0)
-        { screen_Victory(Side_B.stats, Side_A.stats); break; }
-        else if(remainingB < 0)
-        { screen_Victory(Side_A.stats, Side_B.stats); break; }
-        
+        if(check_Victory() == true)
+            break;
+
         // Cheking for retreat
-        for (int j = 0; j < Side_A.size && j < Side_B.size; j++)
-        {
-            bool retreated = true;
-            char *msg;
-            if (Side_A.units[j].retreating == true)
-            { 
-                for (int moves = 0; moves < Side_A.units[j].moves; moves++)
-                {
-                    retreated = unit_Retreat(&Side_A.units[j], &battleMap, mode);
-                    if (retreated == false)
-                    {
-                        battleMap.tiles[Side_A.units[j].position.Y][Side_A.units[j].position.X].unit = NULL;
-                        delete_Unit(Side_A.units, &Side_A.size, j);
-                        break;
-                    }
-                }
-                update_Map(Side_A.units[j].position.X, Side_A.units[j].position.Y, Side_A.units[j].name);
-            }
-            if (Side_B.units[j].retreating == true)
-            {
-                msg = get_MapSprite(&battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X], mode);
-                for (int moves = 0; moves < Side_B.units[j].moves; moves++)
-                {
-                    retreated = unit_Retreat(&Side_B.units[j], &battleMap, mode);
-                    if (retreated == false)
-                    {
-                        battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X].unit = NULL;
-                        delete_Unit(Side_B.units, &Side_B.size, j);
-                        break;
-                    }
-                    update_Map(Side_B.units[j].position.X, Side_B.units[j].position.Y, Side_B.units[j].name);
-                }
-            }
-        }
+        check_Retreat(&mode, &Side_A);
+        check_Retreat(&mode, &Side_B);
+        
+        // Checking for victory
+        if(check_Victory() == true)
+            break;
+
+        // for (int j = 0; j < Side_B.size; j++)
+        // {
+        //     bool retreated = true;
+        //     if (Side_B.units[j].retreating == true)
+        //     {
+        //         msg = get_MapSprite(&battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X], mode);
+        //         for (int moves = 0; moves < Side_B.units[j].moves; moves++)
+        //         {
+        //             retreated = unit_Retreat(&Side_B.units[j], &battleMap, mode);
+        //             if (retreated == false)
+        //             {
+        //                 battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X].unit = NULL;
+        //                 delete_Unit(Side_B.units, &Side_B.size, j);
+        //                 break;
+        //             }
+        //             update_Map(Side_B.units[j].position.X, Side_B.units[j].position.Y, Side_B.units[j].name);
+        //         }
+        //     }
+        // }
     }
 
     // Freeing to Menu

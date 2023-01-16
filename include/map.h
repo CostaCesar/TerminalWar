@@ -431,19 +431,22 @@ int move_Unit(B_Map *source_Map, B_Unit *unit, T_Direc direction)
         // Checking for terrain-related movement
         if(source_Map->tiles[destPos.Y][destPos.X].elevation < -1 && source_Map->tiles[destPos.Y][destPos.X].terrain == Water)
         {
-            print_Message("The water is too deep to cross!", get_HalfWidth(), 1, true, false, true);  
+            if(unit->retreating == false)
+                print_Message("The water is too deep to cross!", get_HalfWidth(), 1, true, false, true);  
             return FUNCTION_FAIL;           
         }
         if(abs(source_Map->tiles[unit->position.Y][unit->position.X].elevation - source_Map->tiles[destPos.Y][destPos.X].elevation) > HEIGHT_DIF)
         {
-            print_Message("The terrain is too step to go!", get_HalfWidth(), 1, true, false, true);  
+            if(unit->retreating == false)
+                print_Message("The terrain is too step to go!", get_HalfWidth(), 1, true, false, true);  
             return FUNCTION_FAIL;
         }
 
         // Cheking for units (if friend, then if foe)
         if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) == (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
         {
-            print_Message("Units can't go over eachother!", get_HalfWidth(), 1, true, false, true);  
+            if(unit->retreating == false)
+                print_Message("Units can't go over eachother!", get_HalfWidth(), 1, true, false, true);  
             return FUNCTION_FAIL;             
         }
         else if (source_Map->tiles[destPos.Y][destPos.X].unit != NULL && (source_Map->tiles[destPos.Y][destPos.X].unit->Game_ID % 2) != (source_Map->tiles[unit->position.Y][unit->position.X].unit->Game_ID % 2))
@@ -626,7 +629,7 @@ B_Tile* get_AdjTile(B_Map* map, B_Pos pos, T_Direc direction)
 
 bool unit_Retreat(B_Unit* unit, B_Map* map, int mode)
 {
-    int hasMoved = false;
+    int hasMoved = FUNCTION_FAIL;
     B_Pos previous = unit->position;
     T_Direc direction;
 

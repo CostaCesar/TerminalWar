@@ -126,6 +126,8 @@ B_Unit *get_ClosestUnit(B_Side *side, B_Pos from)
     {
         if(side->units[i].position.X < 0 || side->units[i].position.Y < 0)
             continue;
+        if(side->units[i].retreating == true)
+            continue;
         if(compPos(from, side->units[i].position) == true)
             continue;
         test = calcMoves(side->units[i].position, from);
@@ -265,6 +267,10 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     // Alvo atual ainda existe?
     if((current->chaseID) && get_UnitIndex(they, *current->chaseID) == FUNCTION_FAIL)
         current->goal.X = NO_UNIT, current->goal.Y = NO_UNIT, current->chaseID = NULL;
+
+    // Ainda há inimigos no mapa?
+    if(closest_Foe == NULL)
+        return AI_Wait;
     
     // Se muito perto, recuar
     // talvex só ranged ou algo assim

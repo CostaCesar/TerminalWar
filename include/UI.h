@@ -682,7 +682,7 @@ void show_gUnit(B_Unit *unit)
 
     print_Line(NULL, 0);
     print_Line(" ", 0);
-    if(unit->Game_ID > 0)
+    if(unit->Game_ID >= 0)
     {
         snprintf(msg, sizeof(msg), "Unit %d", unit->Game_ID);
         print_Line(msg, 0);
