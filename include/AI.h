@@ -319,9 +319,6 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
                 return AI_Fortify;
             if(autoMove(map, current_Tile, &map->tiles[test.Y][test.X]) != NULL)
                 return AI_GoTo;
-            // Posição alvo é uma unidade amiga, como resolver?
-            // IMPLEMENTAR
-            
             // Se for atacada, unidade não pode fortificar e unidade tem mobilidade...
             // IMPLEMENTAR
         }

@@ -272,17 +272,6 @@ void print_Message(char *message, int width, int line, bool overwrite, bool offs
     return;     
 }
 
-// REMOVER
-void game_Message(int Ypos, char *message, bool doWait, int width, int msgOffset)
-{
-    COORD pos = { 0, Ypos};
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-    
-    print_Message(message, width, 1, true, msgOffset > 0, doWait);
-
-    return;
-}
-
 void print_UnitDesc(int descPos, char *descFile)
 {
     char file[STRING_NAME] = "units/";
@@ -767,7 +756,10 @@ int listScen()
         FindClose(handle);
     }
     else
-        game_Message(0, "Can't load the scenarios folder, get at least one scenario in there!", true, 0, -1);
+    {
+        print_Message("Can't load the scenarios folder!", get_ScreenWidth(), 1, true, false, false);
+        print_Message("Must have at least one scenario in there", get_ScreenWidth(), 2, false, false, true);
+    }
     return nScen;
 }
 

@@ -10,7 +10,7 @@
 #include "include/AI.h"
 
 #define MAP_DELAY (2 * 1000)
-#define TURNS 30
+#define TURNS 100
 #define VERSION 1.75f
 
 // Game Variables
@@ -1119,25 +1119,25 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
 bool check_Victory()
 {
     fflush(stdin);
-    int remainingA, remainingB;
+    int leftA, leftB;
     B_Pos invalid = {-1, -1};
-    for(remainingA = Side_A.size-1; remainingA >= 0; remainingA--)
+    for(leftA = Side_A.size-1; leftA >= 0; leftA--)
     {
-        if(compPos(Side_A.units[remainingA].position, invalid) == false)
+        if(compPos(Side_A.units[leftA].position, invalid) == false)
             break;
-        else if(remainingA == 0)
-        { remainingA = -1; break; }
+        else if(leftA == 0)
+            leftA--;
     }
-    for(remainingB = Side_B.size-1; remainingB >= 0; remainingB--)
+    for(leftB = Side_B.size-1; leftB >= 0; leftB--)
     {
-        if(compPos(Side_B.units[remainingB].position, invalid) == false)
+        if(compPos(Side_B.units[leftB].position, invalid) == false)
             break;
-        else if(remainingB == 0)
-        { remainingB = -1; break; }
+        else if(leftB == 0)
+            leftB--;
     }
-    if(remainingA < 0)
+    if(leftA < 0)
     { screen_Victory(Side_B.stats, Side_A.stats); return true;}
-    else if(remainingB < 0)
+    else if(leftB < 0)
     { screen_Victory(Side_A.stats, Side_B.stats); return true;}
     return false;
 }
@@ -1284,6 +1284,8 @@ startMenu:
         if(do_Turn(&Side_A, &Side_B, &battleMap, unitA_I, i, &mode) == FUNCTION_FAIL)
             break;
         unitA_I++;
+        // Cheking for retreat
+        check_Retreat(&mode, &Side_A);
         
         // Checking for victory
         if(check_Victory() == true)
@@ -1303,36 +1305,12 @@ startMenu:
         unitB_I++;
 
         // Checking for victory
-        if(check_Victory() == true)
-            break;
-
-        // Cheking for retreat
-        check_Retreat(&mode, &Side_A);
         check_Retreat(&mode, &Side_B);
-        
+
         // Checking for victory
         if(check_Victory() == true)
             break;
 
-        // for (int j = 0; j < Side_B.size; j++)
-        // {
-        //     bool retreated = true;
-        //     if (Side_B.units[j].retreating == true)
-        //     {
-        //         msg = get_MapSprite(&battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X], mode);
-        //         for (int moves = 0; moves < Side_B.units[j].moves; moves++)
-        //         {
-        //             retreated = unit_Retreat(&Side_B.units[j], &battleMap, mode);
-        //             if (retreated == false)
-        //             {
-        //                 battleMap.tiles[Side_B.units[j].position.Y][Side_B.units[j].position.X].unit = NULL;
-        //                 delete_Unit(Side_B.units, &Side_B.size, j);
-        //                 break;
-        //             }
-        //             update_Map(Side_B.units[j].position.X, Side_B.units[j].position.Y, Side_B.units[j].name);
-        //         }
-        //     }
-        // }
     }
 
     // Freeing to Menu

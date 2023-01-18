@@ -650,7 +650,6 @@ bool unit_Retreat(B_Unit* unit, B_Map* map, int mode)
     B_Tile* adj = get_AdjTile(map, unit->position, direction);
     if((adj) && adj->unit == NULL)
         hasMoved = move_Unit(map, unit, direction);
-    msg = get_MapSprite(&map->tiles[previous.Y][previous.X], mode);
     if (hasMoved == FUNCTION_FAIL)
     {
         adj = get_AdjTile(map, unit->position, direction -1);
@@ -665,6 +664,7 @@ bool unit_Retreat(B_Unit* unit, B_Map* map, int mode)
                 return false;
         }
     }
+    msg = get_MapSprite(&map->tiles[previous.Y][previous.X], mode);
     update_Map(previous.X, previous.Y, msg);
     return true;
 }
@@ -879,15 +879,9 @@ T_Direc *autoMove(B_Map* map, B_Tile *startNode, B_Tile *endNode)
     }
     if(path_Size < 0)
     {
-        // printf("\n");
-        // printf("#=======================================# \n");
-        // printf("| Path to %3dX %3dY could not be found  | \n");
-        // printf("#=======================================# \n");
         char msg[38];
         snprintf(msg, sizeof(msg), "Path to %3dX %3dY could not be found!", endNode->unit->position.X, endNode->unit->position.Y);
-        game_Message(0, msg, true, 0, -1);
-        
-        getchar();
+        print_Message(msg, get_HalfWidth(), 1, true, false, true);
     }
 
     return path;
