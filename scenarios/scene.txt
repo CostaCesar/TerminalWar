@@ -29,7 +29,7 @@ What they don't know is
 #plz subscribe;
 $
 map: update.map
-mapTitle: AI Test
+mapTitle: AI Melee Test
 music: NU_Battle.wav
 table: update.bin
 attacker: sideB
@@ -44,6 +44,26 @@ sideB: AI
 placement: forced
 units: 1
 1 5 15
+mapDesc: |#|
+Mate todos as unidades da Imperia
+e veja como ela reage ;)
+$
+map: update.map
+mapTitle: AI Horse Test
+music: NU_Battle.wav
+table: update.bin
+attacker: sideB
+sideA: Player
+placement: chosen
+units: 4
+0
+1
+2
+3
+sideB: AI
+placement: forced
+units: 1
+2 5 15
 mapDesc: |#|
 Mate todos as unidades da Imperia
 e veja como ela reage ;)

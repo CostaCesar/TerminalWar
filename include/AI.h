@@ -257,7 +257,42 @@ B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_
     return best;
 }
 
-T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl)
+B_Pos get_BestRetreat(B_Map *map, B_Unit* us, int moves, B_Unit *enemy)
+{
+    B_Pos minCoord, maxCoord, bestPos = us->position;
+    int bestScore = -1, posbScore;
+    minCoord.X = (us->position.X - moves > 0) ? us->position.X - moves : 0;
+    minCoord.Y = (us->position.Y - moves > 0) ? us->position.Y - moves : 0;
+    maxCoord.X = (us->position.X + moves < map->width) ? us->position.X + moves : map->width - 1;
+    maxCoord.Y = (us->position.Y + moves < map->height) ? us->position.Y + moves : map->height - 1;
+
+    for(int i = minCoord.Y; i <= maxCoord.Y; i++)
+    {
+        for(int j = minCoord.X; j <= maxCoord.X; j++)
+        {
+            if(map->tiles[i][j].unit != NULL)
+                continue;
+            posbScore = 0;
+            B_Tile *test = &map->tiles[i][j];
+            int dif = get_HeightDif(map, enemy->position, test->pos);
+            int dist = get_MovesCost(map, &map->tiles[us->position.Y][us->position.X], test);
+
+            if(dist > moves)
+                continue;
+            dist = get_MovesCost(map, &map->tiles[enemy->position.Y][enemy->position.X], test);
+            posbScore += dist - enemy->moves;
+            if(calcMoves(test->pos, enemy->position) <= enemy->range)
+                posbScore -= 5;
+            posbScore += handle_Advantages(us, test->terrain, test->vegetation, dif);
+
+            if(posbScore > bestScore)
+            { bestScore = posbScore, bestPos = test->pos; }
+        }
+    }
+    return bestPos;
+}
+
+T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T_Level lvl, int moves)
 {
     B_Pos test;
     B_Unit *closest_Foe = get_ClosestUnit(they, current->position);
@@ -273,8 +308,16 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
         return AI_Wait;
     
     // Se muito perto, recuar
-    // talvex só ranged ou algo assim
-    // IMPLEMENTAR?
+    if(current->attacked == true && unit_HasBuff(current, Buff_HitRun) && current->chaseID == NULL)
+    {
+        current->goal = get_BestRetreat(map, current, moves, closest_Foe);
+        if(compPos(current->goal, current->position) == true)
+            return AI_Wait;
+        else return AI_GoTo;
+        // Recuar mesmo se não puder evitar prox ataque?
+        // IMPLEMENTAR
+    }
+
     if((get_UnitPowerGap(current, closest_Foe,
                          get_HeightDif(map, current->position, closest_Foe->position),
                          current_Tile->fortLevel, false) <= 0.5
@@ -337,17 +380,14 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     {
         // Obtendo alvo e melhor angulo de ataque
         current->chaseID = get_BestMatchup(current, they->units, they->size, map);
-        current->goal = get_BestTileMatch(map, closest_Foe->position, current);
+        B_Unit *chase = &they->units[get_UnitIndex(they, *current->chaseID)];
+        current->goal = get_BestTileMatch(map, chase->position, current);
         
         // Se estiver do lado, engajar
         if(compPos(current->goal, current->position) == true)
         {
             current->goal = closest_Foe->position;
             return AI_Engage;
-        }
-        else if(current->attacked == true)
-        {
-            // Corret para longe
         }
         else return AI_GoTo;
     }

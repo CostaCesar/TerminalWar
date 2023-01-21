@@ -224,11 +224,6 @@ int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
 
     // Go
     system("cls");
-    // If attaker != cavalary OR charriot, engage
-    // if(attacker->type < Lg_Cavalary || attacker->type > Hv_Charriot)
-    //     attacker->inCombat = true;
-    // Defender must be engaged
-    // defender->inCombat = true;
     int tVeget = getTile_Vegetat(&battleMap, target), tHeight = get_HeightDif(&battleMap, attacker->position, target);
     int tTerrain = getTile_Terrain(&battleMap, target);
     short int *tFort = &battleMap.tiles[target.Y][target.X].fortLevel;
@@ -248,6 +243,7 @@ int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
     system("cls");
     
     // Cleanup
+    attacker->chaseID = NULL;
     target = defender->position;
     if(defender->men == 0)
     {
@@ -1046,7 +1042,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
         for (int moves = 0; moves < player->units[cUnit_I].moves; moves++)
         {
             // show_Map(&battleMap, Map_Height);
-            int FRes = false;
+            int realMoves = player->units[cUnit_I].moves - moves;
             info_Upper(battleMap->name, *mode, turn, player->name, false, player->units[cUnit_I].name,
                        player->units[cUnit_I].Game_ID, pos_A, NO_UNIT);
             if (player->units[cUnit_I].retreating == true)
@@ -1067,16 +1063,16 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
             }
             
             pos_Screen.X = pos_A.X, pos_Screen.Y = pos_A.Y;
-            switch(AI_Process(battleMap, player, opponent, &player->units[cUnit_I], AI_Easy))
+            switch(AI_Process(battleMap, player, opponent, &player->units[cUnit_I], AI_Easy, realMoves))
             {
                 case AI_Fire:
                     pos_B = player->units[cUnit_I].goal;
-                    if(rangedCombat(player, &player->units[cUnit_I], opponent, pos_B) == FUNCTION_FAIL)
+                    if(rangedCombat(player, &player->units[cUnit_I], opponent, pos_B) == FUNCTION_SUCESS)
                     {
-                        // Fazer algo
+                        show_Map(battleMap, *mode, true);
+                        continue;
                     }
-                    else show_Map(battleMap, *mode, true);
-                    moves = player->units[cUnit_I].moves;
+                    moves--;
                     break;
                 case AI_GoTo:
                 case AI_Engage:
@@ -1099,7 +1095,7 @@ int do_Turn(B_Side *player, B_Side *opponent, B_Map *battleMap, int cUnit_I, int
                     else moves = player->units[cUnit_I].moves;
                     break;
                 default:
-                    FRes = move_Unit(battleMap, &player->units[cUnit_I], Northeast);
+                    (void) move_Unit(battleMap, &player->units[cUnit_I], Northeast);
                     pos_A = player->units[cUnit_I].position;
                     break;
             }

@@ -820,6 +820,29 @@ void find_Path(B_Map* map, B_Tile *startNode, B_Tile *endNode)
     return;
 }
 
+int get_MovesCost(B_Map* map, B_Tile *startNode, B_Tile *endNode)
+{
+    int path_Size = 0;
+    B_Tile *cTile = endNode;
+    T_Direc *path = (T_Direc *) calloc(path_Size, sizeof(T_Direc));
+    
+    find_Path(map, startNode, endNode);
+    while(cTile->node.parentPos.X > -1 && cTile->node.parentPos.Y > -1)
+    {
+        int prePath = -1;
+        prePath = getDirection(cTile->pos, cTile->node.parentPos);
+        if(prePath > -1)
+        {
+            cTile = &map->tiles[cTile->node.parentPos.Y][cTile->node.parentPos.X];
+            path_Size += cTile->node.conectS[(prePath + 4) % 8] + 1;
+        }
+        else break;
+    }
+    if(cTile != startNode)
+        return FUNCTION_FAIL;
+    else return path_Size;
+}
+
 int get_MovesToTile(B_Map* map, B_Tile *startNode, B_Tile *endNode)
 {
     int path_Size = 0;
