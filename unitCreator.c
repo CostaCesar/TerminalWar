@@ -17,7 +17,7 @@ void handleBuffs(B_Unit *unit)
     bool skip = false;
 
     for(int i = 0; i < BUFFS_MAX; i++)
-        unit->buffs[i] = No_Buff;
+        unit->buffs[i] = Buff_NONE;
     
     for(int i = 0; i < unit->buffs_S; i++)
     {

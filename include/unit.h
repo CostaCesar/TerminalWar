@@ -6,18 +6,18 @@
 
 typedef enum E_buffs
 {
-    No_Buff = -1,
-    Shield_Wall,
-    Forest_Advtg,
-    Desert_Advtg,
-    Snow_Advtg,
-    Height_Block,
-    Amphibious,
-    Rally,
-    Ambusher,
-    Pike_Formation,
-    Charge_Buff,
-    Hit_And_Move
+    Buff_NONE = -1,
+    Buff_ShieldWall,
+    Buff_Forest,
+    Buff_Desert,
+    Buff_Snow,
+    Buff_HeightBlock,
+    Buff_Amphibious,
+    Buff_Rally,
+    Buff_Ambusher,
+    Buff_PikeFormation,
+    Buff_Charge,
+    Buff_HitRun
 } Unit_Buff;
 typedef enum E_class
 {
@@ -184,34 +184,34 @@ char *get_UnitBuff(Unit_Buff buff)
     char *type;
     switch (buff)
     {
-        case Shield_Wall:
+        case Buff_ShieldWall:
             type = "Shield Wall";
             break;
-        case Forest_Advtg:
+        case Buff_Forest:
             type = "Forest Native";
             break;
-        case Desert_Advtg:
+        case Buff_Desert:
             type = "Desert Lover";
             break;
-        case Height_Block:
+        case Buff_HeightBlock:
             type = "Valley Survivor";
             break;
-        case Amphibious:
+        case Buff_Amphibious:
             type = "Amphibious";
             break;
-        case Rally:
-            type = "Rally Up";
+        case Buff_Rally:
+            type = "Buff_Rally Up";
             break;
-        case Ambusher:
+        case Buff_Ambusher:
             type = "Ambush Expert";
             break;
-        case Pike_Formation:
+        case Buff_PikeFormation:
             type = "Pike Wall";
             break;
-        case Charge_Buff:
+        case Buff_Charge:
             type = "Charger";
             break;
-        case Hit_And_Move:
+        case Buff_HitRun:
             type = "Hit & Run";
             break;
         default:

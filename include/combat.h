@@ -30,15 +30,15 @@ int get_BonusByHeight(double height)
 double handle_Advantages(B_Unit *unit, T_Terrain terrain, T_Veget vegetation, int height)
 {
     double value = 0.0;
-    if((unit_HasBuff(unit, Desert_Advtg) && terrain == Sand)
-    || (unit_HasBuff(unit, Amphibious) && terrain == Water)
-    || (unit_HasBuff(unit, Snow_Advtg) && terrain == Snow))
+    if((unit_HasBuff(unit, Buff_Desert) && terrain == Sand)
+    || (unit_HasBuff(unit, Buff_Amphibious) && terrain == Water)
+    || (unit_HasBuff(unit, Buff_Snow) && terrain == Snow))
         value += DAMAGE_SMALL;
     
-    if(unit_HasBuff(unit, Forest_Advtg) && vegetation > Sparse)
+    if(unit_HasBuff(unit, Buff_Forest) && vegetation > Sparse)
         value += DAMAGE_SMALL;
     
-    if(unit_HasBuff(unit, Height_Block) && height < 0)
+    if(unit_HasBuff(unit, Buff_HeightBlock) && height < 0)
         value += get_BonusByHeight(-height);
     return value;
 }
@@ -263,7 +263,7 @@ B_Result execute_MeleeCombat(B_Unit *attacker, B_Unit *defender, int heightDif, 
         defender_Power = 0;
 
     // Buffs
-    if(unit_HasBuff(attacker, Charge_Buff) == true && attacker->men == attacker->men_Max)
+    if(unit_HasBuff(attacker, Buff_Charge) == true && attacker->men == attacker->men_Max)
         attacker_Power += DAMAGE_LARGE;
     attacker_Power += handle_Advantages(attacker, terrain, vegetation, heightDif);
     defender_Power += handle_Advantages(defender, terrain, vegetation, heightDif);
@@ -416,7 +416,7 @@ bool check_UnitMove(B_Unit *unit, int *moves)
     
     if((*moves) >= unit->moves)
         return false;
-    if(unit->attacked == true && unit_HasBuff(unit, Hit_And_Move) == false)
+    if(unit->attacked == true && unit_HasBuff(unit, Buff_HitRun) == false)
         return false;
     
     if(unit->engaged == false)
@@ -467,10 +467,10 @@ B_Result execute_RangedCombat(B_Unit* attacker, B_Unit* defender, int heightDif,
 
     // Buffs
     protec += handle_Advantages(defender, terrain, vegetat, heightDif);
-    if(unit_HasBuff(defender, Shield_Wall) && defender->engaged == false)
+    if(unit_HasBuff(defender, Buff_ShieldWall) && defender->engaged == false)
         protec += DAMAGE_SMALL;
     // Negating amphibious buff
-    if(unit_HasBuff(defender, Amphibious) == true && terrain == Water)
+    if(unit_HasBuff(defender, Buff_Amphibious) == true && terrain == Water)
         protec -= DAMAGE_SMALL;
 
     float damage = volley - protec + get_BonusByHeight(heightDif) - get_BonusByVeget(vegetat)- ((float) *fortLevel / 2)

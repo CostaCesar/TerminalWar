@@ -5,6 +5,7 @@
         "math.h": "c",
         "cmath": "c",
         "cstdlib": "c",
-        "random": "c"
+        "random": "c",
+        "const.h": "c"
     }
 }
