@@ -572,6 +572,11 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
         print_Line("[Enter] Start Battle | [R] Remove Unit", 0);
         print_Line(" ", 0);
         print_Line(NULL, 0);
+        if(*mode != Map_Graphic)
+        {
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+            BACKGROUND_GREEN | BACKGROUND_RED | FOREGROUND_RED | BACKGROUND_INTENSITY);
+        }
         show_Map(map, *mode, false);
         
         reset_Cursor();

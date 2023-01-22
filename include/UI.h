@@ -61,7 +61,7 @@ void toggle_Cursor(bool cursor)
 void clear_afterMap(short int mHeight)
 {
     // int screenWidth = get_ScreenWidth();
-    COORD pos = {0, MAP_OFFSET_Y+mHeight*2};
+    COORD pos = {0, MAP_OFFSET_Y+mHeight*2+1};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     printf("%100s", " ");
     printf("%100s", " ");
@@ -387,7 +387,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
     printf("     |");
     for(int i = 0; i < mWidth; i++)
         printf("%3d|", i);
-    printf("\n     ");
+    printf("     \n     ");
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
     {
@@ -397,7 +397,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 
         if(i == mWidth-2) edge = true;
     }
-    putchar('\n');
+    printf("     \n");
 
     // Tiles
     for(short int i = 0; i < mHeight; i++)
@@ -430,7 +430,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 
                 if(j == mWidth - 2) edge = true;
             }
-            putchar('\n');
+            printf("     \n");
         }
         if(i == mHeight - 2) mapEdge = true;
     }
@@ -446,10 +446,10 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 
         if(i == mWidth-2) edge = true;
     }
-    printf("\n     |");
+    printf("     \n     |");
     for(int i = 0; i < mWidth; i++)
         printf("%3d|", i);
-    putchar('\n');
+    printf("     \n");
     return;
 }
 
@@ -461,7 +461,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
     printf("     |");
     for(int i = 0; i < mWidth; i++)
         printf("%3d|", i);
-    printf("\n     ");
+    printf("     \n     ");
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
     {
@@ -471,7 +471,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
 
         if(i == mWidth-2) edge = true;
     }
-    putchar('\n');
+    printf("     \n");
 
     // Tiles
     for(short int i = 0; i < mHeight; i++)
@@ -504,7 +504,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
             {
                 if(data->terrain)
                     tile = (int) *(data[i * mWidth + j].terrain);
-                else if(data->veget != NULL)
+                else if(data->veget)
                     tile = (int) *(data[i * mWidth + j].veget);
                 else
                     tile = (int) *(data[i * mWidth + j].height);
@@ -527,7 +527,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
 
                 if(j == mWidth - 2) edge = true;
             }
-            putchar('\n');
+            printf("     \n");
         }
         if(i == mHeight - 2) mapEdge = true;
     }
@@ -543,10 +543,10 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
 
         if(i == mWidth-2) edge = true;
     }
-    printf("\n     |");
+    printf("     \n     |");
     for(int i = 0; i < mWidth; i++)
         printf("%3d|", i);
-    putchar('\n');
+    printf("     \n");
     return;
 }
 

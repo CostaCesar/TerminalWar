@@ -273,6 +273,7 @@ char *get_MapSprite(B_Tile* tile, int mode)
 void show_Map(B_Map *source, int mode, bool skipBanner)
 {
     B_tileData *tiles = (B_tileData*) malloc(source->height * source->width * sizeof(B_tileData));
+    HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
     char tileAux[4] = {0};
     int cNames = 1;
     
@@ -325,11 +326,13 @@ void show_Map(B_Map *source, int mode, bool skipBanner)
         }
     }
     COORD pos = {0, 8};
-    if(skipBanner == true) SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    if(skipBanner == true) SetConsoleCursorPosition(hnd, pos);
     
     if(mode == Map_Graphic)
         print_MapGraphic(source->height, source->width, tiles);
-    else print_MapStats(source->height, source->width, tiles);
+    else
+        print_MapStats(source->height, source->width, tiles);
+    SetConsoleTextAttribute(hnd, FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_RED);
     free(tiles);
     if(skipBanner == true)
         reset_Cursor();
