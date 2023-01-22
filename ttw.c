@@ -576,7 +576,6 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
         
         reset_Cursor();
         out = get_KeyPress(true);
-        clear_afterMap(map->height);
         switch (out)
         {
         case 't':
@@ -585,18 +584,19 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                 *mode = Map_Height;
             continue;
         case 'a':
+            if (dUnits == Side->size)
+            {
+                print_Message("All the units have been deployed!", 0, 1, true, false, true);
+                continue;
+            }
+            clear_afterMap(map->height);
             printf(">> Placeable units: \n");
             for (i = 0; i < Side->size; i++)
                 if (Side->units[i].position.X < 0 && Side->units[i].position.Y < 0)
                     show_gUnit(&Side->units[i]);
-            if (i < 0)
-            {
-                print_Message("No units in the reserve!", 0, 1, true, false, true);
-                continue;
-            }
 
-            toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
+            toggle_Cursor(true);
             scanf(" %d", &out);
             toggle_Cursor(false);
 
@@ -604,8 +604,8 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             reset_Cursor();
             if (Index > -1 && (Side->units[Index].position.X < 0 && Side->units[Index].position.Y < 0))
             {
-                toggle_Cursor(true);
                 print_Message(">> Cordinates of the unit <X Y> inside |*1| area: ", 0, 1, true, true, false);
+                toggle_Cursor(true);
                 scanf(" %hd %hd", &Side->units[Index].position.X, &Side->units[Index].position.Y);
                 toggle_Cursor(false);
 
@@ -623,21 +623,25 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             }
             else
                 print_Message("This unit ID is not valid!", 0, 1, true, false, true);
+            clear_afterMap(map->height);
             continue;
         case 'm':
+            if (dUnits < 1)
+            {
+                print_Message("No units deployed to move", 0, 1, true, false, true);
+                continue;
+            }
+            clear_afterMap(map->height);
             for (i = 0; i < Side->size; i++)
+            {
                 if (Side->units[i].position.X >= 0 && Side->units[i].position.Y >= 0)
                 {
                     printf(">> At %dX - %dY \n", Side->units[i].position.X, Side->units[i].position.Y);
                     show_gUnit(&Side->units[i]);
                 }
-            if (i < 0)
-            {
-                print_Message("No units in the field!", 0, 1, true, false, true);
-                continue;
             }
-            toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
+            toggle_Cursor(true);
             scanf("%d", &out);
             toggle_Cursor(false);
 
@@ -645,8 +649,8 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             if (Index > -1 && (Side->units[Index].position.X > -1 && Side->units[Index].position.Y > -1))
             {
                 unitPos.X = Side->units[Index].position.X, unitPos.Y = Side->units[Index].position.Y;
-                toggle_Cursor(true);
                 print_Message(">> Cordinates of the unit <X Y> inside |*1| area: ", 0, 1, true, true, false);
+                toggle_Cursor(true);
                 scanf("%hd %hd", &Side->units[Index].position.X, &Side->units[Index].position.Y);
                 toggle_Cursor(false);
 
@@ -664,22 +668,26 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             }
             else
                 print_Message("This unit ID is not valid!", 0, 3, true, false, true);
+            clear_afterMap(map->height);
             continue;
         case 'r':
+            if (dUnits < 1)
+            {
+                print_Message("No units deployed to remove", 0, 1, true, false, true);
+                continue;
+            }
+            clear_afterMap(map->height);
             for (i = 0; i < Side->size; i++)
+            {
                 if (Side->units[i].position.X >= 0 && Side->units[i].position.Y >= 0)
                 {
                     printf(">> At %dX - %dY \n", Side->units[i].position.X, Side->units[i].position.Y);
                     show_gUnit(&Side->units[i]);
                 }
-            if (i < 0)
-            {
-                print_Message("No units in the field!", 0, 1, true, false, true);
-                continue;
             }
 
-            toggle_Cursor(true);
             printf(">> ID of the chosen unit: ");
+            toggle_Cursor(true);
             scanf("%d", &out);
             toggle_Cursor(false);
 
@@ -694,6 +702,7 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
             }
             else
                 print_Message("This unit ID is not valid!", 0, 1, true, false, true);
+            clear_afterMap(map->height);
             continue;
         case KEY_ESCAPE:
             return FUNCTION_FAIL;
@@ -714,8 +723,11 @@ int placementMenu(B_Map *map, B_Side *Side, int *mode)
                     continue;
             }
             return FUNCTION_SUCESS;
+        case -32:
+            (void) get_KeyPress(false);
         default:
             print_Message("Invalid action!", 0, 1, true, false, true);
+            fflush(stdin);
             continue;
         }
     } while (1);
