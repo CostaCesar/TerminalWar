@@ -162,6 +162,8 @@ void meleeCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
     T_Veget vegetation = battleMap.tiles[defender->position.Y][defender->position.X].vegetation;
     
     // Trivia
+    attacker->goal = (B_Pos){-1, -1};
+    defender->goal = (B_Pos){-1, -1};
     attacker->attacked = true;
     attacker->engaged = true;
     defender->engaged = true;
@@ -190,11 +192,8 @@ void meleeCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
         delete_Unit(attackerSide->units, &attackerSide->size, get_UnitIndex(attackerSide, attacker->Game_ID));
         battleMap.tiles[target.Y][target.X].unit = NULL;
     }
-    else
-    {
-        // Whoever wins gains the innitiative (can disengage/engage)
-        result.winner->engaged = false;
-    }
+    else // Whoever wins gains the innitiative (can disengage/engage)
+    { result.winner->engaged = false; }
 
     return;
 }
@@ -231,6 +230,12 @@ int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
     attackerSide->stats.killed += res.defenderLoss;
     defenderSide->stats.loss += res.defenderLoss;
 
+    // Trivia
+    attacker->goal = (B_Pos) {-1, -1};
+    defender->goal = (B_Pos) {-1, -1};
+    attacker->chaseID = NULL, defender->chaseID = NULL;
+    target = defender->position;
+    
     // Showing results
     if(show_Combat(&res) == true)
         attacker->level++;
@@ -243,8 +248,6 @@ int rangedCombat(B_Side* attackerSide, B_Unit *attacker, B_Side *defenderSide, B
     system("cls");
     
     // Cleanup
-    attacker->chaseID = NULL;
-    target = defender->position;
     if(defender->men == 0)
     {
         delete_Unit(defenderSide->units, &defenderSide->size, get_UnitIndex(defenderSide, defender->Game_ID));

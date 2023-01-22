@@ -2,6 +2,7 @@
 #include "unit.h"
 #include "map.h"
 #include "combat.h"
+#include <limits.h>
 
 typedef enum E_Response
 {
@@ -150,7 +151,8 @@ B_Pos get_BestTileRanged(B_Map *map, B_Unit *unit, B_Unit *foe)
         for(int j = start.X; j < finsh.X; j++)
         {
             // MUDAR para -1
-            if(abs(i - foe->position.Y) <= foe->moves -1 && abs(j - foe->position.X) <= foe->moves -1)
+            if(abs(i - foe->position.Y) <= foe->moves -1 && abs(j - foe->position.X) <= foe->moves -1
+            && unit_HasBuff(unit, Buff_HitRun) == false)
                 continue;
             
             // comp.X = abs(j - unit->position.X), comp.Y = abs(i - unit->position.Y);
@@ -259,8 +261,8 @@ B_Pos get_BestTileFort(B_Map *map, B_Pos this, B_Pos closest_Foe, B_Pos closest_
 
 B_Pos get_BestRetreat(B_Map *map, B_Unit* us, int moves, B_Unit *enemy)
 {
-    B_Pos minCoord, maxCoord, bestPos = us->position;
-    int bestScore = -1, posbScore;
+    B_Pos minCoord, maxCoord, bestPos = {-1, -1};
+    int bestScore = INT_MIN, posbScore;
     minCoord.X = (us->position.X - moves > 0) ? us->position.X - moves : 0;
     minCoord.Y = (us->position.Y - moves > 0) ? us->position.Y - moves : 0;
     maxCoord.X = (us->position.X + moves < map->width) ? us->position.X + moves : map->width - 1;
@@ -277,15 +279,16 @@ B_Pos get_BestRetreat(B_Map *map, B_Unit* us, int moves, B_Unit *enemy)
             int dif = get_HeightDif(map, enemy->position, test->pos);
             int dist = get_MovesCost(map, &map->tiles[us->position.Y][us->position.X], test);
 
-            if(dist > moves)
+            if(dist > moves || dist == FUNCTION_FAIL)
                 continue;
-            dist = get_MovesCost(map, &map->tiles[enemy->position.Y][enemy->position.X], test);
-            posbScore += dist - enemy->moves;
+            posbScore += get_MovesCost(map, &map->tiles[enemy->position.Y][enemy->position.X], test);
             if(calcMoves(test->pos, enemy->position) <= enemy->range)
-                posbScore -= 5;
+                posbScore -= 1000;
             posbScore += handle_Advantages(us, test->terrain, test->vegetation, dif);
 
             if(posbScore > bestScore)
+            { bestScore = posbScore, bestPos = test->pos;}
+            else if(posbScore == bestScore && calcDistance(test->pos, us->position) < calcDistance(bestPos, us->position))
             { bestScore = posbScore, bestPos = test->pos; }
         }
     }
@@ -314,8 +317,6 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
         if(compPos(current->goal, current->position) == true)
             return AI_Wait;
         else return AI_GoTo;
-        // Recuar mesmo se não puder evitar prox ataque?
-        // IMPLEMENTAR
     }
 
     if((get_UnitPowerGap(current, closest_Foe,
@@ -368,7 +369,7 @@ T_Response AI_Process(B_Map *map, B_Side *ours, B_Side *they, B_Unit *current, T
     }
 
     // Ir para posição ranged
-    if(closest_Foe->defend_RangeP < current->attack_RangeP)
+    if(closest_Foe->defend_RangeP < current->attack_RangeP || unit_HasBuff(current, Buff_HitRun))
     {
         current->goal = get_BestTileRanged(map, current, closest_Foe);
         if(current->goal.X != -1 && current->goal.Y != -1)
