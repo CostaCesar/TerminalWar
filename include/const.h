@@ -28,7 +28,7 @@
 
 // UI.h
 #define MAP_OFFSET_X 6
-#define MAP_OFFSET_Y 10
+#define MAP_OFFSET_Y 11
 
 // map.h
 #define BACKUP_MAP_COLUMNS 10

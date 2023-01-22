@@ -386,9 +386,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
     char msg[4] = {0};
     printf("     |");
     for(int i = 0; i < mWidth; i++)
-    {
         printf("%3d|", i);
-    }
     printf("\n     ");
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
@@ -419,7 +417,7 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
             SetConsoleTextAttribute(hnd, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
             putchar(179);
         }
-        putchar('\n');
+        printf("[%3d]\n", i);
         printf("     ");
         if(mapEdge == false)
         {
@@ -448,6 +446,9 @@ void print_MapGraphic(short int mHeight, short int mWidth, B_tileData *data)
 
         if(i == mWidth-2) edge = true;
     }
+    printf("\n     |");
+    for(int i = 0; i < mWidth; i++)
+        printf("%3d|", i);
     putchar('\n');
     return;
 }
@@ -459,9 +460,7 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
     int words_I = 0, tile = 0;
     printf("     |");
     for(int i = 0; i < mWidth; i++)
-    {
         printf("%3d|", i);
-    }
     printf("\n     ");
     putchar(218);
     for(short int i = 0; i < mWidth; i++)
@@ -515,8 +514,8 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
             }
             putchar(179);
         }
-        putchar('\n');
-        printf("     ");
+        printf("[%3d]", i);
+        printf("\n     ");
         if(mapEdge == false)
         {
             putchar(195);
@@ -544,6 +543,9 @@ void print_MapStats(short int mHeight, short int mWidth, B_tileData *data)
 
         if(i == mWidth-2) edge = true;
     }
+    printf("\n     |");
+    for(int i = 0; i < mWidth; i++)
+        printf("%3d|", i);
     putchar('\n');
     return;
 }
